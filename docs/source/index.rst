@@ -6,6 +6,11 @@
 Welcome to mkinit's documentation!
 ==================================
 
+Autogenerates __init__.py files statically and dynamically. 
+To use the static version simply pip install and run the `mkinit` command with
+the directory corresponding to the package.
+
+
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
