@@ -2,11 +2,11 @@
 # -*- coding: utf-8 -*-
 """
 Installation:
-    pip install git+https://github.com/Erotemic/ahoy.git
+    pip install git+https://github.com/Erotemic/mkinit.git
 
 Developing:
-    git clone https://github.com/Erotemic/ahoy.git
-    pip install -e ahoy
+    git clone https://github.com/Erotemic/mkinit.git
+    pip install -e mkinit
 
 Pypi:
      # Presetup
@@ -31,11 +31,11 @@ Pypi:
      twine upload --username erotemic --skip-existing dist/*
 
      # Check the url to make sure everything worked
-     https://pypi.org/project/ahoy/
+     https://pypi.org/project/mkinit/
 
      # ---------- OLD ----------------
      # Check the url to make sure everything worked
-     https://pypi.python.org/pypi?:action=display&name=ahoy
+     https://pypi.python.org/pypi?:action=display&name=mkinit
 
 """
 from setuptools import setup
@@ -47,7 +47,7 @@ def parse_version(package):
     Statically parse the version number from __init__.py
 
     CommandLine:
-        python -c "import setup; print(setup.parse_version('ahoy'))"
+        python -c "import setup; print(setup.parse_version('mkinit'))"
     """
     from os.path import dirname, join
     import ast
@@ -130,7 +130,7 @@ def parse_requirements(fname='requirements.txt'):
     return []
 
 
-version = parse_version('ahoy')  # needs to be a global var for git tags
+version = parse_version('mkinit')  # needs to be a global var for git tags
 
 if __name__ == '__main__':
     install_requires = parse_requirements('requirements.txt')
@@ -138,7 +138,7 @@ if __name__ == '__main__':
         install_requires += parse_requirements('requirements-win32.txt')
 
     setup(
-        name='ahoy',
+        name='mkinit',
         version=version,
         author='Jon Crall',
         description='Say Hello Via Clear Imports!',
@@ -147,16 +147,16 @@ if __name__ == '__main__':
         entry_points={
             # the console_scripts entry point creates the xdoctest executable
             'console_scripts': [
-                'ahoy = ahoy.__main__:main'
+                'mkinit = mkinit.__main__:main'
             ]
         },
         extras_require={
             'all': parse_requirements('optional-requirements.txt')
         },
         author_email='erotemic@gmail.com',
-        url='https://github.com/Erotemic/ahoy',
+        url='https://github.com/Erotemic/mkinit',
         license='Apache 2',
-        packages=['ahoy'],
+        packages=['mkinit'],
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
