@@ -141,7 +141,7 @@ if __name__ == '__main__':
         name='mkinit',
         version=version,
         author='Jon Crall',
-        description='Say Hello Via Clear Imports!',
+        description='Create __init__.py files',
         long_description=parse_description(),
         install_requires=install_requires,
         entry_points={
