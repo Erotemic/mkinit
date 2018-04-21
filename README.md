@@ -1,3 +1,11 @@
+[![Travis](https://img.shields.io/travis/Erotemic/mkinit/master.svg?label=Travis%20CI)](https://travis-ci.org/Erotemic/mkinit)
+[![Codecov](https://codecov.io/github/Erotemic/mkinit/badge.svg?branch=master&service=github)](https://codecov.io/github/Erotemic/mkinit?branch=master)
+[![Appveyor](https://ci.appveyor.com/api/projects/status/github/Erotemic/mkinit?svg=True)](https://ci.appveyor.com/project/Erotemic/mkinit/branch/master)
+[![Pypi](https://img.shields.io/pypi/v/mkinit.svg)](https://pypi.python.org/pypi/mkinit)
+
+
+Read the docs here: http://mkinit.readthedocs.io/en/latest/
+
 The `mkinit` module helps you write `__init__` files without `from ? import *`.
 
 `mkinit` automatically imports all submodules in a package and their members.
