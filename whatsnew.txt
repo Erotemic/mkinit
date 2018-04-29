@@ -1,0 +1,8 @@
+version: 0.0.2
+---------------
+* Changed attribute from `__SUBMODULES__` to `__submodules__`. The former is
+  still accepted.
+
+version: 0.0.1
+---------------
+* Ported from `ubelt` `0.1.1`

@@ -3,11 +3,11 @@
 Static version of dynamic_autogen.py
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
-import textwrap
-from os.path import join, exists
-from six.moves import builtins
 import six
+import textwrap
+from os.path import join, exists, abspath, isdir, dirname, basename
 from xdoctest import static_analysis as static
+from six.moves import builtins
 
 
 def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
@@ -46,7 +46,7 @@ def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
         >>> assert 'autogen_init' in new_text
     """
     if exists(modpath_or_name):
-        modpath = modpath_or_name
+        modpath = abspath(modpath_or_name)
     else:
         modpath = static.modname_to_modpath(modpath_or_name)
         if modpath is None:
@@ -55,14 +55,18 @@ def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
     if imports is None:
         # the __init__ file may have a variable describing the correct imports
         # should imports specify the name of this variable or should it always
-        # be __SUBMODULES__?
-        with open(join(modpath, '__init__.py'), 'r') as file:
-            source = file.read()
-        varname = '__SUBMODULES__'
-        try:
-            imports = static.parse_static_value(varname, source)
-        except NameError:
-            pass
+        # be __submodules__?
+        init_fpath = join(modpath, '__init__.py')
+        if exists(init_fpath):
+            with open(init_fpath, 'r') as file:
+                source = file.read()
+            try:
+                imports = static.parse_static_value('__submodules__', source)
+            except NameError:
+                try:
+                    imports = static.parse_static_value('__SUBMODULES__', source)
+                except NameError:
+                    pass
 
     modname, imports, from_imports = _static_parse_imports(modpath,
                                                            imports=imports,
@@ -124,9 +128,10 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
         >>> modname, imports, from_imports = tup
         >>> # assert 'autogen_init' in imports
     """
+    # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = static.modpath_to_modname(modpath)
-    assert modname is not None
     if imports is not None:
+        assert modname is not None
         import_paths = {
             m: static.modname_to_modpath(modname + '.' + m, hide_init=False)
             for m in imports
