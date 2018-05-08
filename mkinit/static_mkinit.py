@@ -8,7 +8,7 @@ import textwrap
 from os.path import join, exists, abspath, isdir, dirname, basename
 from xdoctest import static_analysis as static
 from six.moves import builtins
-from .top_level_ast import TopLevelVisitor
+from mkinit.top_level_ast import TopLevelVisitor
 
 
 def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
