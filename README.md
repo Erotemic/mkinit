@@ -238,3 +238,5 @@ following:
   operator. Again, these will be accounted for by dynamic analysis.
 * In the case where no `__init__.py` file exists, the `mkinit` command line
   tool will create one.
+* By default we ignore attributes that are marked as non-public by a leading
+  underscore

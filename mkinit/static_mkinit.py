@@ -8,6 +8,7 @@ import textwrap
 from os.path import join, exists, abspath, isdir, dirname, basename
 from xdoctest import static_analysis as static
 from six.moves import builtins
+from .top_level_ast import TopLevelVisitor
 
 
 def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
@@ -45,39 +46,13 @@ def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
         >>>                                     dry=True)
         >>> assert 'autogen_init' in new_text
     """
-    if exists(modpath_or_name):
-        modpath = abspath(modpath_or_name)
-    else:
-        modpath = static.modname_to_modpath(modpath_or_name)
-        if modpath is None:
-            raise ValueError('Invalid module {}'.format(modpath_or_name))
-
-    if imports is None:
-        # the __init__ file may have a variable describing the correct imports
-        # should imports specify the name of this variable or should it always
-        # be __submodules__?
-        init_fpath = join(modpath, '__init__.py')
-        if exists(init_fpath):
-            with open(init_fpath, 'r') as file:
-                source = file.read()
-            try:
-                imports = static.parse_static_value('__submodules__', source)
-            except NameError:
-                try:
-                    imports = static.parse_static_value('__SUBMODULES__', source)
-                except NameError:
-                    pass
-
-    modname, imports, from_imports = _static_parse_imports(modpath,
-                                                           imports=imports,
-                                                           use_all=use_all)
-    if not attrs:
-        from_imports = []
-    initstr = _initstr(modname, imports, from_imports, withheader=False)
+    modpath = _rectify_to_modpath(modpath_or_name)
+    initstr = static_init(modpath, imports=imports, attrs=attrs,
+                          use_all=use_all)
     init_fpath, new_text = _autogen_init_make(modpath, initstr)
     if dry:
         print('(DRY) would write updated file: %r' % init_fpath)
-        print(new_text)
+        # print(new_text)
         print(initstr)
         return init_fpath, new_text
     else:  # nocover
@@ -87,27 +62,77 @@ def autogen_init(modpath_or_name, imports=None, attrs=True, use_all=True,
             file_.write(new_text)
 
 
+def _rectify_to_modpath(modpath_or_name):
+    if exists(modpath_or_name):
+        modpath = abspath(modpath_or_name)
+    else:
+        modpath = static.modname_to_modpath(modpath_or_name)
+        if modpath is None:
+            raise ValueError('Invalid module {}'.format(modpath_or_name))
+    return modpath
+
+
+def static_init(modpath_or_name, imports=None, attrs=True, use_all=True):
+    modpath = _rectify_to_modpath(modpath_or_name)
+    if imports is None:
+        imports = parse_submodule_definition(modpath)
+
+    modname, imports, from_imports = _static_parse_imports(modpath,
+                                                           imports=imports,
+                                                           use_all=use_all)
+    if not attrs:
+        from_imports = []
+    initstr = _initstr(modname, imports, from_imports, withheader=False)
+    return initstr
+
+
+def parse_submodule_definition(modpath):
+    """
+    Statically determine the submodules that should be auto-imported
+    """
+    # the __init__ file may have a variable describing the correct imports
+    # should imports specify the name of this variable or should it always
+    # be __submodules__?
+    imports = None
+    init_fpath = join(modpath, '__init__.py')
+    if exists(init_fpath):
+        with open(init_fpath, 'r') as file:
+            source = file.read()
+        try:
+            imports = static.parse_static_value('__submodules__', source)
+        except NameError:
+            try:
+                imports = static.parse_static_value('__SUBMODULES__', source)
+            except NameError:
+                pass
+    return imports
+
+
 def _find_local_submodules(pkgpath):
     """
+    Yields all children submodules in a package (non-recursively)
+
     Args:
         pkgpath (str): path to a package with an __init__.py file
 
     Example:
         >>> pkgpath = static.modname_to_modpath('mkinit')
         >>> import_paths = dict(_find_local_submodules(pkgpath))
-        >>> # assert 'util_dict' in import_paths
+        >>> print('import_paths = {!r}'.format(import_paths))
     """
     # Find all the children modules in this package (non recursive)
-    pkgname = static.modpath_to_modname(pkgpath)
-    assert pkgname is not None, 'cannot import {!r}'.format(pkgpath)
+    pkgname = static.modpath_to_modname(pkgpath, check=False)
+    if pkgname is None:
+        raise Exception('cannot import {!r}'.format(pkgpath))
+    # TODO:
+    # DOES THIS NEED A REWRITE TO HANDLE THE CASE WHEN __init__ does not exist?
     for sub_modpath in static.package_modpaths(pkgpath, with_pkg=True,
-                                               recursive=False):
-        sub_modname = static.modpath_to_modname(sub_modpath)
+                                               recursive=False, check=False):
+        sub_modname = static.modpath_to_modname(sub_modpath, check=False,
+                                                relativeto=pkgpath)
         rel_modname = sub_modname[len(pkgname) + 1:]
-        if rel_modname.startswith('_'):
+        if not rel_modname or rel_modname.startswith('_'):
             # Skip private modules
-            pass
-        elif not rel_modname:
             pass
         else:
             yield rel_modname, sub_modpath
@@ -129,9 +154,10 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
         >>> # assert 'autogen_init' in imports
     """
     # FIXME: handle the case where the __init__.py file doesn't exist yet
-    modname = static.modpath_to_modname(modpath)
+    modname = static.modpath_to_modname(modpath, check=False)
     if imports is not None:
-        assert modname is not None
+        if modname is None:
+            raise AssertionError('modname is None')
         import_paths = {
             m: static.modname_to_modpath(modname + '.' + m, hide_init=False)
             for m in imports
@@ -143,8 +169,8 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
     from_imports = []
     for rel_modname in imports:
         sub_modpath = import_paths[rel_modname]
-        print('import_paths = {!r}'.format(import_paths))
-        assert sub_modpath is not None, 'Failed to lookup {!r}'.format(rel_modname)
+        if sub_modpath is None:
+            raise Exception('Failed to lookup {!r}'.format(rel_modname))
         try:
             if six.PY2:
                 with open(sub_modpath, 'r') as file:
@@ -155,26 +181,26 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
         except Exception as ex:  # nocover
             raise IOError('Error reading {}, caused by {}'.format(
                 sub_modpath, repr(ex)))
-        valid_callnames = None
+        valid_attrs = None
         if use_all:  # pragma: nobranch
             try:
-                valid_callnames = static.parse_static_value('__all__', source)
+                valid_attrs = static.parse_static_value('__all__', source)
             except NameError:
                 pass
-        if valid_callnames is None:
+        if valid_attrs is None:
             # The __all__ variable is not specified or we dont care
-            top_level = static.TopLevelVisitor.parse(source)
-            attrnames = list(top_level.assignments) + list(top_level.calldefs.keys())
+            top_level = TopLevelVisitor.parse(source)
+            attrnames = top_level.attrnames
             # list of names we wont export by default
             invalid_callnames = dir(builtins)
-            valid_callnames = []
+            valid_attrs = []
             for attr in attrnames:
-                if '.' in attr or attr.startswith('_'):
+                if attr.startswith('_'):
                     continue
                 if attr in invalid_callnames:  # nocover
                     continue
-                valid_callnames.append(attr)
-        from_imports.append((rel_modname, sorted(valid_callnames)))
+                valid_attrs.append(attr)
+        from_imports.append((rel_modname, sorted(valid_attrs)))
     return modname, imports, from_imports
 
 
@@ -186,9 +212,12 @@ def _autogen_init_make(modpath, initstr):
     # Get path to init file so we can overwrite it
     init_fpath = join(modpath, '__init__.py')
     print('attempting to update: %r' % init_fpath)
-    assert exists(init_fpath)
-    with open(init_fpath, 'r') as file_:
-        lines = file_.readlines()
+    # assert exists(init_fpath)
+    if exists(init_fpath):
+        with open(init_fpath, 'r') as file_:
+            lines = file_.readlines()
+    else:
+        lines = []
 
     # write after the last multiline comment, unless explicit tags are defined
     startline = 0
@@ -213,8 +242,8 @@ def _autogen_init_make(modpath, initstr):
 
     assert startline <= endline
     new_lines = lines[:startline] + [initstr_] + lines[endline:]
-    print('startline = {!r}'.format(startline))
-    print('endline = {!r}'.format(endline))
+    # print('startline = {!r}'.format(startline))
+    # print('endline = {!r}'.format(endline))
 
     new_text = ''.join(new_lines).rstrip() + '\n'
     return init_fpath, new_text
