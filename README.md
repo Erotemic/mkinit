@@ -228,12 +228,9 @@ following:
 * When discovering attributes of submodules `mkinit` will respect the `__all__`
   attribute by default. In general it is good practice to specify this
   property; doing so will also avoid the following caveats.
-* Static analysis currently only extracts top-level module attributes. This
-  means that it will not discover any attributes defined within a conditional
-  statement. In other words, it only looks at members defined without any
-  indentation. In the future it may change to import members guaranteed to be
-  defined on all branches, but I haven't written this code yet. However, dynamic
-  analysis will handle these cases. 
+* Static analysis currently only extracts top-level module attributes. However, 
+  if will also extract attributes defined on all paths of conditional
+  if-else statements. (try except statements don't work yet)
 * Static analysis currently does not look or account for the usage of the `del`
   operator. Again, these will be accounted for by dynamic analysis.
 * In the case where no `__init__.py` file exists, the `mkinit` command line
