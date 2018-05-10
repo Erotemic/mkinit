@@ -1,4 +1,6 @@
+# -*- coding: utf-8 -*-
 # from collections import OrderedDict
+from __future__ import absolute_import, division, print_function, unicode_literals
 import ast
 import six
 
@@ -70,7 +72,7 @@ class TopLevelVisitor(ast.NodeVisitor):
     def visit_If(self, node):
         """
         Notes:
-            elif clauses don’t have a special representation in the AST, but
+            elif clauses don't have a special representation in the AST, but
             rather appear as extra If nodes within the orelse section of the
             previous one.
         """
