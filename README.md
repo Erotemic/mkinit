@@ -229,8 +229,8 @@ following:
   attribute by default. In general it is good practice to specify this
   property; doing so will also avoid the following caveats.
 * Static analysis currently only extracts top-level module attributes. However, 
-  if will also extract attributes defined on all paths of conditional
-  if-else statements. (try except statements don't work yet)
+  if will also extract attributes defined on all non-error raising paths of
+  conditional if-else or try-except statements. 
 * Static analysis currently does not look or account for the usage of the `del`
   operator. Again, these will be accounted for by dynamic analysis.
 * In the case where no `__init__.py` file exists, the `mkinit` command line

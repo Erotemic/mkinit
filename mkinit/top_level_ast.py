@@ -3,58 +3,10 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ast
 import six
-# Perhaps simply depend on ubelt?
-from mkinit.orderedset import OrderedSet as oset
+import ubelt as ub
 
 
 _UNHANDLED = None
-
-
-def static_truthiness(node):
-    """
-    Extracts static truthiness of a node if possible
-
-    Args:
-        node (ast.Node)
-
-    Returns:
-        bool or None: True or False if a node can be statically bound to a
-        truthy value, otherwise returns None.
-    """
-    if isinstance(node, ast.Str):
-        return bool(node.s)
-    elif isinstance(node, ast.Tuple):
-        return bool(node.elts)
-    elif isinstance(node, ast.Num):
-        return bool(node.n)
-    elif six.PY3 and isinstance(node, ast.Bytes):  # nocover
-        return bool(node.s)
-    elif six.PY3 and isinstance(node, ast.NameConstant):
-        return bool(node.value)
-    elif six.PY2 and isinstance(node, ast.Name):  # nocover
-        constants_lookup = {
-            'True': True,
-            'False': False,
-            'None': None,
-        }
-        try:
-            return bool(constants_lookup[node.id])
-        except KeyError:
-            return _UNHANDLED
-    else:
-        return _UNHANDLED
-
-
-def get_conditional_attrnames(nodes):
-    """
-    Gets attrnames within a list of nodes
-    """
-    sub_visitor = TopLevelVisitor()
-    for node in nodes:
-        # Check the attributes defined on this branch
-        sub_visitor.visit(node)
-    got_attrnames = sub_visitor.attrnames
-    return got_attrnames
 
 
 class TopLevelVisitor(ast.NodeVisitor):
@@ -98,6 +50,8 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...        c = True
         ...    else:
         ...        b = False
+        ...    d = True
+        ...    del d
         ...    ''')
         >>> self = TopLevelVisitor.parse(source)
         >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
@@ -110,23 +64,36 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...    try:
         ...        d = True
         ...        e = True
+        ...    except ImportError:
+        ...        raise
         ...    except Exception:
         ...        d = False
+        ...        f = False
+        ...    else:
+        ...        f = True
         ...    ''')
         >>> self = TopLevelVisitor.parse(source)
         >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        attrnames = ['d', 'f']
     """
     def __init__(self):
         super(TopLevelVisitor, self).__init__()
-        self.attrnames = oset()
+        self.attrnames = ub.oset()
+        self.removed = ub.oset()  # keep track of which variables were deleted
 
     def _register(self, name):
-        if isinstance(name, (list, tuple)):
+        if isinstance(name, (list, tuple, ub.oset)):
             for n in name:
                 self._register(n)
         else:
             if name not in self.attrnames:
-                self.attrnames.append(name)
+                self.attrnames.add(name)
+                self.removed.discard(name)
+
+    def _unregister(self, name):
+        if name in self.attrnames:
+            self.attrnames.discard(name)
+            self.removed.add(name)
 
     @classmethod
     def parse(TopLevelVisitor, source):
@@ -172,74 +139,151 @@ class TopLevelVisitor(ast.NodeVisitor):
             except Exception:  # nocover
                 pass
 
-        def check_condition_definitions(node, common=None):
-            """
-            Find definitions from conditionals that always accept or
-            that are defined in all possible branches (note this requires an
-            else statment)
-            """
-            has_elseif = len(node.orelse) == 1 and isinstance(node.orelse[0], ast.If)
-            has_else = node.orelse and not has_elseif
+        # TODO: handled deleted attributes?
+        # Find definitions from conditionals that always accept or
+        # that are defined in all possible non-rejecting branches (note this
+        # requires an else statment). A rejecting branch is one that is
+        # unconditionally false or unconditionally raises an exception
+        if_node, elif_nodes, else_body = unpack_if_nodes(node)
+        test_nodes = [if_node] + elif_nodes
 
-            # returns True if this branch will unconditionally accept, False,
-            # if it will unconditionally reject, and None if it is uncertain.
-            truth = static_truthiness(node.test)
-            if truth is not _UNHANDLED:
-                if truth:
-                    # No need to check other conditionals
-                    attrnames = get_conditional_attrnames(node.body)
-                    return attrnames
+        has_unconditional = False
+        required = []
+
+        for item in test_nodes:
+            truth = static_truthiness(item.test)
+            # if any(isinstance(n, ast.Raise) for n in item.body):
+            #     # Ignore branches that simply raise an error
+            #     continue
+            if truth is _UNHANDLED:
+                names = get_conditional_attrnames(item.body)
+                required.append(names)
+            elif truth is True:
+                # Branch is unconditionally true, no need to check others
+                names = get_conditional_attrnames(item.body)
+                required.append(names)
+                has_unconditional = True
+                break
+            elif truth is False:
+                # Ignore branches that are unconditionally false
+                continue
             else:
-                # Find the attrs in this branch and intersect them with common
-                attrnames = oset(get_conditional_attrnames(node.body))
-                if common is None:
-                    common = attrnames
-                else:
-                    common = common.intersection(attrnames)
+                raise AssertionError('cannot happen')
 
-            if has_else:
-                # If we get to an else, return the common attributes between
-                # all non-rejecting branches
-                else_attrs = oset(get_conditional_attrnames(node.orelse))
-                if common is None:
-                    common = else_attrs
-                else:
-                    common = common.intersection(else_attrs)
-                return common
+        if not has_unconditional and else_body:
+            # If we havent found an unconditional branch we need an else
+            if not any(isinstance(n, ast.Raise) for n in else_body):
+                # Ignore else branches that simply raise an error
+                names = get_conditional_attrnames(else_body)
+                required.append(names)
+            has_unconditional = True
 
-            if has_elseif:
-                # Recurse
-                elif_node = node.orelse[0]
-                return check_condition_definitions(elif_node, common)
+        if has_unconditional:
+            # We can only gaurentee that something will exist if there is at
+            # least one path that must be taken
+            common = ub.oset.intersection(*required) if required else ub.oset()
+            self._register(common)
 
-        # FIXME: will not handled deleted attributes
-        common = check_condition_definitions(node)
-        if common:
-            self._register(list(common))
-
-    def visit_TryExcept(self, node):
+    def visit_Try(self, node):
         """
         We only care about checking if (a) a variable is defined in the main
         body, and (b) that the variable is defined in all except blacks that
         **don't** immediately re-raise.
         """
-        # TODO
+        body_attrs = get_conditional_attrnames(node.body)
+
+        orelse_attrs = get_conditional_attrnames(node.orelse)
+        body_attrs.extend(orelse_attrs)
+
+        # Require that attributes are defined in all non-error branches
+        required = []
+        for handler in node.handlers:
+            # Ignore any handlers that will always reraise
+            if not any(isinstance(n, ast.Raise) for n in handler.body):
+                handler_attrs = get_conditional_attrnames(handler.body)
+                required.append(handler_attrs)
+
+        common = ub.oset.intersection(body_attrs, *required)
+        self._register(common)
+
+    # for python2
+    visit_TryExcept = visit_Try
+
+    def visit_Delete(self, node):
+        for item in node.targets:
+            if isinstance(item, ast.Name):
+                self._unregister(item.id)
         self.generic_visit(node)
 
-    def visit_Del(self, node):
-        # TODO
-        self.generic_visit(node)
 
-    # def visit_ExceptHandler(self, node):
-    #     pass
+def unpack_if_nodes(if_node):
+    """
+    Extract chain of `<if><elif>*<else>?` statements
+    """
+    elif_nodes = []
+    else_body = None
 
-    # def visit_TryFinally(self, node):
-    #     pass
+    curr = if_node
+    while curr:
+        if len(curr.orelse) == 1 and isinstance(curr.orelse[0], ast.If):
+            # The current node is followed by an else-if statement
+            elif_node = curr.orelse[0]
+            elif_nodes.append(elif_node)
+            curr = elif_node
+        elif curr.orelse:
+            # The current node is followed by an else statement
+            else_body = curr.orelse
+            curr = None
+        else:
+            curr = None
 
-    # def visit_Try(self, node):
-    #     TODO: parse a node only if it is visible in all cases
-    #     pass
-    #     # self.generic_visit(node)  # nocover
+    return if_node, elif_nodes, else_body
+
+
+def static_truthiness(node):
+    """
+    Extracts static truthiness of a node if possible
+
+    Args:
+        node (ast.Node)
+
+    Returns:
+        bool or None: True or False if a node can be statically bound to a
+        truthy value, otherwise returns None.
+    """
+    if isinstance(node, ast.Str):
+        return bool(node.s)
+    elif isinstance(node, ast.Tuple):
+        return bool(node.elts)
+    elif isinstance(node, ast.Num):
+        return bool(node.n)
+    elif six.PY3 and isinstance(node, ast.Bytes):  # nocover
+        return bool(node.s)
+    elif six.PY3 and isinstance(node, ast.NameConstant):
+        return bool(node.value)
+    elif six.PY2 and isinstance(node, ast.Name):  # nocover
+        constants_lookup = {
+            'True': True,
+            'False': False,
+            'None': None,
+        }
+        try:
+            return bool(constants_lookup[node.id])
+        except KeyError:
+            return _UNHANDLED
+    else:
+        return _UNHANDLED
+
+
+def get_conditional_attrnames(body):
+    """
+    Gets attrnames within a list of nodes
+    """
+    sub_visitor = TopLevelVisitor()
+    for node in body:
+        # Check the attributes defined on this branch
+        sub_visitor.visit(node)
+    return sub_visitor.attrnames
 
 
 if __name__ == '__main__':

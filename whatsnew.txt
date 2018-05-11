@@ -2,6 +2,9 @@ version: 0.0.2
 ---------------
 * Changed attribute from `__SUBMODULES__` to `__submodules__`. The former is
   still accepted.
+* Can now handle attributes defined in if-else and try-except statements as long as they are
+  defined on all non-rejecting paths. (Note: a path is rejecting if it is
+  unconditionally false or it unconditionally raises an exception)
 
 version: 0.0.1
 ---------------
