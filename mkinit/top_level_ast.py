@@ -181,7 +181,10 @@ class TopLevelVisitor(ast.NodeVisitor):
         if has_unconditional:
             # We can only gaurentee that something will exist if there is at
             # least one path that must be taken
-            common = ub.oset.intersection(*required) if required else ub.oset()
+            if len(required) == 1:
+                common = required[0]
+            else:
+                common = ub.oset.intersection(*required) if required else ub.oset()
             self._register(common)
 
     def visit_Try(self, node):
