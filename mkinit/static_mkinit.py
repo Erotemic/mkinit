@@ -133,11 +133,12 @@ def _find_local_submodules(pkgpath):
 
     try:
         # Hack to grab the root package
-        a, b = static.split_modpath(pkgpath)
+        a, b = static.split_modpath(pkgpath, check=False)
         root_pkgpath = join(a, b.replace('\\', '/').split('/')[0])
     except ValueError:
         # Assume that the path is the root package if split_modpath fails
         root_pkgpath = pkgpath
+        print('!! root_pkgpath = {!r}'.format(root_pkgpath))
 
     for sub_modpath in static.package_modpaths(pkgpath, with_pkg=True,
                                                recursive=False, check=False):

@@ -1,7 +1,7 @@
 def main():
     from mkinit import static_mkinit
     from xdoctest import utils
-    from os.path import exists, join, isdir
+    # from os.path import exists, join, isdir
     import os
     import six
     import argparse
@@ -11,14 +11,14 @@ def main():
         ''')
 
     parser = argparse.ArgumentParser(prog='python -m xdoctest', description=description)
-    parser.add_argument('modname', help='what files to run')
+    parser.add_argument('modname_or_path', nargs='?', help='what files to run', default='.')
     parser.add_argument('--dry', action='store_true', default=False)
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
 
     # modpath_or_name = sys.argv[1]
     print('ns = {!r}'.format(ns))
-    modname = ns['modname']
+    modname_or_path = ns['modname_or_path']
 
     def touch(fpath):
         if six.PY2:  # nocover
@@ -30,10 +30,10 @@ def main():
                 os.utime(f.fileno() if os.utime in os.supports_fd else fpath)
 
     # Hack in the ability to handle the case where __init__ does not exist yet
-    if isdir(modname) and not exists(join(modname, '__init__.py')):
-        touch(join(modname, '__init__.py'))
+    # if isdir(modname_or_path) and not exists(join(modname_or_path, '__init__.py')):
+    #     touch(join(modname_or_path, '__init__.py'))
 
-    static_mkinit.autogen_init(modname, dry=ns['dry'])
+    static_mkinit.autogen_init(modname_or_path, dry=ns['dry'])
 
 if __name__ == '__main__':
     main()
