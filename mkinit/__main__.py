@@ -10,8 +10,8 @@ def main():
         discover and run doctests within a python package
         ''')
 
-    parser = argparse.ArgumentParser(prog='python -m xdoctest', description=description)
-    parser.add_argument('modname_or_path', nargs='?', help='what files to run', default='.')
+    parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
+    parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
     parser.add_argument('--dry', action='store_true', default=False)
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
