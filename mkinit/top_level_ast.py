@@ -208,7 +208,10 @@ class TopLevelVisitor(ast.NodeVisitor):
                 handler_attrs = get_conditional_attrnames(handler.body)
                 required.append(handler_attrs)
 
-        common = ub.oset.intersection(body_attrs, *required)
+        if len(required) == 0:
+            common = body_attrs
+        else:
+            common = ub.oset.intersection(body_attrs, *required)
         self._register(common)
 
     # for python2
