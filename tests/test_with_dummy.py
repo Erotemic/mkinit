@@ -101,7 +101,7 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module'):
 
         # ------------------------
         # This is static, so maybe another_val exists as a global
-        if sys.maxint == good_attr_07:
+        if sys.version_info.major == good_attr_07:
             good_attr_08 = None
             bad_attr_uncommon5_1 = None
             bad_attr_uncommon5_0 = None
@@ -113,9 +113,9 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module'):
             bad_attr_uncommon5_0 = None
 
         # ------------------------
-        flag1 = sys.maxint < 10
-        flag2 = sys.maxint > 10
-        flag3 = sys.maxint > 10
+        flag1 = sys.version_info.major < 10
+        flag2 = sys.version_info.major > 10
+        flag3 = sys.version_info.major > 10
 
         if flag1:
             bad_attr_num6 = 1
