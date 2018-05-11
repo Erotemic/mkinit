@@ -130,10 +130,19 @@ def _find_local_submodules(pkgpath):
         raise Exception('cannot import {!r}'.format(pkgpath))
     # TODO:
     # DOES THIS NEED A REWRITE TO HANDLE THE CASE WHEN __init__ does not exist?
+
+    try:
+        # Hack to grab the root package
+        a, b = static.split_modpath(pkgpath)
+        root_pkgpath = join(a, b.replace('\\', '/').split('/')[0])
+    except ValueError:
+        # Assume that the path is the root package if split_modpath fails
+        root_pkgpath = pkgpath
+
     for sub_modpath in static.package_modpaths(pkgpath, with_pkg=True,
                                                recursive=False, check=False):
         sub_modname = static.modpath_to_modname(sub_modpath, check=False,
-                                                relativeto=pkgpath)
+                                                relativeto=root_pkgpath)
         rel_modname = sub_modname[len(pkgname) + 1:]
         if not rel_modname or rel_modname.startswith('_'):
             # Skip private modules

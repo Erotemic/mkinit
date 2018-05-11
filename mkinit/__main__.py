@@ -12,6 +12,7 @@ def main():
 
     parser = argparse.ArgumentParser(prog='python -m xdoctest', description=description)
     parser.add_argument('modname', help='what files to run')
+    parser.add_argument('--dry', action='store_true', default=False)
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
 
@@ -32,7 +33,7 @@ def main():
     if isdir(modname) and not exists(join(modname, '__init__.py')):
         touch(join(modname, '__init__.py'))
 
-    static_mkinit.autogen_init(modname)
+    static_mkinit.autogen_init(modname, dry=ns['dry'])
 
 if __name__ == '__main__':
     main()
