@@ -13,6 +13,7 @@ def main():
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
     parser.add_argument('--dry', action='store_true', default=False)
+    parser.add_argument('--noattrs', action='store_true', default=False)
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
 
@@ -33,7 +34,9 @@ def main():
     # if isdir(modname_or_path) and not exists(join(modname_or_path, '__init__.py')):
     #     touch(join(modname_or_path, '__init__.py'))
 
-    static_mkinit.autogen_init(modname_or_path, dry=ns['dry'])
+    static_mkinit.autogen_init(modname_or_path,
+                               attrs=not ns['noattrs'],
+                               dry=ns['dry'])
 
 if __name__ == '__main__':
     main()
