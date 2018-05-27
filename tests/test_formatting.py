@@ -78,8 +78,4 @@ def test_implicit_stacked_insert_points():
         clobbered2 = True
         ''').split('\n')
     start, end, indent = _find_insert_points(lines)
-    assert (start, end, indent) == (2, 3, '')
-
-    lines = ['__version__ = "0.0.1"']
-    start, end, indent = _find_insert_points(lines)
-    assert (start, end, indent) == (1, 1, '')
+    assert (start, end, indent) == (4, 5, '')
