@@ -5,8 +5,11 @@ version: 0.0.3
   by making light use of xdoctest's PS1 line parser.
 * An __all__ variable is now defined by default.
 * Formatting is now controlled by an options dict
+* Removed attrs kwarg in static_init
 * Added command line arg `--nomods` to disable generating module imports.
+* Added command line arg `--noall` to disable generating of the all variable.
 * Added command line arg `--relative` to generate relative instead of absolute imports
+* Added command line arg `--ignore_all` to ignore __all__ when parsing.
 
 
 version: 0.0.2

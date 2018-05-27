@@ -157,6 +157,15 @@ from ubelt.util_import import (import_module_from_name,
                                modpath_to_modname, split_modpath,)
 from ubelt.orderedset import (OrderedSet, oset,)
 from ubelt.progiter import (ProgIter,)
+__all__ = ['util_arg', 'util_cmd', 'util_dict', 'util_links', 'util_hash',
+           'util_import', 'orderedset', 'progiter', 'argflag', 'argval', 'cmd',
+           'AutoDict', 'AutoOrderedDict', 'ddict', 'dict_hist', 'dict_subset',
+           'dict_take', 'dict_union', 'dzip', 'find_duplicates', 'group_items',
+           'invert_dict', 'map_keys', 'map_vals', 'odict', 'symlink',
+           'hash_data', 'hash_file', 'import_module_from_name',
+           'import_module_from_path', 'modname_to_modpath',
+           'modpath_to_modname', 'split_modpath', 'OrderedSet', 'oset',
+           'ProgIter']
 # </AUTOGEN_INIT>
 ```
 
@@ -237,3 +246,7 @@ following:
   tool will create one.
 * By default we ignore attributes that are marked as non-public by a leading
   underscore
+
+## TODO:
+
+- [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.

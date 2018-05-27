@@ -7,7 +7,7 @@ from os.path import join, exists
 import textwrap
 
 
-def ensure_options(given_options=None):
+def _ensure_options(given_options=None):
     """
     Ensures dict contains all formatting options.
 
@@ -247,7 +247,7 @@ def _initstr(modname, imports, from_imports, options=None):
                    'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
                    'y', 'z']
     """
-    options = ensure_options(options)
+    options = _ensure_options(options)
 
     if options['relative']:
         modname = '.'
@@ -309,8 +309,8 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
     Example:
         >>> from_imports = [
         ...     ('foo', list(map(chr, range(97, 123)))),
-        ...     ('a_longer_package', list(map(chr, range(65, 91)))),
         ...     ('bar', []),
+        ...     ('a_longer_package', list(map(chr, range(65, 91)))),
         ... ]
         >>> from_str = _make_fromimport_str(from_imports, indent=' ' * 8)
         >>> print(from_str)
@@ -324,8 +324,6 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
         rootmodname = ''
     def _pack_fromimport(tup):
         name, fromlist = tup[0], tup[1]
-        print('name = {!r}'.format(name))
-        print('fromlist = {!r}'.format(fromlist))
         if len(fromlist) > 0:
             lhs_text = indent + 'from {rootmodname}.{name} import ('.format(
                 rootmodname=rootmodname, name=name)
@@ -333,9 +331,10 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
             packstr = _packed_rhs_text(lhs_text, rhs_text)
         else:
             packstr = ''
-        print('packstr = {!r}'.format(packstr))
         return packstr
-    from_str = '\n'.join(map(_pack_fromimport, from_imports))
+
+    parts = [_pack_fromimport(t) for t in from_imports]
+    from_str = '\n'.join([p for p in parts if p])
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)
     return from_str
