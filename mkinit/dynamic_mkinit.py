@@ -218,6 +218,10 @@ def _find_local_submodule_names(pkgpath):
 
 
 def _autogen_write(modpath, initstr):
+    """
+    TODO:
+        - [ ] : replace with code in mkinit/formatting.py
+    """
     # Get path to init file so we can overwrite it
     init_fpath = join(modpath, '__init__.py')
     print('attempting to update: %r' % init_fpath)

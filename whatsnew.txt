@@ -1,3 +1,14 @@
+version: 0.0.3
+---------------
+* Moved formatting code to its own module 
+* Improved handling of existing code when AUTOGEN_INIT tags are not specified
+  by making light use of xdoctest's PS1 line parser.
+* An __all__ variable is now defined by default.
+* Formatting is now controlled by an options dict
+* Added command line arg `--nomods` to disable generating module imports.
+* Added command line arg `--relative` to generate relative instead of absolute imports
+
+
 version: 0.0.2
 ---------------
 * Changed attribute from `__SUBMODULES__` to `__submodules__`. The former is

@@ -13,7 +13,12 @@ def main():
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
     parser.add_argument('--dry', action='store_true', default=False)
-    parser.add_argument('--noattrs', action='store_true', default=False)
+    parser.add_argument('--noattrs', action='store_true', default=False,
+                        help='Do not export module attributes')
+    parser.add_argument('--nomods', action='store_true', default=False,
+                        help='Do not export modules')
+    parser.add_argument('--relative', action='store_true', default=False,
+                        help='Use relative . imports instead of <modname>')
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
 
@@ -34,9 +39,12 @@ def main():
     # if isdir(modname_or_path) and not exists(join(modname_or_path, '__init__.py')):
     #     touch(join(modname_or_path, '__init__.py'))
 
-    static_mkinit.autogen_init(modname_or_path,
-                               attrs=not ns['noattrs'],
-                               dry=ns['dry'])
+    options = {
+        'attrs': not ns['noattrs'],
+        'mods': not ns['nomods'],
+        'relative': ns['relative'],
+    }
+    static_mkinit.autogen_init(modname_or_path, options=options, dry=ns['dry'])
 
 if __name__ == '__main__':
     main()
