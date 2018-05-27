@@ -13,12 +13,20 @@ def main():
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
     parser.add_argument('--dry', action='store_true', default=False)
+
     parser.add_argument('--noattrs', action='store_true', default=False,
-                        help='Do not export module attributes')
+                        help='Do not generate attribute from imports')
     parser.add_argument('--nomods', action='store_true', default=False,
-                        help='Do not export modules')
+                        help='Do not generate modules imports')
+    parser.add_argument('--noall', action='store_true', default=False,
+                        help='Do not generate an __all__ variable')
+
     parser.add_argument('--relative', action='store_true', default=False,
                         help='Use relative . imports instead of <modname>')
+
+    parser.add_argument('--ignore_all', action='store_true', default=False,
+                        help='Ignores __all__ variables when parsing')
+
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
 
@@ -39,12 +47,17 @@ def main():
     # if isdir(modname_or_path) and not exists(join(modname_or_path, '__init__.py')):
     #     touch(join(modname_or_path, '__init__.py'))
 
+    use_all = not ns['ignore_all']
+
+    # Formatting options
     options = {
-        'attrs': not ns['noattrs'],
-        'mods': not ns['nomods'],
+        'with_attrs': not ns['noattrs'],
+        'with_mods': not ns['nomods'],
+        'with_all': not ns['noall'],
         'relative': ns['relative'],
     }
-    static_mkinit.autogen_init(modname_or_path, options=options, dry=ns['dry'])
+    static_mkinit.autogen_init(modname_or_path, use_all=use_all,
+                               options=options, dry=ns['dry'])
 
 if __name__ == '__main__':
     main()
