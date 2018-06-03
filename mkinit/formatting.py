@@ -209,7 +209,10 @@ def _find_insert_points(lines):
 
 
 def _indent(text, indent='    '):
-    return indent + text.replace('\n', '\n' + indent)
+    new_text = indent + text.replace('\n', '\n' + indent)
+    # remove whitespace on blank lines
+    new_text = '\n'.join([line.rstrip() for line in new_text.split('\n')])
+    return new_text
 
 
 def _initstr(modname, imports, from_imports, options=None):
