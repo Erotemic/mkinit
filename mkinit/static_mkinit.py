@@ -11,6 +11,12 @@ from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
 
 
+__all__ = [
+    'autogen_init',
+    'static_init',
+]
+
+
 def autogen_init(modpath_or_name, imports=None, use_all=True,
                  options=None, dry=False):  # nocover
     """

@@ -5,6 +5,10 @@ import ast
 import six
 import ubelt as ub
 
+__all__ = [
+    'TopLevelVisitor',
+]
+
 
 _UNHANDLED = None
 

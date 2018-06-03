@@ -1,3 +1,10 @@
+version: 0.0.4
+---------------
+* Removed clutter from module level API
+* generated __all__ is now sorted 
+* generated __all__ is now separated from generated imports by a space
+
+
 version: 0.0.3
 ---------------
 * Moved formatting code to its own module 

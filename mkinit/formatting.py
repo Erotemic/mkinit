@@ -222,6 +222,9 @@ def _initstr(modname, imports, from_imports, options=None):
     Args:
         options (dict): customize output
 
+    CommandLine:
+        python -m mkinit.formatting _initstr
+
     Example:
         >>> modname = 'foo'
         >>> imports = ['bar', 'baz']
@@ -230,7 +233,9 @@ def _initstr(modname, imports, from_imports, options=None):
         >>> print(initstr)
         from foo import bar
         from foo import baz
+        <BLANKLINE>
         from foo.bar import (func1, func2,)
+        <BLANKLINE>
         __all__ = ['bar', 'baz', 'func1', 'func2']
 
     Example:
@@ -241,9 +246,11 @@ def _initstr(modname, imports, from_imports, options=None):
         >>> print(initstr)
         from foo import bar
         from foo import baz
+        <BLANKLINE>
         from foo.bar import (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r, s,
                              t, u, v, w, x, y, z,)
-        __all__ = ['bar', 'baz', 'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
+        <BLANKLINE>
+        __all__ = ['a', 'b', 'bar', 'baz', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
                    'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
                    'y', 'z']
     """
@@ -257,21 +264,30 @@ def _initstr(modname, imports, from_imports, options=None):
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())
 
+    def append_part(new_part):
+        """ appends a new part if it is nonempty """
+        if new_part:
+            if parts:
+                # separate from previous parts with a newline
+                parts.append('')
+            parts.append(new_part)
+
     if options.get('with_mods', True):
         all_exports.extend(imports)
-        parts.append(_make_imports_str(imports, modname))
+        append_part(_make_imports_str(imports, modname))
 
     if options.get('with_attrs', True):
         all_exports.extend([n for m, sub in from_imports for n in sub])
-        parts.append(_make_fromimport_str(from_imports, modname))
+        attr_part = _make_fromimport_str(from_imports, modname)
+        append_part(attr_part)
 
     if options.get('with_all', True):
-        exports_repr = ["'{}'".format(e) for e in all_exports]
+        exports_repr = ["'{}'".format(e) for e in sorted(all_exports)]
         rhs_body = ', '.join(exports_repr)
         packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
-        parts.append(packed)
+        append_part(packed)
 
-    initstr = '\n'.join([p for p in parts if len(p) > 0])
+    initstr = '\n'.join([p for p in parts])
     return initstr
 
 
@@ -338,3 +354,11 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)
     return from_str
+
+if __name__ == '__main__':
+    """
+    CommandLine:
+        python -m mkinit.formatting all
+    """
+    import xdoctest
+    xdoctest.doctest_module(__file__)
