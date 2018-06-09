@@ -3,7 +3,8 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ast
 import six
-import ubelt as ub
+# from ubelt.orderedset import OrderedSet as oset
+from ordered_set import OrderedSet as oset
 
 __all__ = [
     'TopLevelVisitor',
@@ -82,11 +83,11 @@ class TopLevelVisitor(ast.NodeVisitor):
     """
     def __init__(self):
         super(TopLevelVisitor, self).__init__()
-        self.attrnames = ub.oset()
-        self.removed = ub.oset()  # keep track of which variables were deleted
+        self.attrnames = oset()
+        self.removed = oset()  # keep track of which variables were deleted
 
     def _register(self, name):
-        if isinstance(name, (list, tuple, ub.oset)):
+        if isinstance(name, (list, tuple, oset)):
             for n in name:
                 self._register(n)
         else:
@@ -186,12 +187,13 @@ class TopLevelVisitor(ast.NodeVisitor):
             # We can only gaurentee that something will exist if there is at
             # least one path that must be taken
             if len(required) == 0:
-                common = ub.oset()
+                common = oset()
             elif len(required) == 1:
                 common = required[0]
             else:
-                common = ub.oset.intersection(*required)
-            self._register(common)
+                # common = oset.intersection(*required)
+                common = set.intersection(*map(set, required))
+            self._register(sorted(common))
 
     def visit_Try(self, node):
         """
@@ -202,7 +204,8 @@ class TopLevelVisitor(ast.NodeVisitor):
         body_attrs = get_conditional_attrnames(node.body)
 
         orelse_attrs = get_conditional_attrnames(node.orelse)
-        body_attrs.extend(orelse_attrs)
+        # body_attrs.extend(orelse_attrs)
+        body_attrs.update(orelse_attrs)
 
         # Require that attributes are defined in all non-error branches
         required = []
@@ -215,8 +218,9 @@ class TopLevelVisitor(ast.NodeVisitor):
         if len(required) == 0:
             common = body_attrs
         else:
-            common = ub.oset.intersection(body_attrs, *required)
-        self._register(common)
+            # common = oset.intersection(body_attrs, *required)
+            common = set.intersection(set(body_attrs), *map(set, required))
+        self._register(sorted(common))
 
     # for python2
     visit_TryExcept = visit_Try
