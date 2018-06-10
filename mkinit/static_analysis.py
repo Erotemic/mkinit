@@ -275,7 +275,7 @@ def split_modpath(modpath, check=True):
 
     Example:
         >>> from mkinit import static_analysis
-        >>> modpath = static_analysis.__file__
+        >>> modpath = abspath(static_analysis.__file__)
         >>> modpath = modpath.replace('.pyc', '.py')
         >>> dpath, rel_modpath = split_modpath(modpath)
         >>> assert join(dpath, rel_modpath) == modpath, (
