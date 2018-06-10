@@ -487,6 +487,162 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
                     return modpath
 
 
+def is_balanced_statement(lines):
+    """
+    Checks if the lines have balanced parens, brakets, curlies and strings
+
+    Args:
+        lines (list): list of strings
+
+    Returns:
+        bool: False if the statement is not balanced
+
+    Doctest:
+        >>> assert is_balanced_statement(['print(foobar)'])
+        >>> assert is_balanced_statement(['foo = bar']) is True
+        >>> assert is_balanced_statement(['foo = (']) is False
+        >>> assert is_balanced_statement(['foo = (', "')(')"]) is True
+        >>> assert is_balanced_statement(
+        ...     ['foo = (', "'''", ")]'''", ')']) is True
+        >>> #assert is_balanced_statement(['foo = ']) is False
+        >>> #assert is_balanced_statement(['== ']) is False
+
+    """
+    from six.moves import cStringIO as StringIO
+    import tokenize
+    block = '\n'.join(lines)
+    if six.PY2:
+        block = block.encode('utf8')
+    stream = StringIO()
+    stream.write(block)
+    stream.seek(0)
+    try:
+        for t in tokenize.generate_tokens(stream.readline):
+            pass
+    except tokenize.TokenError as ex:
+        message = ex.args[0]
+        if message.startswith('EOF in multi-line'):
+            return False
+        raise
+    else:
+        # Note: trying to use ast.parse(block) will not work
+        # here because it breaks in try, except, else
+        return True
+
+
+def _locate_ps1_linenos(source_lines):
+    """
+    Determines which lines in the source begin a "logical block" of code.
+
+    Notes:
+        implementation taken from xdoctest.parser
+
+    Args:
+        source_lines (list): lines belonging only to the doctest src
+            these will be unindented, prefixed, and without any want.
+
+    Returns:
+        (list, bool): a list of indices indicating which lines
+           are considered "PS1" and a flag indicating if the final line
+           should be considered for a got/want assertion.
+
+    Example:
+        >>> source_lines = ['>>> def foo():', '>>>     return 0', '>>> 3']
+        >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
+        >>> assert linenos == [0, 2]
+        >>> assert eval_final is True
+
+    Example:
+        >>> source_lines = ['>>> x = [1, 2, ', '>>> 3, 4]', '>>> print(len(x))']
+        >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
+        >>> assert linenos == [0, 2]
+        >>> assert eval_final is True
+    """
+    import ast
+    import sys
+    # print('source_lines = {!r}'.format(source_lines))
+    # Strip indentation (and PS1 / PS2 from source)
+    exec_source_lines = [p[4:] for p in source_lines]
+
+    # Hack to make comments appear like executable statements
+    # note, this hack never leaves this function because we only are
+    # returning line numbers.
+    exec_source_lines = ['_._  = None' if p.startswith('#') else p
+                         for p in exec_source_lines]
+
+    source_block = '\n'.join(exec_source_lines)
+    try:
+        pt = ast.parse(source_block, filename='<source_block>')
+    except SyntaxError as syn_ex:
+        # Assign missing information to the syntax error.
+        if syn_ex.text is None:
+            if syn_ex.lineno is not None:
+                # Grab the line where the error occurs
+                # (why is this not populated in SyntaxError by default?)
+                # (because filename does not point to a valid loc)
+                line = source_block.split('\n')[syn_ex.lineno - 1]
+                syn_ex.text = line  + '\n'
+        raise syn_ex
+
+    statement_nodes = pt.body
+    ps1_linenos = [node.lineno - 1 for node in statement_nodes]
+    NEED_16806_WORKAROUND = True
+    if NEED_16806_WORKAROUND:  # pragma: nobranch
+        ps1_linenos = _workaround_16806(ps1_linenos, exec_source_lines)
+    # Respect any line explicitly defined as PS2 (via its prefix)
+    ps2_linenos = {
+        x for x, p in enumerate(source_lines) if p[:4] != '>>> '
+    }
+    ps1_linenos = sorted(ps1_linenos.difference(ps2_linenos))
+
+    if len(statement_nodes) == 0:
+        eval_final = False
+    else:
+        # Is the last statement evaluatable?
+        if sys.version_info.major == 2:  # nocover
+            eval_final = isinstance(statement_nodes[-1], (
+                ast.Expr, ast.Print))
+        else:
+            # This should just be an Expr in python3
+            # (todo: ensure this is true)
+            eval_final = isinstance(statement_nodes[-1], ast.Expr)
+
+    return ps1_linenos, eval_final
+
+
+def _workaround_16806(ps1_linenos, exec_source_lines):
+    """
+    workaround for python issue 16806 (https://bugs.python.org/issue16806)
+
+    Issue causes lineno for multiline strings to give the line they end on,
+    not the line they start on.  A patch for this issue exists
+    `https://github.com/python/cpython/pull/1800`
+
+    Notes:
+        Starting from the end look at consecutive pairs of indices to
+        inspect the statment it corresponds to.  (the first statment goes
+        from ps1_linenos[-1] to the end of the line list.
+
+        Implementation taken from xdoctest.parser
+    """
+    new_ps1_lines = []
+    b = len(exec_source_lines)
+    for a in ps1_linenos[::-1]:
+        # the position of `b` is correct, but `a` may be wrong
+        # is_balanced_statement will be False iff `a` is wrong.
+        while not is_balanced_statement(exec_source_lines[a:b]):
+            # shift `a` down until it becomes correct
+            a -= 1
+        # push the new correct value back into the list
+        new_ps1_lines.append(a)
+        # set the end position of the next string to be `a` ,
+        # note, because this `a` is correct, the next `b` is
+        # must also be correct.
+        b = a
+    ps1_linenos = set(new_ps1_lines)
+    return ps1_linenos
+
+
 if __name__ == '__main__':
     """
     CommandLine:

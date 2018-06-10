@@ -1,14 +1,14 @@
 def main():
     from mkinit import static_mkinit
-    from xdoctest import utils
     # from os.path import exists, join, isdir
+    import textwrap
     import os
     import six
     import argparse
-    description = utils.codeblock(
+    description = textwrap.dedent(
         '''
         discover and run doctests within a python package
-        ''')
+        ''').strip('\n')
 
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
