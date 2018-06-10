@@ -278,8 +278,8 @@ def split_modpath(modpath, check=True):
         >>> modpath = static_analysis.__file__
         >>> modpath = modpath.replace('.pyc', '.py')
         >>> dpath, rel_modpath = split_modpath(modpath)
-        >>> assert join(dpath, rel_modpath) == modpath
-        >>> assert rel_modpath == join('mkinit', 'static_analysis.py')
+        >>> assert join(dpath, rel_modpath) == modpath, repr(join(dpath, rel_modpath))
+        >>> assert rel_modpath == join('mkinit', 'static_analysis.py'), repr(rel_modpath)
     """
     modpath_ = abspath(expanduser(modpath))
     if check:
