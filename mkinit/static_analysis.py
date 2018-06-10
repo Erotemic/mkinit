@@ -68,7 +68,6 @@ def parse_static_value(key, source=None, fpath=None):
         fpath (str): filepath to read if source is not specified
 
     Example:
-        >>> from xdoctest.static_analysis import parse_static_value
         >>> key = 'foo'
         >>> source = 'foo = 123'
         >>> assert parse_static_value(key, source=source) == 123
@@ -157,7 +156,7 @@ def normalize_modpath(modpath, hide_init=True, hide_main=False):
            ignore __main__.py.
 
     Example:
-        >>> import xdoctest.static_analysis as static
+        >>> import mkinit.static_analysis as static
         >>> modpath = static.__file__
         >>> assert static.normalize_modpath(modpath) == modpath
         >>> dpath = dirname(modpath)
@@ -212,14 +211,14 @@ def package_modpaths(pkgpath, with_pkg=False, with_mod=True, followlinks=True,
         http://stackoverflow.com/questions/1707709/list-modules-in-py-package
 
     Example:
-        >>> from xdoctest.static_analysis import *
-        >>> pkgpath = modname_to_modpath('xdoctest')
+        >>> from mkinit.static_analysis import *
+        >>> pkgpath = modname_to_modpath('mkinit')
         >>> paths = list(package_modpaths(pkgpath))
         >>> print('\n'.join(paths))
         >>> names = list(map(modpath_to_modname, paths))
-        >>> assert 'xdoctest.core' in names
-        >>> assert 'xdoctest.__main__' in names
-        >>> assert 'xdoctest' not in names
+        >>> assert 'mkinit.static_mkinit' in names
+        >>> assert 'mkinit.__main__' in names
+        >>> assert 'mkinit' not in names
         >>> print('\n'.join(names))
     """
     if isfile(pkgpath):
@@ -275,12 +274,12 @@ def split_modpath(modpath, check=True):
         ValueError: if modpath does not exist or is not a package
 
     Example:
-        >>> from xdoctest import static_analysis
+        >>> from mkinit import static_analysis
         >>> modpath = static_analysis.__file__
         >>> modpath = modpath.replace('.pyc', '.py')
         >>> dpath, rel_modpath = split_modpath(modpath)
         >>> assert join(dpath, rel_modpath) == modpath
-        >>> assert rel_modpath == join('xdoctest', 'static_analysis.py')
+        >>> assert rel_modpath == join('mkinit', 'static_analysis.py')
     """
     modpath_ = abspath(expanduser(modpath))
     if check:
@@ -331,16 +330,16 @@ def modpath_to_modname(modpath, hide_init=True, hide_main=False, check=True,
         ValueError: if check is True and the path does not exist
 
     Example:
-        >>> from xdoctest import static_analysis
+        >>> from mkinit import static_analysis
         >>> modpath = static_analysis.__file__
         >>> modpath = modpath.replace('.pyc', '.py')
         >>> modname = modpath_to_modname(modpath)
-        >>> assert modname == 'xdoctest.static_analysis'
+        >>> assert modname == 'mkinit.static_analysis'
 
     Example:
-        >>> import xdoctest
-        >>> assert modpath_to_modname(xdoctest.__file__) == 'xdoctest'
-        >>> assert modpath_to_modname(dirname(xdoctest.__file__)) == 'xdoctest'
+        >>> import mkinit
+        >>> assert modpath_to_modname(mkinit.__file__) == 'mkinit'
+        >>> assert modpath_to_modname(dirname(mkinit.__file__)) == 'mkinit'
 
     Example:
         >>> modpath = modname_to_modpath('_ctypes')
@@ -389,14 +388,13 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
         str: modpath - path to the module, or None if it doesn't exist
 
     CommandLine:
-        python -m xdoctest.static_analysis modname_to_modpath:0
-        pytest  /home/joncrall/code/xdoctest/xdoctest/static_analysis.py::modname_to_modpath:0
+        python -m mkinit.static_analysis modname_to_modpath:0
 
     Example:
-        >>> modname = 'xdoctest.__main__'
+        >>> modname = 'mkinit.__main__'
         >>> modpath = modname_to_modpath(modname, hide_main=False)
         >>> assert modpath.endswith('__main__.py')
-        >>> modname = 'xdoctest'
+        >>> modname = 'mkinit'
         >>> modpath = modname_to_modpath(modname, hide_init=False)
         >>> assert modpath.endswith('__init__.py')
         >>> modpath = basename(modname_to_modpath('_ctypes'))
@@ -418,7 +416,7 @@ def _pkgutil_modname_to_modpath(modname):  # nocover
 
     Example:
         >>> # xdoctest: +SKIP
-        >>> modname = 'xdoctest.static_analysis'
+        >>> modname = 'mkinit.static_analysis'
         >>> _pkgutil_modname_to_modpath(modname)
         ...static_analysis.py
         >>> _pkgutil_modname_to_modpath('_ctypes')
@@ -449,23 +447,23 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         This is much slower than the pkgutil mechanisms.
 
     CommandLine:
-        python -m xdoctest.static_analysis _syspath_modname_to_modpath
+        python -m mkinit.static_analysis _syspath_modname_to_modpath
 
     Example:
-        >>> print(_syspath_modname_to_modpath('xdoctest.static_analysis'))
+        >>> print(_syspath_modname_to_modpath('mkinit.static_analysis'))
         ...static_analysis.py
-        >>> print(_syspath_modname_to_modpath('xdoctest'))
-        ...xdoctest
+        >>> print(_syspath_modname_to_modpath('mkinit'))
+        ...mkinit
         >>> print(_syspath_modname_to_modpath('_ctypes'))
         ..._ctypes...
-        >>> assert _syspath_modname_to_modpath('xdoctest', sys_path=[]) is None
-        >>> assert _syspath_modname_to_modpath('xdoctest.static_analysis', sys_path=[]) is None
+        >>> assert _syspath_modname_to_modpath('mkinit', sys_path=[]) is None
+        >>> assert _syspath_modname_to_modpath('mkinit.static_analysis', sys_path=[]) is None
         >>> assert _syspath_modname_to_modpath('_ctypes', sys_path=[]) is None
         >>> assert _syspath_modname_to_modpath('this', sys_path=[]) is None
 
     Example:
         >>> # test what happens when the module is not visible in the path
-        >>> modname = 'xdoctest.static_analysis'
+        >>> modname = 'mkinit.static_analysis'
         >>> modpath = _syspath_modname_to_modpath(modname)
         >>> exclude = [split_modpath(modpath)[0]]
         >>> found = _syspath_modname_to_modpath(modname, exclude=exclude)
@@ -538,11 +536,11 @@ def is_modname_importable(modname, sys_path=None, exclude=None):
         bool: True if the module could be imported
 
     Example:
-        >>> is_modname_importable('xdoctest')
+        >>> is_modname_importable('mkinit')
         True
         >>> is_modname_importable('not_a_real_module')
         False
-        >>> is_modname_importable('xdoctest', sys_path=[])
+        >>> is_modname_importable('mkinit', sys_path=[])
         False
     """
     modpath = _syspath_modname_to_modpath(modname, sys_path=sys_path,
