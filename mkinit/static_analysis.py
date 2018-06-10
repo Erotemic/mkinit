@@ -7,34 +7,21 @@ import os
 import sys
 import ast
 import six
-import tokenize
 import sysconfig
-from six.moves import cStringIO as StringIO
 from collections import OrderedDict
 from os.path import (join, exists, expanduser, abspath, split, splitext,
                      isfile, dirname, basename, isdir, realpath, relpath)
 
 
-class CallDefNode(object):
-    def __init__(self, callname, lineno, docstr, doclineno, doclineno_end,
-                 args=None):
-        self.callname = callname
-        self.lineno = lineno
-        self.docstr = docstr
-        self.doclineno = doclineno
-        self.doclineno_end = doclineno_end
-        self.lineno_end = None
-        self.args = args
-
-    # def __str__(self):
-    #     return '{}[{}:{}][{}]'.format(
-    #         self.callname, self.lineno, self.lineno_end,
-    #         self.doclineno)
-
-
 def _parse_static_node_value(node):
     """
-    Extract a constant value from a node if possible
+    Extract a constant value from an ast node if possible
+
+    Args:
+        node (ast.Node)
+
+    Returns:
+        object: static value of the node
     """
     if isinstance(node, ast.Num):
         value = node.n
@@ -411,30 +398,6 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
     return modpath
 
 
-def _pkgutil_modname_to_modpath(modname):  # nocover
-    """
-    faster version of `_syspath_modname_to_modpath` using builtin python
-    mechanisms, but unfortunately it doesn't play nice with pytest.
-
-    Example:
-        >>> # xdoctest: +SKIP
-        >>> modname = 'mkinit.static_analysis'
-        >>> _pkgutil_modname_to_modpath(modname)
-        ...static_analysis.py
-        >>> _pkgutil_modname_to_modpath('_ctypes')
-        ..._ctypes...
-
-    Ignore:
-        >>> _pkgutil_modname_to_modpath('cv2')
-    """
-    import pkgutil
-    loader = pkgutil.find_loader(modname)
-    if loader is None:
-        raise Exception('No module named {} in the PYTHONPATH'.format(modname))
-    modpath = loader.get_filename().replace('.pyc', '.py')
-    return modpath
-
-
 def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
     """
     syspath version of modname_to_modpath
@@ -522,74 +485,6 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             if isfile(modpath):
                 if _isvalid(modpath, dpath):
                     return modpath
-
-
-def is_modname_importable(modname, sys_path=None, exclude=None):
-    """
-    Determines if a modname is importable based on your current sys.path
-
-    Args:
-        modname (str): name of module to check
-        sys_path (list): if specified overrides `sys.path` (default None)
-        exclude (list): list of directory paths. if specified prevents these
-            directories from being searched.
-
-    Returns:
-        bool: True if the module could be imported
-
-    Example:
-        >>> is_modname_importable('mkinit')
-        True
-        >>> is_modname_importable('not_a_real_module')
-        False
-        >>> is_modname_importable('mkinit', sys_path=[])
-        False
-    """
-    modpath = _syspath_modname_to_modpath(modname, sys_path=sys_path,
-                                          exclude=exclude)
-    flag = bool(modpath is not None)
-    return flag
-
-
-def is_balanced_statement(lines):
-    """
-    Checks if the lines have balanced parens, brakets, curlies and strings
-
-    Args:
-        lines (list): list of strings
-
-    Returns:
-        bool: False if the statement is not balanced
-
-    Doctest:
-        >>> assert is_balanced_statement(['print(foobar)'])
-        >>> assert is_balanced_statement(['foo = bar']) is True
-        >>> assert is_balanced_statement(['foo = (']) is False
-        >>> assert is_balanced_statement(['foo = (', "')(')"]) is True
-        >>> assert is_balanced_statement(
-        ...     ['foo = (', "'''", ")]'''", ')']) is True
-        >>> #assert is_balanced_statement(['foo = ']) is False
-        >>> #assert is_balanced_statement(['== ']) is False
-
-    """
-    block = '\n'.join(lines)
-    if six.PY2:
-        block = block.encode('utf8')
-    stream = StringIO()
-    stream.write(block)
-    stream.seek(0)
-    try:
-        for t in tokenize.generate_tokens(stream.readline):
-            pass
-    except tokenize.TokenError as ex:
-        message = ex.args[0]
-        if message.startswith('EOF in multi-line'):
-            return False
-        raise
-    else:
-        # Note: trying to use ast.parse(block) will not work
-        # here because it breaks in try, except, else
-        return True
 
 
 if __name__ == '__main__':
