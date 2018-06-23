@@ -191,8 +191,8 @@ class TopLevelVisitor(ast.NodeVisitor):
             elif len(required) == 1:
                 common = required[0]
             else:
-                # common = oset.intersection(*required)
-                common = set.intersection(*map(set, required))
+                common = oset.intersection(*required)
+                # common = set.intersection(*map(set, required))
             self._register(sorted(common))
 
     def visit_Try(self, node):
@@ -218,8 +218,8 @@ class TopLevelVisitor(ast.NodeVisitor):
         if len(required) == 0:
             common = body_attrs
         else:
-            # common = oset.intersection(body_attrs, *required)
-            common = set.intersection(set(body_attrs), *map(set, required))
+            common = oset.intersection(body_attrs, *required)
+            # common = set.intersection(set(body_attrs), *map(set, required))
         self._register(sorted(common))
 
     # for python2
