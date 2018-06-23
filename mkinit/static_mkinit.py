@@ -5,8 +5,8 @@ Static version of dynamic_autogen.py
 from __future__ import absolute_import, division, print_function, unicode_literals
 import six
 from os.path import join, exists, abspath
-from xdoctest import static_analysis as static
 from six.moves import builtins
+from mkinit import static_analysis as static
 from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
 

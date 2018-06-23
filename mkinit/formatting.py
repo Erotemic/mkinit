@@ -5,6 +5,7 @@ into the final product.
 from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import join, exists
 import textwrap
+from mkinit import static_analysis as static
 
 
 def _ensure_options(given_options=None):
@@ -92,8 +93,7 @@ def _find_insert_points(lines):
             indentation.
 
     Examples:
-        >>> from xdoctest import utils
-        >>> lines = utils.codeblock(
+        >>> lines = textwrap.dedent(
             '''
             preserved1 = True
             if True:
@@ -101,19 +101,18 @@ def _find_insert_points(lines):
                 clobbered2 = True
                 # </AUTOGEN_INIT>
             preserved3 = True
-            ''').split('\n')
+            ''')strip('\n').split('\n')
         >>> start, end, indent = _find_insert_points(lines)
         >>> print(repr((start, end, indent)))
         (3, 4, '    ')
 
     Examples:
-        >>> from xdoctest import utils
-        >>> lines = utils.codeblock(
+        >>> lines = textwrap.dedent(
             '''
             preserved1 = True
             __version__ = '1.0'
             clobbered2 = True
-            ''').split('\n')
+            ''').strip('\n').split('\n')
         >>> start, end, indent = _find_insert_points(lines)
         >>> print(repr((start, end, indent)))
         (2, 3, '')
@@ -129,11 +128,9 @@ def _find_insert_points(lines):
         # This lets us correctly skip to the end of a multiline expression
         # A better solution might be to use the line-number aware parser
         # to search for AUTOGEN_INIT comments and other relevant structures.
-        from xdoctest.parser import DoctestParser
-        dtparser = DoctestParser()
         source_lines = ['>>> ' + p.rstrip('\n') for p in lines]
         try:
-            ps1_lines, _ = dtparser._locate_ps1_linenos(source_lines)
+            ps1_lines, _ = static._locate_ps1_linenos(source_lines)
             # print('ps1_lines = {!r}'.format(ps1_lines))
         except IndexError:
             assert len(lines) == 0
@@ -357,6 +354,7 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)
     return from_str
+
 
 if __name__ == '__main__':
     """

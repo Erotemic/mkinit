@@ -144,6 +144,7 @@ if __name__ == '__main__':
         description='Create __init__.py files',
         long_description=parse_description(),
         install_requires=install_requires,
+        tests_require=parse_requirements('optional-requirements.txt'),
         entry_points={
             # the console_scripts entry point creates the xdoctest executable
             'console_scripts': [
