@@ -250,3 +250,5 @@ following:
 ## TODO:
 
 - [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.
+- [ ] If an attribute would be defined twice, then don't define it at all.
+  Currently, it is defined, but its value is not well-defined.
