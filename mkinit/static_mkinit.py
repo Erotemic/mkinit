@@ -9,12 +9,16 @@ from six.moves import builtins
 from mkinit import static_analysis as static
 from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
+from mkinit.util import SimpleLog
 
 
 __all__ = [
     'autogen_init',
     'static_init',
 ]
+
+
+logger = SimpleLog()
 
 
 def autogen_init(modpath_or_name, imports=None, use_all=True,
@@ -52,7 +56,9 @@ def autogen_init(modpath_or_name, imports=None, use_all=True,
         >>>                                     dry=True)
         >>> assert 'autogen_init' in new_text
     """
+    logger.debug('modpath_or_name = {!r}'.format(modpath_or_name))
     modpath = _rectify_to_modpath(modpath_or_name)
+    logger.debug('modpath = {!r}'.format(modpath))
     initstr = static_init(modpath, imports=imports,
                           use_all=use_all, options=options)
     init_fpath, new_text = _insert_autogen_text(modpath, initstr)
@@ -173,6 +179,7 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
     """
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = static.modpath_to_modname(modpath, check=False)
+    logger.debug('modname = {!r}'.format(modname))
     if imports is not None:
         if modname is None:
             raise AssertionError('modname is None')

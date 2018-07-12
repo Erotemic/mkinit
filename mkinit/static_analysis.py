@@ -11,6 +11,10 @@ import sysconfig
 from collections import OrderedDict
 from os.path import (join, exists, expanduser, abspath, split, splitext,
                      isfile, dirname, basename, isdir, realpath, relpath)
+from mkinit.util import SimpleLog
+
+
+logger = SimpleLog()
 
 
 def _parse_static_node_value(node):
@@ -335,13 +339,17 @@ def modpath_to_modname(modpath, hide_init=True, hide_main=False, check=True,
         >>> modname = modpath_to_modname(modpath)
         >>> assert modname == '_ctypes'
     """
+    logger.debug('[static.modpath_to_modname] modpath = {!r}'.format(modpath))
     if check:
         if not exists(modpath):
             raise ValueError('modpath={} does not exist'.format(modpath))
+
     modpath_ = abspath(expanduser(modpath))
 
     modpath_ = normalize_modpath(modpath_, hide_init=hide_init,
                                  hide_main=hide_main)
+    logger.debug('[static.modpath_to_modname] * modpath_ = {!r}'.format(modpath_))
+    logger.debug('[static.modpath_to_modname] * relativeto = {!r}'.format(relativeto))
     if relativeto:
         dpath = dirname(abspath(expanduser(relativeto)))
         rel_modpath = relpath(modpath_, dpath)
@@ -353,6 +361,7 @@ def modpath_to_modname(modpath, hide_init=True, hide_main=False, check=True,
         modname, abi_tag = modname.split('.')
     modname = modname.replace('/', '.')
     modname = modname.replace('\\', '.')
+    logger.debug('[static.modpath_to_modname] * modname = {!r}'.format(modname))
     return modname
 
 
