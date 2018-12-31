@@ -1,3 +1,13 @@
+version: 0.1.1
+---------------
+* Can now specify __init__.py file paths instead in addition to parent directory paths
+
+
+version: 0.1.0
+---------------
+* Fixes and version bump
+
+
 version: 0.0.4
 ---------------
 * Removed clutter from module level API

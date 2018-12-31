@@ -4,11 +4,15 @@ Static version of dynamic_autogen.py
 """
 from __future__ import absolute_import, division, print_function, unicode_literals
 import six
-from os.path import join, exists, abspath
 from six.moves import builtins
 from mkinit import static_analysis as static
 from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
+from os.path import abspath
+from os.path import exists
+from os.path import join
+from os.path import basename
+from os.path import dirname
 
 
 __all__ = [
@@ -75,6 +79,8 @@ def _rectify_to_modpath(modpath_or_name):
         modpath = static.modname_to_modpath(modpath_or_name)
         if modpath is None:
             raise ValueError('Invalid module {}'.format(modpath_or_name))
+    if basename(modpath) == '__init__.py':
+        modpath = dirname(modpath)
     return modpath
 
 
@@ -84,37 +90,46 @@ def static_init(modpath_or_name, imports=None, use_all=True, options=None):
     executed with `exec` or directly copied into the __init__.py file.
     """
     modpath = _rectify_to_modpath(modpath_or_name)
+    user_decl = parse_user_declarations(modpath)
     if imports is None:
-        imports = parse_submodule_definition(modpath)
+        imports = user_decl.get('imports', imports)
+
+    extra_all = user_decl.get('extra_all', [])
 
     modname, imports, from_imports = _static_parse_imports(modpath,
                                                            imports=imports,
                                                            use_all=use_all)
 
-    initstr = _initstr(modname, imports, from_imports, options=options)
+    initstr = _initstr(modname, imports, from_imports, extra_all=extra_all,
+                       options=options)
     return initstr
 
 
-def parse_submodule_definition(modpath):
+def parse_user_declarations(modpath):
     """
-    Statically determine the submodules that should be auto-imported
+    Statically determine special file-specific user options and declarations
     """
     # the __init__ file may have a variable describing the correct imports
-    # should imports specify the name of this variable or should it always
-    # be __submodules__?
-    imports = None
+    # should imports specify the name of this variable or should it always be
+    # __submodules__?
+    user_decl = {}
+
     init_fpath = join(modpath, '__init__.py')
     if exists(init_fpath):
         with open(init_fpath, 'r') as file:
             source = file.read()
         try:
-            imports = static.parse_static_value('__submodules__', source)
+            user_decl['imports'] = static.parse_static_value('__submodules__', source)
         except NameError:
             try:
-                imports = static.parse_static_value('__SUBMODULES__', source)
+                user_decl['imports'] = static.parse_static_value('__SUBMODULES__', source)
             except NameError:
                 pass
-    return imports
+        try:
+            user_decl['extra_all'] = static.parse_static_value('__extra_all__', source)
+        except NameError:
+            pass
+    return user_decl
 
 
 def _find_local_submodules(pkgpath):

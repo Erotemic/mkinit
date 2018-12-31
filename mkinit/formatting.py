@@ -212,7 +212,7 @@ def _indent(text, indent='    '):
     return new_text
 
 
-def _initstr(modname, imports, from_imports, options=None):
+def _initstr(modname, imports, from_imports, extra_all=[], options=None):
     """
     Calls the other string makers
 
@@ -259,7 +259,7 @@ def _initstr(modname, imports, from_imports, options=None):
     if options['relative']:
         modname = '.'
 
-    all_exports = []
+    all_exports = list(extra_all)
     parts = []
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())

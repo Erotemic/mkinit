@@ -8,6 +8,9 @@ def main():
     description = textwrap.dedent(
         '''
         discover and run doctests within a python package
+
+        Respects the varaibles:
+            `__submodules__`, `__extra_all__`
         ''').strip('\n')
 
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
