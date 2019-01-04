@@ -3,7 +3,7 @@
 Regenerate Input Command
 mkinit ~/code/mkinit/mkinit
 """
-__version__ = '0.1.1'
+__version__ = '0.1.3'
 
 __submodules__ = [
     'dynamic_mkinit',
