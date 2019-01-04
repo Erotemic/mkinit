@@ -6,6 +6,10 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 from os.path import join, exists
 import textwrap
 from mkinit import static_analysis as static
+import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 def _ensure_options(given_options=None):
@@ -50,7 +54,7 @@ def _insert_autogen_text(modpath, initstr):
 
     # Get path to init file so we can overwrite it
     init_fpath = join(modpath, '__init__.py')
-    print('inserting initstr into: {!r}'.format(init_fpath))
+    logger.debug('inserting initstr into: {!r}'.format(init_fpath))
 
     if exists(init_fpath):
         with open(init_fpath, 'r') as file_:
