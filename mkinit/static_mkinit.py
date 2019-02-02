@@ -203,16 +203,29 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
     logger.debug('Parse static imports: {}'.format(modpath))
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = static.modpath_to_modname(modpath, check=False)
-    if imports is not None:
+    if imports is None:
+        import_paths = dict(_find_local_submodules(modpath))
+        imports = sorted(import_paths.keys())
+    else:
         if modname is None:
             raise AssertionError('modname is None')
+
         import_paths = {
             m: static.modname_to_modpath(modname + '.' + m, hide_init=False)
             for m in imports
         }
-    else:
-        import_paths = dict(_find_local_submodules(modpath))
-        imports = sorted(import_paths.keys())
+        # FIX for relative nested import_paths
+        for m in import_paths.keys():
+            oldval = import_paths[m]
+            if oldval is None:
+                candidates = [
+                    join(modpath, m),
+                    join(modpath, m) + '.py',
+                ]
+                for newval in candidates:
+                    if exists(newval):
+                        import_paths[m] = newval
+                        break
 
     from_imports = []
     for rel_modname in imports:
