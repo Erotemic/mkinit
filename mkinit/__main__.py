@@ -8,7 +8,7 @@ def main():
         discover and run doctests within a python package
 
         Respects the varaibles:
-            `__submodules__`, `__extra_all__`
+            `__submodules__`, `__explicit__`, `__protected__`, `__private__`
         ''').strip('\n')
 
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
