@@ -5,8 +5,8 @@ into the final product.
 from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import join, exists
 import textwrap
-from mkinit import static_analysis as static
 import logging
+from mkinit import static_analysis as static
 
 
 logger = logging.getLogger(__name__)
@@ -105,7 +105,7 @@ def _find_insert_points(lines):
                 clobbered2 = True
                 # </AUTOGEN_INIT>
             preserved3 = True
-            ''')strip('\n').split('\n')
+            ''').strip('\n').split('\n')
         >>> start, end, indent = _find_insert_points(lines)
         >>> print(repr((start, end, indent)))
         (3, 4, '    ')
