@@ -142,11 +142,13 @@ def parse_user_declarations(modpath):
             user_decl['__submodules__'] = static.parse_static_value('__submodules__', source)
         except NameError:
             try:
-                warnings.warn('Use __submodules__, __SUBMODULES__ is depricated',
-                              DeprecationWarning)
                 user_decl['__submodules__'] = static.parse_static_value('__SUBMODULES__', source)
             except NameError:
                 pass
+            else:
+                warnings.warn(
+                    'Use __submodules__, __SUBMODULES__ is depricated',
+                    DeprecationWarning)
 
         try:
             user_decl['extra_all'] = static.parse_static_value('__extra_all__', source)
