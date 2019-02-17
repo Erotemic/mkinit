@@ -1,4 +1,4 @@
-version: 0.1.4
+version: 0.2.0
 ---------------
 * Can now specify __explicit__, __protected__, and __private__.
 * Dry by default specify -w to write
