@@ -151,7 +151,7 @@ def parse_user_declarations(modpath):
                     DeprecationWarning)
 
         try:
-            user_decl['extra_all'] = static.parse_static_value('__extra_all__', source)
+            user_decl['__explicit__'] = static.parse_static_value('__extra_all__', source)
         except NameError:
             pass
 
