@@ -113,14 +113,14 @@ def static_init(modpath_or_name, imports=None, use_all=True, options=None):
         submodules = imports
 
     explicit = user_decl.get('__explicit__', [])
-    protected = user_decl.get('__protected__', [])
     private = user_decl.get('__private__', [])
+    protected = user_decl.get('__protected__', [])
 
     modname, imports, from_imports = _static_parse_imports(
         modpath, submodules=submodules, use_all=use_all)
 
-    initstr = _initstr(modname, imports, from_imports, explicit=explicit,
-                       options=options, protected=protected, private=private,)
+    initstr = _initstr(modname, imports, from_imports, options=options,
+                       explicit=explicit, protected=protected, private=private)
     return initstr
 
 
@@ -161,14 +161,14 @@ def parse_user_declarations(modpath):
             pass
 
         try:
-            # For private submodules, dont import them.
-            user_decl['__private__'] = static.parse_static_value('__private__', source)
+            # Procted items are exposed, but their attributes are not
+            user_decl['__protected__'] = static.parse_static_value('__protected__', source)
         except NameError:
             pass
 
         try:
-            # For protected submodules, only include attrs
-            user_decl['__protected__'] = static.parse_static_value('__protected__', source)
+            # Private items and their attributes are not exposed
+            user_decl['__private__'] = static.parse_static_value('__private__', source)
         except NameError:
             pass
     return user_decl
@@ -213,7 +213,7 @@ def _find_local_submodules(pkgpath):
             yield rel_modname, sub_modpath
 
 
-def _static_parse_imports(modpath, submodules=None, use_all=True, protected=[],
+def _static_parse_imports(modpath, submodules=None, use_all=True, private=[],
                           private=[]):
     """
     Args:

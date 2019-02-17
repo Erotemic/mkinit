@@ -1,3 +1,10 @@
+version: 0.1.4
+---------------
+* Can now specify __explicit__, __protected__, and __private__.
+* Dry by default specify -w to write
+* Reworked CLI
+
+
 version: 0.1.1
 ---------------
 * Can now specify __init__.py file paths instead in addition to parent directory paths

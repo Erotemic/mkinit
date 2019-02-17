@@ -282,15 +282,14 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         append_part(_make_imports_str(imports, modname))
 
     if options.get('with_attrs', True):
-        protected = set(protected)
         private = set(private)
-
-        _pp = protected | private
+        protected = set(protected)
+        _pp = private | protected
 
         _from_imports = list((
             (m, sub) for m, sub in from_imports if m not in _pp))
         explicit_exports.extend([
-            n for m, sub in _from_imports for n in sub
+            n for m, sub in _from_imports for n in sub if n not in private
         ])
         attr_part = _make_fromimport_str(_from_imports, modname)
         append_part(attr_part)
