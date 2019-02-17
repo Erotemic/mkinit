@@ -213,8 +213,7 @@ def _find_local_submodules(pkgpath):
             yield rel_modname, sub_modpath
 
 
-def _static_parse_imports(modpath, submodules=None, use_all=True, private=[],
-                          private=[]):
+def _static_parse_imports(modpath, submodules=None, use_all=True):
     """
     Args:
         modpath (PathLike): base path to a package (with an __init__)
