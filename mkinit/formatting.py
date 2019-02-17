@@ -282,14 +282,33 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         append_part(_make_imports_str(imports, modname))
 
     if options.get('with_attrs', True):
+        from fnmatch import fnmatch
+        # TODO: allow pattern matching here
+        # step1: separate into explicit vs glob-pattern strings
         private = set(private)
-        protected = set(protected)
-        _pp = private | protected
+        private_pats =  {p for p in private if '*' in p}
+        private_set = private - private_pats
 
-        _from_imports = list((
-            (m, sub) for m, sub in from_imports if m not in _pp))
+        protected = set(protected)
+        protected_pats =  {p for p in protected if '*' in p}
+        protected_set = protected - protected_pats
+
+        _pp_pats = protected_pats | private_pats
+        _pp_set = private_set | protected_set
+
+        def _pp_matches(x):
+            return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
+
+        def _private_matches(x):
+            return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
+
+        _from_imports = [
+            (m, sub) for m, sub in from_imports if not _pp_matches(m)
+        ]
+
         explicit_exports.extend([
-            n for m, sub in _from_imports for n in sub if n not in private
+            n for m, sub in _from_imports for n in sub
+            if not _private_matches(n)
         ])
         attr_part = _make_fromimport_str(_from_imports, modname)
         append_part(attr_part)

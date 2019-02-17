@@ -105,13 +105,12 @@ def static_init(modpath_or_name, imports=None, use_all=True, options=None):
     executed with `exec` or directly copied into the __init__.py file.
     """
     modpath = _rectify_to_modpath(modpath_or_name)
+
     user_decl = parse_user_declarations(modpath)
+    if imports is not None:
+        user_decl['__submodules__'] = imports
 
-    if imports is None:
-        submodules = user_decl.get('__submodules__', imports)
-    else:
-        submodules = imports
-
+    submodules = user_decl.get('__submodules__', [])
     explicit = user_decl.get('__explicit__', [])
     private = user_decl.get('__private__', [])
     protected = user_decl.get('__protected__', [])
