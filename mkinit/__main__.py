@@ -13,7 +13,11 @@ def main():
 
     parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
-    parser.add_argument('--dry', action='store_true', default=False)
+
+    parser.add_argument('--dry', dest='_dry_old', action='store_true', default=True)
+
+    parser.add_argument(*('-i', '-w', '--write', '--inplace'), dest='dry', action='store_false', default=True)
+    # parser.add_argument('-i', dest='dry', action='store_false', default=True)
 
     parser.add_argument('--noattrs',
                         dest='with_attrs', action='store_false', default=True,
@@ -29,9 +33,9 @@ def main():
                         action='store_true', default=False,
                         help='Use relative . imports instead of <modname>')
 
-    parser.add_argument('--ignore_all',
-                        dest='use_all', action='store_false', default=True,
-                        help='Ignores __all__ variables when parsing')
+    # parser.add_argument('--ignore_all',
+    #                     dest='use_all', action='store_false', default=True,
+    #                     help='Ignores __all__ variables when parsing')
 
     parser.add_argument('--verbose', nargs='?', default=0, type=int,
                         help='Verbosity level')
@@ -43,7 +47,7 @@ def main():
     if ns['verbose'] is None:
         ns['verbose'] = 1
 
-    use_all = ns['use_all']
+    use_all = ns['with_all']
     verbose = ns['verbose']
     dry = ns['dry']
 

@@ -123,7 +123,7 @@ def _find_insert_points(lines):
     """
     startline = 0
     endline = len(lines)
-    explicit = False
+    explicit_flag = False
     init_indent = ''
 
     NEW_IMPLEMENTATION = 1
@@ -159,7 +159,7 @@ def _find_insert_points(lines):
                 else:
                     # print('SKIPPED TO = {!r}'.format(lineno))
                     skipto = None
-            if not explicit:
+            if not explicit_flag:
                 if line.strip().startswith(implicit_patterns):
                     # print('[mkinit] RESPECTING LINE {}: {}'.format(lineno, line))
                     startline = lineno + 1
@@ -179,15 +179,15 @@ def _find_insert_points(lines):
             if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
                 # print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
                 init_indent = line[:line.find('#')]
-                explicit = True
+                explicit_flag = True
                 startline = lineno + 1
-            if explicit and line.strip().startswith('# </AUTOGEN_INIT>'):
+            if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
                 # print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
                 endline = lineno
     else:  # nocover
-        # write after the last multiline comment, unless explicit tags are defined
+        # write after the last multiline comment, unless explicit_flag tags are defined
         for lineno, line in enumerate(lines):
-            if not explicit:
+            if not explicit_flag:
                 if line.strip() in ['"""', "'''"]:  # nocover
                     startline = lineno + 1
                 if line.strip().startswith('from __future__'):
@@ -198,9 +198,9 @@ def _find_insert_points(lines):
                     startline = lineno + 1
             if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
                 init_indent = line[:line.find('#')]
-                explicit = True
+                explicit_flag = True
                 startline = lineno + 1
-            if explicit and line.strip().startswith('# </AUTOGEN_INIT>'):
+            if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
                 endline = lineno
 
     # print('startline = {}'.format(startline))
@@ -216,7 +216,8 @@ def _indent(text, indent='    '):
     return new_text
 
 
-def _initstr(modname, imports, from_imports, extra_all=[], options=None):
+def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
+             private=set(), options=None):
     """
     Calls the other string makers
 
@@ -263,7 +264,7 @@ def _initstr(modname, imports, from_imports, extra_all=[], options=None):
     if options['relative']:
         modname = '.'
 
-    all_exports = list(extra_all)
+    explicit_exports = list(explicit)
     parts = []
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())
@@ -277,16 +278,25 @@ def _initstr(modname, imports, from_imports, extra_all=[], options=None):
             parts.append(new_part)
 
     if options.get('with_mods', True):
-        all_exports.extend(imports)
+        explicit_exports.extend(imports)
         append_part(_make_imports_str(imports, modname))
 
     if options.get('with_attrs', True):
-        all_exports.extend([n for m, sub in from_imports for n in sub])
-        attr_part = _make_fromimport_str(from_imports, modname)
+        protected = set(protected)
+        private = set(private)
+
+        _pp = protected | private
+
+        _from_imports = list((
+            (m, sub) for m, sub in from_imports if m not in _pp))
+        explicit_exports.extend([
+            n for m, sub in _from_imports for n in sub
+        ])
+        attr_part = _make_fromimport_str(_from_imports, modname)
         append_part(attr_part)
 
     if options.get('with_all', True):
-        exports_repr = ["'{}'".format(e) for e in sorted(all_exports)]
+        exports_repr = ["'{}'".format(e) for e in sorted(explicit_exports)]
         rhs_body = ', '.join(exports_repr)
         packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
         append_part(packed)
