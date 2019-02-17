@@ -14,6 +14,7 @@ from os.path import join
 from os.path import basename
 from os.path import dirname
 import logging
+import warnings
 
 
 logger = logging.getLogger(__name__)
@@ -105,17 +106,21 @@ def static_init(modpath_or_name, imports=None, use_all=True, options=None):
     """
     modpath = _rectify_to_modpath(modpath_or_name)
     user_decl = parse_user_declarations(modpath)
+
     if imports is None:
-        imports = user_decl.get('imports', imports)
+        submodules = user_decl.get('__submodules__', imports)
+    else:
+        submodules = imports
 
-    extra_all = user_decl.get('extra_all', [])
+    explicit = user_decl.get('__explicit__', [])
+    protected = user_decl.get('__protected__', [])
+    private = user_decl.get('__private__', [])
 
-    modname, imports, from_imports = _static_parse_imports(modpath,
-                                                           imports=imports,
-                                                           use_all=use_all)
+    modname, imports, from_imports = _static_parse_imports(
+        modpath, submodules=submodules, use_all=use_all)
 
-    initstr = _initstr(modname, imports, from_imports, extra_all=extra_all,
-                       options=options)
+    initstr = _initstr(modname, imports, from_imports, explicit=explicit,
+                       options=options, protected=protected, private=private,)
     return initstr
 
 
@@ -133,14 +138,37 @@ def parse_user_declarations(modpath):
         with open(init_fpath, 'r') as file:
             source = file.read()
         try:
-            user_decl['imports'] = static.parse_static_value('__submodules__', source)
+            # Include only these submodules
+            user_decl['__submodules__'] = static.parse_static_value('__submodules__', source)
         except NameError:
             try:
-                user_decl['imports'] = static.parse_static_value('__SUBMODULES__', source)
+                warnings.warn('Use __submodules__, __SUBMODULES__ is depricated',
+                              DeprecationWarning)
+                user_decl['__submodules__'] = static.parse_static_value('__SUBMODULES__', source)
             except NameError:
                 pass
+
         try:
             user_decl['extra_all'] = static.parse_static_value('__extra_all__', source)
+        except NameError:
+            pass
+
+        try:
+            # Add custom explicitly defined names to this, and they will be
+            # automatically added to the __all__ variable.
+            user_decl['__explicit__'] = static.parse_static_value('__explicit__', source)
+        except NameError:
+            pass
+
+        try:
+            # For private submodules, dont import them.
+            user_decl['__private__'] = static.parse_static_value('__private__', source)
+        except NameError:
+            pass
+
+        try:
+            # For protected submodules, only include attrs
+            user_decl['__protected__'] = static.parse_static_value('__protected__', source)
         except NameError:
             pass
     return user_decl
@@ -185,11 +213,12 @@ def _find_local_submodules(pkgpath):
             yield rel_modname, sub_modpath
 
 
-def _static_parse_imports(modpath, imports=None, use_all=True):
+def _static_parse_imports(modpath, submodules=None, use_all=True, protected=[],
+                          private=[]):
     """
     Args:
         modpath (PathLike): base path to a package (with an __init__)
-        imports (List[str]): list of submodules to look at in the base package
+        submodules (List[str]): list of submodules to look at in the base package
 
     CommandLine:
         python -m mkinit.static_autogen _static_parse_imports
@@ -197,22 +226,22 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
     Example:
         >>> modpath = static.modname_to_modpath('mkinit')
         >>> tup = _static_parse_imports(modpath, None, True)
-        >>> modname, imports, from_imports = tup
-        >>> # assert 'autogen_init' in imports
+        >>> modname, submodules, from_imports = tup
+        >>> # assert 'autogen_init' in submodules
     """
-    logger.debug('Parse static imports: {}'.format(modpath))
+    logger.debug('Parse static submodules: {}'.format(modpath))
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = static.modpath_to_modname(modpath, check=False)
-    if imports is None:
+    if submodules is None:
         import_paths = dict(_find_local_submodules(modpath))
-        imports = sorted(import_paths.keys())
+        submodules = sorted(import_paths.keys())
     else:
         if modname is None:
             raise AssertionError('modname is None')
 
         import_paths = {
             m: static.modname_to_modpath(modname + '.' + m, hide_init=False)
-            for m in imports
+            for m in submodules
         }
         # FIX for relative nested import_paths
         for m in import_paths.keys():
@@ -228,7 +257,7 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
                         break
 
     from_imports = []
-    for rel_modname in imports:
+    for rel_modname in submodules:
         sub_modpath = import_paths[rel_modname]
         if sub_modpath is None:
             raise Exception('Failed to lookup {!r}'.format(rel_modname))
@@ -262,7 +291,7 @@ def _static_parse_imports(modpath, imports=None, use_all=True):
                     continue
                 valid_attrs.append(attr)
         from_imports.append((rel_modname, sorted(valid_attrs)))
-    return modname, imports, from_imports
+    return modname, submodules, from_imports
 
 
 if __name__ == '__main__':
