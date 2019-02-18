@@ -16,8 +16,10 @@ def main():
 
     parser.add_argument('--dry', dest='_dry_old', action='store_true', default=True)
 
-    parser.add_argument(*('-i', '-w', '--write', '--inplace'), dest='dry', action='store_false', default=True)
-    # parser.add_argument('-i', dest='dry', action='store_false', default=True)
+    parser.add_argument(*('-i', '-w', '--write', '--inplace'),
+                        dest='dry', action='store_false',
+                        help='modify / write to the file inplace',
+                        default=True)
 
     parser.add_argument('--noattrs',
                         dest='with_attrs', action='store_false', default=True,
@@ -33,9 +35,10 @@ def main():
                         action='store_true', default=False,
                         help='Use relative . imports instead of <modname>')
 
-    # parser.add_argument('--ignore_all',
-    #                     dest='use_all', action='store_false', default=True,
-    #                     help='Ignores __all__ variables when parsing')
+    parser.add_argument('--norespect_all',
+                        dest='respect_all',
+                        action='store_false', default=True,
+                        help='if False does not respect __all__ attributes of submodules when parsing')
 
     parser.add_argument('--verbose', nargs='?', default=0, type=int,
                         help='Verbosity level')
@@ -47,7 +50,7 @@ def main():
     if ns['verbose'] is None:
         ns['verbose'] = 1
 
-    use_all = ns['with_all']
+    respect_all = ns['respect_all']
     verbose = ns['verbose']
     dry = ns['dry']
 
@@ -71,7 +74,7 @@ def main():
         level=level,
     )
 
-    static_mkinit.autogen_init(modname_or_path, use_all=use_all,
+    static_mkinit.autogen_init(modname_or_path, respect_all=respect_all,
                                options=options, dry=dry)
 
 if __name__ == '__main__':
