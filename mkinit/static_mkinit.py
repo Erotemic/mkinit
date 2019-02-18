@@ -215,6 +215,46 @@ def _find_local_submodules(pkgpath):
             yield rel_modname, sub_modpath
 
 
+def _extract_attributes(modpath, respect_all=True):
+    """
+    This is the function that basically simulates import *
+
+    Example:
+        >>> modpath = static.modname_to_modpath('mkinit', hide_init=False)
+        >>> _extract_attributes(modpath)
+    """
+    try:
+        if six.PY2:
+            with open(modpath, 'r') as file:
+                source = file.read()
+        else:
+            with open(modpath, 'r', encoding='utf8') as file:
+                source = file.read()
+    except Exception as ex:  # nocover
+        raise IOError('Error reading {}, caused by {}'.format(
+            modpath, repr(ex)))
+    valid_attrs = None
+    if respect_all:  # pragma: nobranch
+        try:
+            valid_attrs = static.parse_static_value('__all__', source)
+        except NameError:
+            pass
+    if valid_attrs is None:
+        # The __all__ variable is not specified or we dont care
+        top_level = TopLevelVisitor.parse(source)
+        attrnames = top_level.attrnames
+        # list of names we wont export by default
+        invalid_callnames = dir(builtins)
+        valid_attrs = []
+        for attr in attrnames:
+            if attr.startswith('_'):
+                continue
+            if attr in invalid_callnames:  # nocover
+                continue
+            valid_attrs.append(attr)
+    return valid_attrs
+
+
 def _static_parse_imports(modpath, submodules=None, respect_all=True):
     """
     Args:
@@ -264,35 +304,7 @@ def _static_parse_imports(modpath, submodules=None, respect_all=True):
         sub_modpath = import_paths[rel_modname]
         if sub_modpath is None:
             raise Exception('Failed to lookup {!r}'.format(rel_modname))
-        try:
-            if six.PY2:
-                with open(sub_modpath, 'r') as file:
-                    source = file.read()
-            else:
-                with open(sub_modpath, 'r', encoding='utf8') as file:
-                    source = file.read()
-        except Exception as ex:  # nocover
-            raise IOError('Error reading {}, caused by {}'.format(
-                sub_modpath, repr(ex)))
-        valid_attrs = None
-        if respect_all:  # pragma: nobranch
-            try:
-                valid_attrs = static.parse_static_value('__all__', source)
-            except NameError:
-                pass
-        if valid_attrs is None:
-            # The __all__ variable is not specified or we dont care
-            top_level = TopLevelVisitor.parse(source)
-            attrnames = top_level.attrnames
-            # list of names we wont export by default
-            invalid_callnames = dir(builtins)
-            valid_attrs = []
-            for attr in attrnames:
-                if attr.startswith('_'):
-                    continue
-                if attr in invalid_callnames:  # nocover
-                    continue
-                valid_attrs.append(attr)
+        valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
         from_imports.append((rel_modname, sorted(valid_attrs)))
     return modname, submodules, from_imports
 
