@@ -9,7 +9,7 @@ import multiprocessing
 import textwrap
 
 
-def dynamic_init(modname, imports=None, dump=False, verbose=False):
+def dynamic_init(modname, submodules=None, dump=False, verbose=False):
     """
     MAIN ENTRY POINT
 
@@ -36,9 +36,11 @@ def dynamic_init(modname, imports=None, dump=False, verbose=False):
     except Exception:
         module = __import__(modname)
 
-    if imports is None:
+    if submodules is None:
         pkgpath = dirname(module.__file__)
-        imports = _find_local_submodule_names(pkgpath)
+        submodules = _find_local_submodule_names(pkgpath)
+
+    imports = submodules
 
     # Import the modules
     _excecute_imports(module, modname, imports, verbose=verbose)
@@ -203,18 +205,10 @@ def _make_fromimport_str(from_imports, rootmodname='.'):
 
 def _find_local_submodule_names(pkgpath):
     # Automatically find the imports if they are not specified
-    if False:
-        # Old way, doesn't account for subpackages with __init__.py
-        import glob
-        modpaths = list(map(basename, glob.glob(join(pkgpath, '*.py'))))
-        imports = [m[:-3] for m in modpaths if not m.startswith('_')]
-        return imports
-    else:
-        # Better way of doing this
-        from mkinit import static_mkinit
-        import_paths = dict(static_mkinit._find_local_submodules(pkgpath))
-        imports = list(import_paths.keys())
-        return imports
+    from mkinit import static_mkinit
+    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))
+    imports = list(import_paths.keys())
+    return imports
 
 
 def _autogen_write(modpath, initstr):
