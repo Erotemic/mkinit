@@ -43,8 +43,16 @@ def main():
     parser.add_argument('--verbose', nargs='?', default=0, type=int,
                         help='Verbosity level')
 
+    parser.add_argument('--version', action='store_true',
+                        help='print version and exit')
+
     args, unknown = parser.parse_known_args()
     ns = args.__dict__.copy()
+
+    if ns['version']:
+        import mkinit
+        print(mkinit.__version__)
+        return
 
     modname_or_path = ns['modname_or_path']
     if ns['verbose'] is None:

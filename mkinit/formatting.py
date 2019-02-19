@@ -126,82 +126,67 @@ def _find_insert_points(lines):
     explicit_flag = False
     init_indent = ''
 
-    NEW_IMPLEMENTATION = 1
-    if NEW_IMPLEMENTATION:
-        # co-opt the xdoctest parser to break appart lines in the init file
-        # This lets us correctly skip to the end of a multiline expression
-        # A better solution might be to use the line-number aware parser
-        # to search for AUTOGEN_INIT comments and other relevant structures.
-        source_lines = ['>>> ' + p.rstrip('\n') for p in lines]
-        try:
-            ps1_lines, _ = static._locate_ps1_linenos(source_lines)
-            # print('ps1_lines = {!r}'.format(ps1_lines))
-        except IndexError:
-            assert len(lines) == 0
-            ps1_lines = []
+    # co-opt the xdoctest parser to break appart lines in the init file
+    # This lets us correctly skip to the end of a multiline expression
+    # A better solution might be to use the line-number aware parser
+    # to search for AUTOGEN_INIT comments and other relevant structures.
+    source_lines = ['>>> ' + p.rstrip('\n') for p in lines]
+    try:
+        ps1_lines, _ = static._locate_ps1_linenos(source_lines)
+        # print('ps1_lines = {!r}'.format(ps1_lines))
+    except IndexError:
+        assert len(lines) == 0
+        ps1_lines = []
 
-        # Algorithm is similar to the old version, but we skip to the next PS1
-        # line if we encounter an implicit code pattern.
+    # Algorithm is similar to the old version, but we skip to the next PS1
+    # line if we encounter an implicit code pattern.
 
-        skipto = None
+    skipto = None
 
-        def _tryskip(lineno):
-            """ returns the next line to skip to if possible """
+    def _tryskip(lineno):
+        """ returns the next line to skip to if possible """
 
-        implicit_patterns = (
-            'from __future__', '__version__', '__submodules__',
-            '#', '"""', "'''",
-        )
-        for lineno, line in enumerate(lines):
-            if skipto is not None:
-                if lineno != skipto:
-                    continue
-                else:
-                    # print('SKIPPED TO = {!r}'.format(lineno))
-                    skipto = None
-            if not explicit_flag:
-                if line.strip().startswith(implicit_patterns):
-                    # print('[mkinit] RESPECTING LINE {}: {}'.format(lineno, line))
-                    startline = lineno + 1
-                    try:
-                        # Try and skip to the end of the expression
-                        # (if it is a multiline case)
-                        idx = ps1_lines.index(lineno)
-                        skipto = ps1_lines[idx + 1]
-                        startline = skipto
-                        # print('SKIPTO = {!r}'.format(skipto))
-                    except ValueError:
-                        # print('NOT ON A PS1 LINE KEEP {}'.format(startline))
-                        pass
-                    except IndexError:
-                        # print('LAST LINE MOVING TO END {}'.format(startline))
-                        startline = endline
-            if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
-                # print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
-                init_indent = line[:line.find('#')]
-                explicit_flag = True
+    implicit_patterns = (
+        'from __future__', '__version__', '__submodules__',
+
+        '__external__',
+        '__private__',
+        '__protected__',
+
+        '#', '"""', "'''",
+    )
+    for lineno, line in enumerate(lines):
+        if skipto is not None:
+            if lineno != skipto:
+                continue
+            else:
+                # print('SKIPPED TO = {!r}'.format(lineno))
+                skipto = None
+        if not explicit_flag:
+            if line.strip().startswith(implicit_patterns):
+                # print('[mkinit] RESPECTING LINE {}: {}'.format(lineno, line))
                 startline = lineno + 1
-            if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
-                # print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
-                endline = lineno
-    else:  # nocover
-        # write after the last multiline comment, unless explicit_flag tags are defined
-        for lineno, line in enumerate(lines):
-            if not explicit_flag:
-                if line.strip() in ['"""', "'''"]:  # nocover
-                    startline = lineno + 1
-                if line.strip().startswith('from __future__'):
-                    startline = lineno + 1
-                if line.strip().startswith('__version__'):
-                    startline = lineno + 1
-                if line.strip().startswith('#'):
-                    startline = lineno + 1
-            if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
-                init_indent = line[:line.find('#')]
-                explicit_flag = True
-                startline = lineno + 1
-            if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
-                endline = lineno
+                try:
+                    # Try and skip to the end of the expression
+                    # (if it is a multiline case)
+                    idx = ps1_lines.index(lineno)
+                    skipto = ps1_lines[idx + 1]
+                    startline = skipto
+                    # print('SKIPTO = {!r}'.format(skipto))
+                except ValueError:
+                    # print('NOT ON A PS1 LINE KEEP {}'.format(startline))
+                    pass
+                except IndexError:
+                    # print('LAST LINE MOVING TO END {}'.format(startline))
+                    startline = endline
+        if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
+            # print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
+            init_indent = line[:line.find('#')]
+            explicit_flag = True
+            startline = lineno + 1
+        if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
+            # print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
+            endline = lineno
 
     # print('startline = {}'.format(startline))
     # print('endline = {}'.format(endline))
@@ -232,8 +217,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     Example:
         >>> modname = 'foo'
-        >>> imports = ['bar', 'baz']
-        >>> from_imports = [('bar', ['func1', 'func2'])]
+        >>> imports = ['.bar', '.baz']
+        >>> from_imports = [('.bar', ['func1', 'func2'])]
         >>> initstr = _initstr(modname, imports, from_imports)
         >>> print(initstr)
         from foo import bar
@@ -245,8 +230,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     Example:
         >>> modname = 'foo'
-        >>> imports = ['bar', 'baz']
-        >>> from_imports = [('bar', list(map(chr, range(97, 123))))]
+        >>> imports = ['.bar', '.baz']
+        >>> from_imports = [('.bar', list(map(chr, range(97, 123))))]
         >>> initstr = _initstr(modname, imports, from_imports)
         >>> print(initstr)
         from foo import bar
@@ -278,7 +263,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             parts.append(new_part)
 
     if options.get('with_mods', True):
-        explicit_exports.extend(imports)
+        explicit_exports.extend([e.lstrip('.') for e in imports])
         append_part(_make_imports_str(imports, modname))
 
     if options.get('with_attrs', True):
@@ -297,9 +282,12 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         _pp_set = private_set | protected_set
 
         def _pp_matches(x):
+            # TODO: standardize how explicit vs submodules are handled
+            x = x.lstrip('.')
             return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
 
         def _private_matches(x):
+            x = x.lstrip('.')
             return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
 
         _from_imports = [
@@ -314,7 +302,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         append_part(attr_part)
 
     if options.get('with_all', True):
-        exports_repr = ["'{}'".format(e) for e in sorted(explicit_exports)]
+        exports_repr = ["'{}'".format(e)
+                        for e in sorted(explicit_exports)]
         rhs_body = ', '.join(exports_repr)
         packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
         append_part(packed)
@@ -330,9 +319,19 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
 
 def _make_imports_str(imports, rootmodname='.'):
-    imports_fmtstr = 'from {rootmodname} import %s'.format(
-        rootmodname=rootmodname)
-    return '\n'.join([imports_fmtstr % (name,) for name in imports])
+    if False:
+        imports_fmtstr = 'from {rootmodname} import %s'.format(
+            rootmodname=rootmodname)
+        return '\n'.join([imports_fmtstr % (name,) for name in imports])
+    else:
+        imports_fmtstr = 'from {rootmodname} import %s'.format(
+            rootmodname=rootmodname)
+        return '\n'.join([
+            imports_fmtstr % (name.lstrip('.'))
+            if name.startswith('.') else
+            'import %s' % (name,)
+            for name in imports
+        ])
 
 
 def _packed_rhs_text(lhs_text, rhs_text):
@@ -356,9 +355,9 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
 
     Example:
         >>> from_imports = [
-        ...     ('foo', list(map(chr, range(97, 123)))),
-        ...     ('bar', []),
-        ...     ('a_longer_package', list(map(chr, range(65, 91)))),
+        ...     ('.foo', list(map(chr, range(97, 123)))),
+        ...     ('.bar', []),
+        ...     ('.a_longer_package', list(map(chr, range(65, 91)))),
         ... ]
         >>> from_str = _make_fromimport_str(from_imports, indent=' ' * 8)
         >>> print(from_str)
@@ -372,9 +371,15 @@ def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
         rootmodname = ''
     def _pack_fromimport(tup):
         name, fromlist = tup[0], tup[1]
+
+        if name.startswith('.'):
+            normname = rootmodname + name
+        else:
+            normname = name
+
         if len(fromlist) > 0:
-            lhs_text = indent + 'from {rootmodname}.{name} import ('.format(
-                rootmodname=rootmodname, name=name)
+            lhs_text = indent + 'from {normname} import ('.format(
+                normname=normname)
             rhs_text = ', '.join(fromlist) + ',)'
             packstr = _packed_rhs_text(lhs_text, rhs_text)
         else:
