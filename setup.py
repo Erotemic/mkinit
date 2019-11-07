@@ -7,98 +7,30 @@ Installation:
 Developing:
     git clone https://github.com/Erotemic/mkinit.git
     pip install -e mkinit
-
-Pypi:
-     # Presetup
-     pip install twine
-
-     # First tag the source-code
-     VERSION=$(python -c "import setup; print(setup.version)")
-     echo $VERSION
-     git tag $VERSION -m "tarball tag $VERSION"
-     git push --tags origin master
-
-     # NEW API TO UPLOAD TO PYPI
-     # https://packaging.python.org/tutorials/distributing-packages/
-
-     # Build wheel or source distribution
-     python setup.py bdist_wheel --universal
-
-     # Use twine to upload. This will prompt for username and password
-     # If you get an error:
-     #   403 Client Error: Invalid or non-existent authentication information.
-     # simply try typing your password slower.
-     twine upload --username erotemic --skip-existing dist/*
-
-     # Check the url to make sure everything worked
-     https://pypi.org/project/mkinit/
-
-     # ---------- OLD ----------------
-     # Check the url to make sure everything worked
-     https://pypi.python.org/pypi?:action=display&name=mkinit
-
 """
 from setuptools import setup
 import sys
+from os.path import exists
 
 
-def parse_version(package):
+def parse_version(fpath='mkinit/__init__.py'):
     """
-    Statically parse the version number from __init__.py
-
-    CommandLine:
-        python -c "import setup; print(setup.parse_version('mkinit'))"
+    Statically parse the version number from a python file
     """
-    from os.path import dirname, join
     import ast
-    init_fpath = join(dirname(__file__), package, '__init__.py')
-    with open(init_fpath) as file_:
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
     class VersionVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if target.id == '__version__':
+                if getattr(target, 'id', None) == '__version__':
                     self.version = node.value.s
     visitor = VersionVisitor()
     visitor.visit(pt)
     return visitor.version
-
-
-def parse_description():
-    """
-    Parse the description in the README file
-
-    CommandLine:
-        python -c "import setup; print(setup.parse_description())"
-    """
-    from os.path import dirname, join, exists
-    readme_fpath = join(dirname(__file__), 'README.md')
-    # print('readme_fpath = %r' % (readme_fpath,))
-    # This breaks on pip install, so check that it exists.
-    if exists(readme_fpath):
-        # try:
-        #     # convert markdown to rst for pypi
-        #     import pypandoc
-        #     return pypandoc.convert(readme_fpath, 'rst')
-        # except Exception as ex:
-            # strip out markdown to make a clean readme for pypi
-            textlines = []
-            with open(readme_fpath, 'r') as f:
-                capture = False
-                for line in f.readlines():
-                    if '# Purpose' in line:
-                        capture = True
-                    elif line.startswith('##'):
-                        break
-                    elif capture:
-                        textlines += [line]
-            text = ''.join(textlines).strip()
-            text = text.replace('\n\n', '_NLHACK_')
-            text = text.replace('\n', ' ')
-            text = text.replace('_NLHACK_', '\n\n')
-            return text
-    return ''
 
 
 def parse_requirements(fname='requirements.txt'):
@@ -106,28 +38,87 @@ def parse_requirements(fname='requirements.txt'):
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
 
+    TODO:
+        perhaps use https://github.com/davidfischer/requirements-parser instead
+
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
     """
-    from os.path import dirname, join, exists
+    from os.path import exists
     import re
-    require_fpath = join(dirname(__file__), fname)
-    # This breaks on pip install, so check that it exists.
-    if exists(require_fpath):
-        with open(require_fpath, 'r') as f:
-            packages = []
+    require_fpath = fname
+
+    def parse_line(line):
+        """
+        Parse information from a line in a requirements text file
+        """
+        if line.startswith('-r '):
+            # Allow specifying requirements in other files
+            target = line.split(' ')[1]
+            for info in parse_require_file(target):
+                yield info
+        elif line.startswith('-e '):
+            info = {}
+            info['package'] = line.split('#egg=')[1]
+            yield info
+        else:
+            # Remove versioning from the package
+            pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+            parts = re.split(pat, line, maxsplit=1)
+            parts = [p.strip() for p in parts]
+
+            info = {}
+            info['package'] = parts[0]
+            if len(parts) > 1:
+                op, rest = parts[1:]
+                if ';' in rest:
+                    # Handle platform specific dependencies
+                    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                    version, platform_deps = map(str.strip, rest.split(';'))
+                    info['platform_deps'] = platform_deps
+                else:
+                    version = rest  # NOQA
+                info['version'] = (op, version)
+            yield info
+
+    def parse_require_file(fpath):
+        with open(fpath, 'r') as f:
             for line in f.readlines():
                 line = line.strip()
                 if line and not line.startswith('#'):
-                    if line.startswith('-e '):
-                        package = line.split('#egg=')[1]
-                        packages.append(package)
-                    else:
-                        pat = '|'.join(['>', '>=', '=='])
-                        package = re.split(pat, line)[0]
-                        packages.append(package)
-            return packages
-    return []
+                    for info in parse_line(line):
+                        yield info
+
+    # This breaks on pip install, so check that it exists.
+    packages = []
+    if exists(require_fpath):
+        for info in parse_require_file(require_fpath):
+            package = info['package']
+            if not sys.version.startswith('3.4'):
+                # apparently package_deps are broken in 3.4
+                platform_deps = info.get('platform_deps')
+                if platform_deps is not None:
+                    package += ';' + platform_deps
+            packages.append(package)
+    return packages
+
+
+def parse_description():
+    """
+    Parse the description in the README file
+
+    CommandLine:
+        pandoc --from=markdown --to=rst --output=README.rst README.md
+        python -c "import setup; print(setup.parse_description())"
+    """
+    from os.path import dirname, join, exists
+    readme_fpath = join(dirname(__file__), 'README.rst')
+    # This breaks on pip install, so check that it exists.
+    if exists(readme_fpath):
+        with open(readme_fpath, 'r') as f:
+            text = f.read()
+        return text
+    return ''
 
 
 version = parse_version('mkinit')  # needs to be a global var for git tags
@@ -143,6 +134,7 @@ if __name__ == '__main__':
         author='Jon Crall',
         description='Create __init__.py files',
         long_description=parse_description(),
+        long_description_content_type='text/x-rst',
         install_requires=install_requires,
         tests_require=parse_requirements('optional-requirements.txt'),
         entry_points={
