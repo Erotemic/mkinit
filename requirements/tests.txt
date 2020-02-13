@@ -1,0 +1,4 @@
+pytest
+pytest-cov
+codecov
+xdoctest >= 0.3.5

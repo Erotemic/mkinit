@@ -13,7 +13,7 @@ import sys
 from os.path import exists
 
 
-def parse_version(fpath='mkinit/__init__.py'):
+def parse_version(fpath):
     """
     Statically parse the version number from a python file
     """
@@ -33,16 +33,21 @@ def parse_version(fpath='mkinit/__init__.py'):
     return visitor.version
 
 
-def parse_requirements(fname='requirements.txt'):
+def parse_requirements(fname='requirements.txt', with_version=False):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
 
-    TODO:
-        perhaps use https://github.com/davidfischer/requirements-parser instead
+    Args:
+        fname (str): path to requirements file
+        with_version (bool, default=False): if true include version specs
+
+    Returns:
+        List[str]: list of requirements items
 
     CommandLine:
         python -c "import setup; print(setup.parse_requirements())"
+        python -c "import setup; print(chr(10).join(setup.parse_requirements(with_version=True)))"
     """
     from os.path import exists
     import re
@@ -57,28 +62,27 @@ def parse_requirements(fname='requirements.txt'):
             target = line.split(' ')[1]
             for info in parse_require_file(target):
                 yield info
-        elif line.startswith('-e '):
-            info = {}
-            info['package'] = line.split('#egg=')[1]
-            yield info
         else:
-            # Remove versioning from the package
-            pat = '(' + '|'.join(['>=', '==', '>']) + ')'
-            parts = re.split(pat, line, maxsplit=1)
-            parts = [p.strip() for p in parts]
+            info = {'line': line}
+            if line.startswith('-e '):
+                info['package'] = line.split('#egg=')[1]
+            else:
+                # Remove versioning from the package
+                pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+                parts = re.split(pat, line, maxsplit=1)
+                parts = [p.strip() for p in parts]
 
-            info = {}
-            info['package'] = parts[0]
-            if len(parts) > 1:
-                op, rest = parts[1:]
-                if ';' in rest:
-                    # Handle platform specific dependencies
-                    # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
-                    version, platform_deps = map(str.strip, rest.split(';'))
-                    info['platform_deps'] = platform_deps
-                else:
-                    version = rest  # NOQA
-                info['version'] = (op, version)
+                info['package'] = parts[0]
+                if len(parts) > 1:
+                    op, rest = parts[1:]
+                    if ';' in rest:
+                        # Handle platform specific dependencies
+                        # http://setuptools.readthedocs.io/en/latest/setuptools.html#declaring-platform-specific-dependencies
+                        version, platform_deps = map(str.strip, rest.split(';'))
+                        info['platform_deps'] = platform_deps
+                    else:
+                        version = rest  # NOQA
+                    info['version'] = (op, version)
             yield info
 
     def parse_require_file(fpath):
@@ -89,17 +93,21 @@ def parse_requirements(fname='requirements.txt'):
                     for info in parse_line(line):
                         yield info
 
-    # This breaks on pip install, so check that it exists.
-    packages = []
-    if exists(require_fpath):
-        for info in parse_require_file(require_fpath):
-            package = info['package']
-            if not sys.version.startswith('3.4'):
-                # apparently package_deps are broken in 3.4
-                platform_deps = info.get('platform_deps')
-                if platform_deps is not None:
-                    package += ';' + platform_deps
-            packages.append(package)
+    def gen_packages_items():
+        if exists(require_fpath):
+            for info in parse_require_file(require_fpath):
+                parts = [info['package']]
+                if with_version and 'version' in info:
+                    parts.extend(info['version'])
+                if not sys.version.startswith('3.4'):
+                    # apparently package_deps are broken in 3.4
+                    platform_deps = info.get('platform_deps')
+                    if platform_deps is not None:
+                        parts.append(';' + platform_deps)
+                item = ''.join(parts)
+                yield item
+
+    packages = list(gen_packages_items())
     return packages
 
 
@@ -121,13 +129,9 @@ def parse_description():
     return ''
 
 
-version = parse_version('mkinit')  # needs to be a global var for git tags
+version = parse_version('mkinit/__init__.py')  # needs to be a global var for git tags
 
 if __name__ == '__main__':
-    install_requires = parse_requirements('requirements.txt')
-    if sys.platform.startswith('win32'):
-        install_requires += parse_requirements('requirements-win32.txt')
-
     setup(
         name='mkinit',
         version=version,
@@ -135,16 +139,17 @@ if __name__ == '__main__':
         description='Create __init__.py files',
         long_description=parse_description(),
         long_description_content_type='text/x-rst',
-        install_requires=install_requires,
-        tests_require=parse_requirements('optional-requirements.txt'),
         entry_points={
             # the console_scripts entry point creates the xdoctest executable
             'console_scripts': [
                 'mkinit = mkinit.__main__:main'
             ]
         },
+        install_requires=parse_requirements('requirements/runtime.txt'),
         extras_require={
-            'all': parse_requirements('optional-requirements.txt')
+            'all': parse_requirements('requirements.txt'),
+            'tests': parse_requirements('requirements/tests.txt'),
+            'optional': parse_requirements('requirements/optional.txt'),
         },
         author_email='erotemic@gmail.com',
         url='https://github.com/Erotemic/mkinit',
