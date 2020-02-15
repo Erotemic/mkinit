@@ -252,7 +252,11 @@ def _extract_attributes(modpath, respect_all=True):
             pass
     if valid_attrs is None:
         # The __all__ variable is not specified or we dont care
-        top_level = TopLevelVisitor.parse(source)
+        try:
+            top_level = TopLevelVisitor.parse(source)
+        except SyntaxError as ex:
+            msg = 'modpath={} has bad syntax: {}'.format(modpath, ex)
+            raise SyntaxError(msg)
         attrnames = top_level.attrnames
         # list of names we wont export by default
         invalid_callnames = dir(builtins)
@@ -325,16 +329,24 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
         sub_modpath = import_paths[rel_modname]
         if sub_modpath is None:
             raise Exception('Failed to submodule lookup {!r}'.format(rel_modname))
-        valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
-        from_imports.append(('.' + rel_modname, sorted(valid_attrs)))
+        try:
+            valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
+        except SyntaxError as ex:
+            warnings.warn('Failed to parse module {} ex = {!r}'.format(rel_modname, ex))
+        else:
+            from_imports.append(('.' + rel_modname, sorted(valid_attrs)))
 
     if external:
         for ext_modname in external:
             ext_modpath = static.modname_to_modpath(ext_modname, hide_init=False)
             if ext_modpath is None:
                 raise Exception('Failed to external lookup {!r}'.format(ext_modpath))
-            valid_attrs = _extract_attributes(ext_modpath, respect_all=respect_all)
-            from_imports.append((ext_modname, sorted(valid_attrs)))
+            try:
+                valid_attrs = _extract_attributes(ext_modpath, respect_all=respect_all)
+            except SyntaxError as ex:
+                warnings.warn('Failed to parse {} module ex = {!r}'.format(ext_modname, ex))
+            else:
+                from_imports.append((ext_modname, sorted(valid_attrs)))
 
     return modname, imports, from_imports
 
