@@ -9,6 +9,7 @@ Developing:
     pip install -e mkinit
 """
 from setuptools import setup
+from setuptools import find_packages
 import sys
 from os.path import exists
 
@@ -154,7 +155,7 @@ if __name__ == '__main__':
         author_email='erotemic@gmail.com',
         url='https://github.com/Erotemic/mkinit',
         license='Apache 2',
-        packages=['mkinit'],
+        packages=find_packages('.'),
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
