@@ -78,7 +78,11 @@ def parse_static_value(key, source=None, fpath=None):
         def visit_Assign(self, node):
             for target in node.targets:
                 if getattr(target, 'id', None) == key:
-                    self.value = _parse_static_node_value(node.value)
+                    try:
+                        self.value = _parse_static_node_value(node.value)
+                    except TypeError as ex:
+                        import warnings
+                        warnings.warn(repr(ex))
 
     sentinal = object()
     visitor = AssignentVisitor()
