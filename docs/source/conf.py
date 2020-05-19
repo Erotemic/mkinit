@@ -1,10 +1,20 @@
 # -*- coding: utf-8 -*-
+"""
+Notes:
+    cd ~/code/mkinit/docs
+    make html
+    sphinx-apidoc -f -o ~/code/mkinit/docs/source ~/code/mkinit/mkinit --separate
+    make html
+"""
 #
 # Configuration file for the Sphinx documentation builder.
 #
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
+from os.path import dirname
+from os.path import exists
+from os.path import join
 
 # -- Path setup --------------------------------------------------------------
 
@@ -18,17 +28,42 @@
 
 
 # -- Project information -----------------------------------------------------
-import mkinit
 import sphinx_rtd_theme
 
 project = 'mkinit'
-copyright = '2018, Jon Crall'
+modname = 'mkinit'
+copyright = '2020, Jon Crall'
 author = 'Jon Crall'
 
+
+def parse_version(fpath):
+    """
+    Statically parse the version number from a python file
+    """
+    import ast
+    if not exists(fpath):
+        raise ValueError('fpath={!r} does not exist'.format(fpath))
+    with open(fpath, 'r') as file_:
+        sourcecode = file_.read()
+    pt = ast.parse(sourcecode)
+    class VersionVisitor(ast.NodeVisitor):
+        def visit_Assign(self, node):
+            for target in node.targets:
+                if getattr(target, 'id', None) == '__version__':
+                    self.version = node.value.s
+    visitor = VersionVisitor()
+    visitor.visit(pt)
+    return visitor.version
+
 # The short X.Y version
-version = '.'.join(mkinit.__version__.split('.')[0:2])
+# import ubelt as ub
+# module = ub.import_module_from_path(modpath)
+# release = module.__version__
+
+modpath = join(dirname(dirname(dirname(__file__))), modname, '__init__.py')
 # The full version, including alpha/beta/rc tags
-release = mkinit.__version__
+release = parse_version(modpath)
+version = '.'.join(release.split('.')[0:2])
 
 
 # -- General configuration ---------------------------------------------------
@@ -41,6 +76,7 @@ release = mkinit.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
+    'autoapi.extension',
     'sphinx.ext.autodoc',
     'sphinx.ext.viewcode',
     'sphinx.ext.napoleon',
@@ -48,6 +84,17 @@ extensions = [
     'sphinx.ext.todo',
     'sphinx.ext.autosummary',
 ]
+
+autoapi_modules = {
+    modname: {
+        'override': False,
+        'output': 'auto'
+    }
+}
+
+
+autoapi_dirs = [f'../../{modname}']
+# autoapi_keep_files = True
 
 todo_include_todos = True
 napoleon_google_docstring = True

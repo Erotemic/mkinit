@@ -4,7 +4,9 @@ mkinit
 |CircleCI| |Travis| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
-Read the docs here: http://mkinit.readthedocs.io/en/latest/
+Read the docs here: http://mkinit.readthedocs.io/en/latest/ (although this is
+mostly an API reference, the best getting started docs are currently in this
+README)
 
 The `mkinit` module helps you write `__init__` files that expose all submodule
 attributes without `from ? import *`.
