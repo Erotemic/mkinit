@@ -12,6 +12,7 @@ Notes:
 # This file does only contain a selection of the most common options. For a
 # full list see the documentation:
 # http://www.sphinx-doc.org/en/stable/config
+from os.path import abspath
 from os.path import dirname
 from os.path import exists
 from os.path import join
@@ -60,7 +61,8 @@ def parse_version(fpath):
 # module = ub.import_module_from_path(modpath)
 # release = module.__version__
 
-modpath = join(dirname(dirname(dirname(__file__))), modname, '__init__.py')
+repo_root = dirname(dirname(dirname(abspath(__file__))))
+modpath = join(repo_root, modname, '__init__.py')
 # The full version, including alpha/beta/rc tags
 release = parse_version(modpath)
 version = '.'.join(release.split('.')[0:2])
