@@ -15,8 +15,8 @@ It can do this dynamically, or it can statically autogenerate the `__init__`
 for faster import times. Its kinda like using the `fromimport *` syntax, but
 its easy to replace with text that wont make other developers lose their hair.
 
-Installation:
--------------
+Installation
+============
 
 .. code:: bash
 
@@ -43,16 +43,16 @@ with special xml-like comments.
     import mkinit; exec(mkinit.dynamic_init(__name__))
 
 
-## Examples
------------
+Examples
+========
 
 The `mkinit` module is used by the
 `ubelt`(https://www.github.com/Erotemic/ubelt) library to explicitly
 auto-generate part of the `__init__.py` file. This example walks through the
 design of this module to illustrate the usage of `mkinit`.
 
-### Step 1 (Optional): Write any custom `__init__` code
---------------------------------------------------------
+Step 1 (Optional): Write any custom `__init__` code
+----------------------------------------------------
 
 The first section of the `ubelt` module consists of manually written code. It
 contains coding, `flake8` directives, a docstring a few comments, a future
@@ -85,8 +85,8 @@ final comment, in the file, which is a decent heuristic, but as we will see,
 there are other more explicit ways to define exactly where auto-generated code
 is allowed.
 
-### Step 2 (Optional): Enumerate relevant submodules
------------------------------------------------------
+Step 2 (Optional): Enumerate relevant submodules
+------------------------------------------------
 
 After optionally writing any custom code, you may optionally specify exactly
 what submodules should be considered when auto-generating imports. This is done
@@ -111,8 +111,8 @@ Note that this step is optional, but recommended. If the `__submodules__`
 package is not specified, then all paths matching the glob expressions `*.py`
 or `*/__init__.py` are considered as part of the package.
 
-### Step 3: Autogenerate explicitly
------------------------------------
+Step 3: Autogenerate explicitly
+-------------------------------
 
 To provide the fastest import times and most readable `__init__.py` files, use
 the `mkinit` command line script to statically parse the submodules and
@@ -181,8 +181,8 @@ avoids unintended side effects, prevents arbitrary code execution, and ensures
 that `mkinit` will do something useful even if there would otherwise be a
 runtime error.
 
-### Step 3 (alternate): Autogenerate dynamically
---------------------------------------------------
+Step 3 (alternate): Autogenerate dynamically
+--------------------------------------------
 
 While running `mkinit` from the command line produces the cleanest and most
 readable `__init__.py`, you have to run it every time you make a change to your
@@ -232,8 +232,8 @@ in the first place!
         # </AUTOGEN_INIT>
 
 
-## Behavior Notes
------------------
+Behavior Notes
+--------------
 
 The `mkinit` module is a simple way to execute a complex task. At times it may
 seem like magic, although I assure you it is not. To minimize perception of
@@ -257,8 +257,8 @@ following:
     * By default we ignore attributes that are marked as non-public by a leading
       underscore
 
-## TODO:
---------
+TODO
+----
 
     - [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.
 
