@@ -174,7 +174,7 @@ def parse_user_declarations(modpath):
             pass
 
         try:
-            # Procted items are exposed, but their attributes are not
+            # Protected items are exposed, but their attributes are not
             user_decl['__protected__'] = static.parse_static_value('__protected__', source)
         except NameError:
             pass

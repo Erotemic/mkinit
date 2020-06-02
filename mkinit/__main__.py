@@ -5,13 +5,30 @@ def main():
     import logging
     description = textwrap.dedent(
         '''
-        discover and run doctests within a python package
+        Autogenerate an `__init__.py` that exposes a top-level API.
 
-        Respects the varaibles:
-            `__submodules__`, `__explicit__`, `__protected__`, `__private__`
+        Behavior is modified depending on the existing content of the
+        `__init__.py` file (subsequent runs of mkinit are idempotent).
+
+        The following `__init__.py` variables modify autogeneration behavior:
+
+            `__submodules__` - indicates the list of submodules to be
+                introspected, if unspecified all submodules are introspected.
+
+            `__external__` - Specify external modules to expose the attributes of.
+
+            `__explicit__` - Add custom explicitly defined names to this, and
+                they will be automatically added to the __all__ variable.
+
+            `__protected__` -  Protected modules are exposed, but their attributes are not.
+
+            `__private__` - Private modules and their attributes are not exposed.
         ''').strip('\n')
 
-    parser = argparse.ArgumentParser(prog='python -m mkinit', description=description)
+    parser = argparse.ArgumentParser(
+            prog='python -m mkinit',
+            description=description,
+            formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument('modname_or_path', nargs='?', help='module or path to generate __init__.py for', default='.')
 
     parser.add_argument('--dry', dest='_dry_old', action='store_true', default=True)
@@ -76,6 +93,9 @@ def main():
         level = logging.INFO
     elif verbose >= 2:
         level = logging.DEBUG
+
+    if verbose:
+        print('verbose = {!r}'.format(verbose))
 
     logging.basicConfig(
         format='%(levelname)s: %(message)s',

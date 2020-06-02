@@ -3,6 +3,7 @@ version: 0.2.1
 * Can now specify `__external__`
 * Reworked submodules vs imports. 
 * Slight API changes.
+* Updated CLI docs.
 
 
 version: 0.2.0
