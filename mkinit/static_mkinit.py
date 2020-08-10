@@ -27,7 +27,7 @@ __all__ = [
 
 
 def autogen_init(modpath_or_name, submodules=None, respect_all=True, options=None,
-                 dry=False):
+                 dry=False, diff=False):
     """
     Autogenerates imports for a package __init__.py file.
 
@@ -78,7 +78,19 @@ def autogen_init(modpath_or_name, submodules=None, respect_all=True, options=Non
     init_fpath, new_text = _insert_autogen_text(modpath, initstr)
     if dry:
         logger.info('(DRY) would write updated file: %r' % init_fpath)
-        print(new_text)
+        if diff:
+            # Display difference
+            try:
+                with open(init_fpath, 'r') as file:
+                    old_text = file.read()
+            except Exception:
+                old_text = ''
+            from mkinit.util.util_diff import difftext
+            display_text = difftext(
+                old_text, new_text, colored=True, context_lines=3)
+            print(display_text)
+        else:
+            print(new_text)
         return init_fpath, new_text
     else:
         logger.info('writing updated file: %r' % init_fpath)

@@ -38,6 +38,10 @@ def main():
                         help='modify / write to the file inplace',
                         default=True)
 
+    parser.add_argument('--diff',
+                        dest='diff', action='store_true',
+                        help='show the diff (forces dry mode)', default=False)
+
     parser.add_argument('--noattrs',
                         dest='with_attrs', action='store_false', default=True,
                         help='Do not generate attribute from imports')
@@ -87,6 +91,10 @@ def main():
         'relative': ns['relative'],
     }
 
+    diff = ns['diff']
+    if diff:
+        dry = True
+
     if verbose == 0:
         level = logging.WARNING
     elif verbose == 1:
@@ -103,7 +111,7 @@ def main():
     )
 
     static_mkinit.autogen_init(modname_or_path, respect_all=respect_all,
-                               options=options, dry=dry)
+                               options=options, dry=dry, diff=diff)
 
 if __name__ == '__main__':
     main()
