@@ -1,3 +1,11 @@
+
+version: 0.3.0
+---------------
+
+### Fixes
+* Fixed a bug where long module names would be incorrectly formatted
+
+
 version: 0.2.1
 ---------------
 * Can now specify `__external__`

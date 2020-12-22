@@ -335,13 +335,84 @@ def _make_imports_str(imports, rootmodname='.'):
 
 
 def _packed_rhs_text(lhs_text, rhs_text):
-    """ packs rhs text to have indentation that agrees with lhs text """
-    # not sure why this isn't 76? >= maybe?
-    newline_prefix = (' ' * len(lhs_text))
-    raw_text = lhs_text + rhs_text
-    packstr = '\n'.join(textwrap.wrap(raw_text, break_long_words=False,
-                                      width=79, initial_indent='',
-                                      subsequent_indent=newline_prefix))
+    """
+    packs rhs text to have indentation that agrees with lhs text
+
+    Example:
+        >>> normname = 'this.is.a.module'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+
+        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoing'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+
+        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoingandgoingandgoingandgoingandgoing'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+
+
+    """
+    # FIXME: the parens get broken up wrong
+    # filler = '-' * (len(lhs_text) - 1) + ' '
+    # fill_text = filler + rhs_text
+
+    USE_BLACK = 0
+    if USE_BLACK:
+        import black
+        raw_text = lhs_text + rhs_text
+        packstr = black.format_str(
+            raw_text, mode=black.Mode(string_normalization=False))
+        return packstr
+    else:
+        import re
+        # not sure why this isn't 76? >= maybe?
+        max_width = 79
+
+        if len(lhs_text) > max_width * 0.7:
+            newline_prefix = ' ' * 4
+        else:
+            newline_prefix = (' ' * len(lhs_text))
+
+        raw_text = lhs_text + rhs_text
+        wrapped_lines = textwrap.wrap(
+            raw_text,
+            break_long_words=False,
+
+            width=79, initial_indent='',
+            subsequent_indent=newline_prefix)
+        packstr = '\n'.join(wrapped_lines)
+
+        FIX_FORMAT = 1
+        if FIX_FORMAT:
+            regex = r'\s*'.join(list(map(re.escape, lhs_text.split(' '))))
+            assert re.match(regex, lhs_text)
+            match = re.search(regex, packstr)
+            span = match.span()
+            assert span[0] == 0
+            wrapped_lhs = match.string[:span[1]]
+
+            # If textwrap broke the LHS then do something slightly different
+            if '\n' in wrapped_lhs:
+                new_rhs = packstr[span[1]:]
+                new_packstr = lhs_text + '\n' + newline_prefix + new_rhs
+                packstr = new_packstr
+
     return packstr
 
 

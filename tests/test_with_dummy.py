@@ -18,10 +18,13 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module'):
         'submod2': ub.touch(join(root, 'submod2.py')),
         'subdir1': ub.ensuredir(join(root, 'subdir1')),
         'subdir2': ub.ensuredir(join(root, 'subdir2')),
+        'longsubdir': ub.ensuredir(join(root, 'avery/long/subdir/that/goes/over80chars')),
     }
     paths['subdir1_init'] = ub.touch(join(paths['subdir1'], '__init__.py'))
     paths['subdir2_init'] = ub.touch(join(paths['subdir2'], '__init__.py'))
     paths['root_init'] = ub.touch(join(paths['root'], '__init__.py'))
+    paths['long_subdir_init'] = ub.touch(join(paths['longsubdir'], '__init__.py'))
+    paths['long_submod'] = ub.touch(join(paths['longsubdir'], 'long_submod.py'))
 
     ub.writeto(paths['subdir1_init'], ub.codeblock(
         '''
@@ -191,6 +194,38 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module'):
         if __name__ == 'something_else':
             bad_something_else = None
         '''))
+
+    # Ensure that each submodule has an __init__
+    # (do we need this with PEP 420 anymore?)
+    root = paths['root']
+    from os.path import relpath, exists
+    import os
+    for key, path in paths.items():
+        relative = relpath(path, root)
+        suffix = []
+        parts = relative.split(os.sep)
+        for part in parts:
+            if '.' not in part:
+                suffix.append(part)
+                middir = join(root, os.sep.join(suffix))
+                fpath = join(middir, '__init__.py')
+                if not exists(fpath):
+                    ub.touch(fpath)
+
+    ub.writeto(paths['long_submod'], ub.codeblock(
+        '''
+        def a_very_nested_function():
+            pass
+        def another_func1():
+            pass
+        def another_func2():
+            pass
+        def another_func3():
+            pass
+        def another_func4():
+            pass
+        '''
+    ))
     return paths
 
 
@@ -216,8 +251,13 @@ def test_static_import_without_init():
     paths = make_dummy_package(cache_dpath)
     ub.delete(paths['root_init'])
 
+    text = mkinit.static_init(paths['long_subdir_init'])
+    print(text)
+    # check_dummy_root_init(text)
+
     modpath = paths['root']
     text = mkinit.static_init(modpath)
+    print(text)
     check_dummy_root_init(text)
 
 
