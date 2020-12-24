@@ -1,6 +1,8 @@
 import ubelt as ub
 from os.path import join
 from os.path import dirname
+import sys
+from distutils.version import LooseVersion
 
 
 def make_simple_dummy_package():
@@ -24,10 +26,12 @@ def make_simple_dummy_package():
     paths = {key: join(dpath, path) for key, path in rel_paths.items()}
 
     for key, path in paths.items():
+        if not path.endswith('.py'):
+            ub.ensuredir(path)
+
+    for key, path in paths.items():
         if path.endswith('.py'):
             ub.touch(path)
-        else:
-            ub.ensuredir(path)
 
     with open(paths['submod'], 'w') as file:
         file.write(ub.codeblock(
@@ -54,10 +58,14 @@ def test_simple_lazy_import():
     xdoctest ~/code/mkinit/tests/test_with_simple_dummy.py test_simple_lazy_import
     """
     import mkinit
+    import pytest
     paths = make_simple_dummy_package()
     pkg_path = paths['root']
 
     mkinit.autogen_init(pkg_path, options={'lazy_import': 1}, dry=False, recursive=True)
+
+    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion('3.7'):
+        pytest.skip()
 
     dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(dpath):
