@@ -24,6 +24,122 @@ Installation
 
     pip install mkinit
 
+
+The Pitch
+---------
+
+Say you have a python module structured like so:
+
+.. code::
+
+    └── mkinit_demo_pkg
+        ├── __init__.py
+        ├── submod.py
+        └── subpkg
+            ├── __init__.py
+            └── nested.py
+
+
+And you would like to make all functions inside of ``submod.py`` and
+``nested.py`` available at the top-level of the package. 
+
+Imagine the contents of submod.py and nested.py are:
+
+.. code:: python
+
+    # --- submod.py ---
+
+    def submod_func():
+        print('This is a submod func in {}'.format(__file__))
+
+    # --- nested.py ---
+
+    def nested_func():
+        print('This is a nested func in {}'.format(__file__))
+
+You could manually write:
+
+
+.. code::
+    
+    from mkinit_demo_pkg.submod import *
+    from mkinit_demo_pkg.subpkg.nested import *
+
+
+But that has a few problems. Using ``import *`` makes it hard for people
+reading the code to know what is coming from where. Furthermore, if there were
+many submodules you wanted to expose attributes of, writing this would become
+tedious and hard to maintain. 
+
+Enter the mkinit package. It has the ability to autogenerate explicit ``__init__.py``
+files using static analysis. Normally, the mkinit CLI only works on one file at
+a time, but if we specify the ``--recursive`` flag, then mkinit will
+recursively generate ``__init__.py`` files for all subpackages in the package.
+
+Thus running ``mkinit mkinit_demo_pkg --recursive`` will result in a root
+``__init__.py`` file that looks like this:
+
+.. code:: python
+
+    from mkinit_demo_pkg import submod
+    from mkinit_demo_pkg import subpkg
+
+    from mkinit_demo_pkg.submod import (submod_func,)
+    from mkinit_demo_pkg.subpkg import (nested, nested_func,)
+
+    __all__ = ['nested', 'nested_func', 'submod', 'submod_func', 'subpkg']
+
+
+That's pretty cool. The mkinit package was able to recursively parse our
+package, find all of the defined names, and then generate ``__init__.py`` files
+such that all attributes are exposed at the top level of the package.
+Furthermore, this file is **readable**. It is perfectly clear exactly what
+names are exposed in this module without having to execute anything.
+
+
+Of course, this isn't a perfect solution. Perhaps only some submodules should
+be exposed, perhaps you would rather use relative import statements, maybe you
+only want to expose submodule but not their attributes, or vis-versa. Well good
+news, because mkinit has command line flags that allow for all of these modes.
+See ``mkinit --help`` for more details.
+
+
+Lastly, while exposing all attributes can be helpful, for larger projects
+import time can start to become a consideration. Thankfully, PEP 0562 details a
+method that allows for lazy imports in Python >= 3.7. As of 2020-12-24 mkinit
+supports autogenerating these lazy init files. Unfortunately, this is slightly
+uglier than the eager imports. It must first add in a bit of boilerplate to define the 
+
+
+.. code:: python
+
+    def lazy_install(module_name, submodules, submod_attrs):
+        <HIDDEN BOILERPLATE>
+    
+    __getattr__ = lazy_install(
+        __name__,
+        submodules={
+            'submod',
+            'subpkg',
+        },
+        submod_attrs={
+            'submod': [
+                'submod_func',
+            ],
+            'subpkg': [
+                'nested',
+                'nested_func',
+            ],
+        },
+    )
+
+    def __dir__():
+        return __all__
+
+    __all__ = ['nested', 'nested_func', 'submod', 'submod_func', 'subpkg']
+
+
+
 Command Line Usage
 ------------------
 
@@ -42,6 +158,8 @@ with special xml-like comments.
 
 Dynamic Usage
 -------------
+
+NOTE: Dynamic usage is NOT recommended. 
 
 In most cases, we recommend using mkinit command line tool to statically
 generate / update the `__init__.py` file, but there is an option to to use it
