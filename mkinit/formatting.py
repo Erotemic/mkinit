@@ -343,9 +343,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         default_lazy_boilerplate = ub.codeblock(
             r'''
 
-            DEBUG_LAZY = 0
-
-
             def lazy_install(module_name, submodules, submod_attrs):
                 """
                 Defines gettr for lazy import via PEP 562
@@ -381,8 +378,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                     return module
 
                 def __getattr__(name):
-                    if DEBUG_LAZY:
-                        print('LAZY EVALUATE {!r} in {}'.format(name, __name__))
                     if name in submodules:
                         fullname = f'{module_name}.{name}'
                         attr = require(fullname)
@@ -394,8 +389,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                         attr = getattr(module, name)
                     else:
                         raise AttributeError(f'No {module_name} attribute {name}')
-                    if DEBUG_LAZY:
-                        print('EVALUATED TO = {!r}'.format(attr))
                     # Set module-level attribute so getattr is not called again
                     globals()[name] = attr
                     return attr
@@ -411,10 +404,14 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             )
             ''')
         submod_attrs = {}
-        for submod, attrs in from_imports:
-            submod = submod.lstrip('.')
-            submod_attrs[submod] = attrs
-        submodules = {m.lstrip('.') for m in imports}
+        if options.get('with_attrs', True):
+            for submod, attrs in from_imports:
+                submod = submod.lstrip('.')
+                submod_attrs[submod] = attrs
+        if options.get('with_mods', True):
+            submodules = {m.lstrip('.') for m in imports}
+        else:
+            submodules = set()
         initstr = template.format(
             submodules=ub.repr2(submodules),
             submod_attrs=ub.repr2(submod_attrs)

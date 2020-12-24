@@ -5,6 +5,7 @@ import ubelt as ub
 from distutils.version import LooseVersion
 import sys
 from os.path import join
+from os.path import dirname
 
 
 def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):

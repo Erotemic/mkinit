@@ -11,5 +11,10 @@ python setup.py build_ext --inplace
 
 python -c "import skimage; print(skimage.__file__)"
 
-mkinit skimage/filters/__init__.py --relative --lazy
+mkinit skimage/filters/__init__.py --relative --lazy -w
+
+cat skimage/filters/__init__.py
+
+python -c "from skimage import filters; print(repr(filters.equalize))"
+python -c "import skimage; print(skimage.filters)"
 """
