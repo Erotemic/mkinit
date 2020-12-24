@@ -56,6 +56,19 @@ def main():
                         action='store_true', default=False,
                         help='Use relative . imports instead of <modname>')
 
+    parser.add_argument('--exposeall',
+                        action='store_true', default=False,
+                        help='If specified, runs mkinit on all subpackages in a package')
+
+    parser.add_argument('--lazy',
+                        action='store_true', default=False,
+                        help='Use lazy imports (Python >= 3.7 only!)')
+
+    parser.add_argument('--recursive',
+                        dest='recursive',
+                        action='store_false', default=True,
+                        help='if False does not respect __all__ attributes of submodules when parsing')
+
     parser.add_argument('--norespect_all',
                         dest='respect_all',
                         action='store_false', default=True,
@@ -89,6 +102,7 @@ def main():
         'with_mods': ns['with_mods'],
         'with_all': ns['with_all'],
         'relative': ns['relative'],
+        'lazy_import': ns['lazy'],
     }
 
     diff = ns['diff']

@@ -1,1 +1,2 @@
 xdoctest >= 0.3.5
+black 
