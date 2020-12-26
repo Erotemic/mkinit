@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Contains logic for formatting statically / dynamically extracted information
 into the final product.
@@ -269,7 +270,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         >>> initstr = _initstr(modname, imports, from_imports, options=options)
         >>> print(initstr.replace('\n\n', '\n'))
         from importlib import lazy_import
-          __getattr__ = lazy_install(
+          __getattr__ = lazy_import(
               __name__,
               submodules={
                   'bar',
@@ -345,9 +346,9 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         default_lazy_boilerplate = textwrap.dedent(
             r'''
 
-            def lazy_install(module_name, submodules, submod_attrs):
+            def lazy_import(module_name, submodules, submod_attrs):
                 """
-                Defines gettr for lazy import via PEP 562
+                Boilerplate to define PEP 562 __getattr__ for lazy import
                 https://www.python.org/dev/peps/pep-0562/
                 """
                 import sys
@@ -368,29 +369,35 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                     spec = importlib.util.find_spec(fullname)
                     try:
                         module = importlib.util.module_from_spec(spec)
-                    except:
-                        raise ImportError('Could not lazy import module {fullname}'.format(fullname=fullname)) from None
+                    except Exception:
+                        raise ImportError(
+                            'Could not lazy import module {fullname}'.format(
+                                fullname=fullname)) from None
                     loader = importlib.util.LazyLoader(spec.loader)
 
                     sys.modules[fullname] = module
 
-                    # Make module with proper locking and get it inserted into sys.modules.
+                    # Make module with proper locking and add to sys.modules
                     loader.exec_module(module)
 
                     return module
 
                 def __getattr__(name):
                     if name in submodules:
-                        fullname = '{module_name}.{name}'.format(module_name=module_name, name=name)
+                        fullname = '{module_name}.{name}'.format(
+                            module_name=module_name, name=name)
                         attr = require(fullname)
                     elif name in name_to_submod:
                         modname = name_to_submod[name]
                         module = importlib.import_module(
-                            '{module_name}.{modname}'.format(module_name=module_name, modname=modname)
+                            '{module_name}.{modname}'.format(
+                                module_name=module_name, modname=modname)
                         )
                         attr = getattr(module, name)
                     else:
-                        raise AttributeError('No {module_name} attribute {name}'.format(module_name=module_name, name=name))
+                        raise AttributeError(
+                            'No {module_name} attribute {name}'.format(
+                                module_name=module_name, name=name))
                     # Set module-level attribute so getattr is not called again
                     globals()[name] = attr
                     return attr
@@ -399,7 +406,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         ).rstrip('\n')
         template = textwrap.dedent(
             '''
-            __getattr__ = lazy_install(
+            __getattr__ = lazy_import(
                 __name__,
                 submodules={submodules},
                 submod_attrs={submod_attrs},

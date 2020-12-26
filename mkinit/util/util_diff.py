@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Port of ubelt utilities + difftext wrapper around difflib
 """

@@ -60,7 +60,7 @@ Imagine the contents of submod.py and nested.py are:
 You could manually write:
 
 
-.. code::
+.. code:: python
     
     from mkinit_demo_pkg.submod import *
     from mkinit_demo_pkg.subpkg.nested import *
@@ -104,19 +104,75 @@ news, because mkinit has command line flags that allow for all of these modes.
 See ``mkinit --help`` for more details.
 
 
-Lastly, while exposing all attributes can be helpful, for larger projects
-import time can start to become a consideration. Thankfully, PEP 0562 details a
-method that allows for lazy imports in Python >= 3.7. As of 2020-12-24 mkinit
-supports autogenerating these lazy init files. Unfortunately, this is slightly
-uglier than the eager imports. It must first add in a bit of boilerplate to define the 
+Lastly, while exposing all attributes can be helpful for larger projects,
+import time can start to become a consideration. Thankfully, PEP 0562 outlines
+a lazy import specification for Python >= 3.7. As of 2020-12-26 mkinit
+supports autogenerating these lazy init files. 
+
+Unfortunately, there is no syntax support for lazy imports, so mkinit must
+define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
 
 
 .. code:: python
 
-    def lazy_install(module_name, submodules, submod_attrs):
-        <HIDDEN BOILERPLATE>
+    def lazy_import(module_name, submodules, submod_attrs):
+        """
+        Boilerplate to define PEP 562 __getattr__ for lazy import
+        https://www.python.org/dev/peps/pep-0562/
+        """
+        import sys
+        import importlib
+        import importlib.util
+        all_funcs = []
+        for mod, funcs in submod_attrs.items():
+            all_funcs.extend(funcs)
+        name_to_submod = {
+            func: mod for mod, funcs in submod_attrs.items()
+            for func in funcs
+        }
+
+        def require(fullname):
+            if fullname in sys.modules:
+                return sys.modules[fullname]
+
+            spec = importlib.util.find_spec(fullname)
+            try:
+                module = importlib.util.module_from_spec(spec)
+            except Exception:
+                raise ImportError(
+                    'Could not lazy import module {fullname}'.format(
+                        fullname=fullname)) from None
+            loader = importlib.util.LazyLoader(spec.loader)
+
+            sys.modules[fullname] = module
+
+            # Make module with proper locking and add to sys.modules
+            loader.exec_module(module)
+
+            return module
+
+        def __getattr__(name):
+            if name in submodules:
+                fullname = '{module_name}.{name}'.format(
+                    module_name=module_name, name=name)
+                attr = require(fullname)
+            elif name in name_to_submod:
+                modname = name_to_submod[name]
+                module = importlib.import_module(
+                    '{module_name}.{modname}'.format(
+                        module_name=module_name, modname=modname)
+                )
+                attr = getattr(module, name)
+            else:
+                raise AttributeError(
+                    'No {module_name} attribute {name}'.format(
+                        module_name=module_name, name=name))
+            # Set module-level attribute so getattr is not called again
+            globals()[name] = attr
+            return attr
+        return __getattr__
     
-    __getattr__ = lazy_install(
+    __getattr__ = lazy_import(
         __name__,
         submodules={
             'submod',
