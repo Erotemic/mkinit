@@ -12,6 +12,12 @@ coverage:
       target: auto # auto % coverage target
       threshold: 20%  # allow for 20% reduction of coverage without failing
 
+    # do not run coverage on patch nor changes
+    patch:
+      default:
+        enabled: false
+    changes: no
+
 parsers:
   gcov:
     branch_detection:
