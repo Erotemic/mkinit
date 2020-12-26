@@ -101,8 +101,16 @@ class TopLevelVisitor(ast.NodeVisitor):
     @classmethod
     def parse(TopLevelVisitor, source):
         self = TopLevelVisitor()
-        source_utf8 = source.encode('utf8')
-        pt = ast.parse(source_utf8)
+
+        if six.PY2:
+            try:
+                source_utf8 = source.encode('utf8')
+                pt = ast.parse(source_utf8)
+            except UnicodeDecodeError:
+                pt = ast.parse(source)
+        else:
+            source_utf8 = source.encode('utf8')
+            pt = ast.parse(source_utf8)
 
         self.visit(pt)
         return self

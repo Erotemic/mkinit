@@ -8,6 +8,7 @@ import os
 from six.moves import builtins
 from mkinit import static_analysis as static
 from mkinit.util import util_import
+from mkinit.util import util_diff
 from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
 from os.path import abspath
@@ -259,6 +260,7 @@ def _extract_attributes(modpath, respect_all=True):
 
     Example:
         >>> modpath = util_import.modname_to_modpath('mkinit', hide_init=False)
+        >>> _extract_attributes(modpath)
         >>> modpath = util_import.modname_to_modpath('mkinit.util.util_diff', hide_init=False)
         >>> _extract_attributes(modpath)
     """
