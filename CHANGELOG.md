@@ -1,3 +1,15 @@
+
+version: 0.3.0
+---------------
+
+### Added
+* Can now specify `--recursive` on the CLI to generate all `__init__.py` files in a package.
+* Can now specify `--lazy` on the CLI to auto-generate PEP 562 lazy imports.
+
+### Fixes
+* Fixed a bug where long module names would be incorrectly formatted
+
+
 version: 0.2.1
 ---------------
 * Can now specify `__external__`

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 Contains logic for formatting statically / dynamically extracted information
 into the final product.
@@ -10,6 +11,9 @@ from mkinit import static_analysis as static
 
 
 logger = logging.getLogger(__name__)
+
+
+USE_BLACK = 0
 
 
 def _ensure_options(given_options=None):
@@ -34,6 +38,8 @@ def _ensure_options(given_options=None):
         'with_mods': True,
         'with_all': True,
         'relative': False,
+        'lazy_import': False,
+        'lazy_boilerplate': None,
     }
     options = default_options.copy()
     for k in given_options.keys():
@@ -203,13 +209,20 @@ def _indent(text, indent='    '):
 
 def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
              private=set(), options=None):
-    """
+    r"""
     Calls the other string makers
 
     CommandLine:
         python -m mkinit.static_autogen _initstr
 
     Args:
+        modname (str): the name of the module to generate the init str for
+
+        imports (List[str]): list of module-level imports
+
+        from_imports (List[Tuple[str, List[str]]]):
+            List of submodules and their imported attributes
+
         options (dict): customize output
 
     CommandLine:
@@ -243,6 +256,36 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         __all__ = ['a', 'b', 'bar', 'baz', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k',
                    'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x',
                    'y', 'z']
+
+    Example:
+        >>> modname = 'foo'
+        >>> imports = ['.bar', '.baz']
+        >>> from_imports = [('.bar', ['func1', 'func2'])]
+        >>> options = {'lazy_import': 1, 'lazy_boilerplate': None}
+        >>> initstr = _initstr(modname, imports, from_imports, options=options)
+        >>> print(initstr)
+        ...
+
+        >>> options = {'lazy_import': 1, 'lazy_boilerplate': 'from importlib import lazy_import'}
+        >>> initstr = _initstr(modname, imports, from_imports, options=options)
+        >>> print(initstr.replace('\n\n', '\n'))
+        from importlib import lazy_import
+          __getattr__ = lazy_import(
+              __name__,
+              submodules={
+                  'bar',
+                  'baz',
+              },
+              submod_attrs={
+                  'bar': [
+                      'func1',
+                      'func2',
+                  ],
+              },
+        )
+        def __dir__():
+            return __all__
+        __all__ = ['bar', 'baz', 'func1', 'func2']
     """
     options = _ensure_options(options)
 
@@ -254,18 +297,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())
 
-    def append_part(new_part):
-        """ appends a new part if it is nonempty """
-        if new_part:
-            if parts:
-                # separate from previous parts with a newline
-                parts.append('')
-            parts.append(new_part)
-
     if options.get('with_mods', True):
         explicit_exports.extend([e.lstrip('.') for e in imports])
-        append_part(_make_imports_str(imports, modname))
-
     if options.get('with_attrs', True):
         from fnmatch import fnmatch
         # TODO: allow pattern matching here
@@ -281,14 +314,14 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         _pp_pats = protected_pats | private_pats
         _pp_set = private_set | protected_set
 
+        def _private_matches(x):
+            x = x.lstrip('.')
+            return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
+
         def _pp_matches(x):
             # TODO: standardize how explicit vs submodules are handled
             x = x.lstrip('.')
             return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
-
-        def _private_matches(x):
-            x = x.lstrip('.')
-            return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
 
         _from_imports = [
             (m, sub) for m, sub in from_imports if not _pp_matches(m)
@@ -298,10 +331,137 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             n for m, sub in _from_imports for n in sub
             if not _private_matches(n)
         ])
-        attr_part = _make_fromimport_str(_from_imports, modname)
-        append_part(attr_part)
+
+    def append_part(new_part):
+        """ appends a new part if it is nonempty """
+        if new_part:
+            if parts:
+                # separate from previous parts with a newline
+                parts.append('')
+            parts.append(new_part)
+
+    if options['lazy_import']:
+        # NOTE: We are not using f-strings so the code can still be parsed
+        # in older versions of python.
+        default_lazy_boilerplate = textwrap.dedent(
+            r'''
+
+            def lazy_import(module_name, submodules, submod_attrs):
+                """
+                Boilerplate to define PEP 562 __getattr__ for lazy import
+                https://www.python.org/dev/peps/pep-0562/
+                """
+                import sys
+                import importlib
+                import importlib.util
+                all_funcs = []
+                for mod, funcs in submod_attrs.items():
+                    all_funcs.extend(funcs)
+                name_to_submod = {
+                    func: mod for mod, funcs in submod_attrs.items()
+                    for func in funcs
+                }
+
+                def require(fullname):
+                    if fullname in sys.modules:
+                        return sys.modules[fullname]
+
+                    spec = importlib.util.find_spec(fullname)
+                    try:
+                        module = importlib.util.module_from_spec(spec)
+                    except Exception:
+                        raise ImportError(
+                            'Could not lazy import module {fullname}'.format(
+                                fullname=fullname)) from None
+                    loader = importlib.util.LazyLoader(spec.loader)
+
+                    sys.modules[fullname] = module
+
+                    # Make module with proper locking and add to sys.modules
+                    loader.exec_module(module)
+
+                    return module
+
+                def __getattr__(name):
+                    if name in submodules:
+                        fullname = '{module_name}.{name}'.format(
+                            module_name=module_name, name=name)
+                        attr = require(fullname)
+                    elif name in name_to_submod:
+                        modname = name_to_submod[name]
+                        module = importlib.import_module(
+                            '{module_name}.{modname}'.format(
+                                module_name=module_name, modname=modname)
+                        )
+                        attr = getattr(module, name)
+                    else:
+                        raise AttributeError(
+                            'No {module_name} attribute {name}'.format(
+                                module_name=module_name, name=name))
+                    # Set module-level attribute so getattr is not called again
+                    globals()[name] = attr
+                    return attr
+                return __getattr__
+            '''
+        ).rstrip('\n')
+        template = textwrap.dedent(
+            '''
+            __getattr__ = lazy_import(
+                __name__,
+                submodules={submodules},
+                submod_attrs={submod_attrs},
+            )
+            ''').rstrip('\n')
+        submod_attrs = {}
+        if options.get('with_attrs', True):
+            for submod, attrs in from_imports:
+                submod = submod.lstrip('.')
+                submod_attrs[submod] = attrs
+        if options.get('with_mods', True):
+            submodules = {m.lstrip('.') for m in imports}
+        else:
+            submodules = set()
+
+        # Currently this is the only use of ubelt, but repr2
+        # is easier to use in testing than pprint, so perhaps
+        # we can remove complexity and just use ubelt elsewhere
+        import ubelt as ub
+        initstr = template.format(
+            submodules=ub.repr2(submodules).replace('\n', '\n    '),
+            submod_attrs=ub.repr2(submod_attrs).replace('\n', '\n    '),
+        )
+
+        if USE_BLACK:
+            try:
+                import black
+                initstr = black.format_str(
+                    initstr, mode=black.Mode(string_normalization=False))
+            except ImportError:
+                pass
+
+        if options['lazy_boilerplate'] is None:
+            append_part(default_lazy_boilerplate)
+        else:
+            # Customize lazy boilerplate
+            append_part(options['lazy_boilerplate'])
+
+        append_part(initstr.rstrip())
+    else:
+        if options.get('with_mods', True):
+            append_part(_make_imports_str(imports, modname))
+
+        if options.get('with_attrs', True):
+
+            attr_part = _make_fromimport_str(_from_imports, modname)
+            append_part(attr_part)
 
     if options.get('with_all', True):
+        if options['lazy_import']:
+            append_part(textwrap.dedent(
+                '''
+                def __dir__():
+                    return __all__
+                ''').rstrip())
         exports_repr = ["'{}'".format(e)
                         for e in sorted(explicit_exports)]
         rhs_body = ', '.join(exports_repr)
@@ -310,12 +470,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     initstr = '\n'.join([p for p in parts])
     return initstr
-
-
-# def _make_module_header():
-#     return '\n'.join([
-#         '# flake8:' + ' noqa',  # the plus prevents it from triggering on this file
-#         'from __future__ import absolute_import, division, print_function, unicode_literals'])
 
 
 def _make_imports_str(imports, rootmodname='.'):
@@ -335,13 +489,81 @@ def _make_imports_str(imports, rootmodname='.'):
 
 
 def _packed_rhs_text(lhs_text, rhs_text):
-    """ packs rhs text to have indentation that agrees with lhs text """
-    # not sure why this isn't 76? >= maybe?
-    newline_prefix = (' ' * len(lhs_text))
-    raw_text = lhs_text + rhs_text
-    packstr = '\n'.join(textwrap.wrap(raw_text, break_long_words=False,
-                                      width=79, initial_indent='',
-                                      subsequent_indent=newline_prefix))
+    """
+    packs rhs text to have indentation that agrees with lhs text
+
+    Example:
+        >>> normname = 'this.is.a.module'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+
+        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoing'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+
+        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoingandgoingandgoingandgoingandgoing'
+        >>> fromlist = ['func{}'.format(d) for d in range(10)]
+        >>> indent = ''
+        >>> lhs_text = indent + 'from {normname} import ('.format(
+        >>>     normname=normname)
+        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
+        >>> print(packstr)
+    """
+    # FIXME: the parens get broken up wrong
+    # filler = '-' * (len(lhs_text) - 1) + ' '
+    # fill_text = filler + rhs_text
+
+    if USE_BLACK:
+        import black
+        raw_text = lhs_text + rhs_text
+        packstr = black.format_str(
+            raw_text, mode=black.Mode(string_normalization=False))
+        return packstr
+    else:
+        import re
+        # not sure why this isn't 76? >= maybe?
+        max_width = 79
+
+        # This is a hacky heuristic that could perhaps be more robust?
+        if len(lhs_text) > max_width * 0.7:
+            newline_prefix = ' ' * 4
+        else:
+            newline_prefix = (' ' * len(lhs_text))
+
+        raw_text = lhs_text + rhs_text
+        wrapped_lines = textwrap.wrap(
+            raw_text,
+            break_long_words=False,
+            width=79, initial_indent='',
+            subsequent_indent=newline_prefix)
+        packstr = '\n'.join(wrapped_lines)
+
+        FIX_FORMAT = 1
+        if FIX_FORMAT:
+            regex = r'\s*'.join(list(map(re.escape, lhs_text.split(' '))))
+            assert re.match(regex, lhs_text)
+            match = re.search(regex, packstr)
+            span = match.span()
+            assert span[0] == 0
+            wrapped_lhs = match.string[:span[1]]
+
+            # If textwrap broke the LHS then do something slightly different
+            if '\n' in wrapped_lhs:
+                new_rhs = packstr[span[1]:]
+                new_packstr = lhs_text + '\n' + newline_prefix + new_rhs
+                packstr = new_packstr
+
     return packstr
 
 

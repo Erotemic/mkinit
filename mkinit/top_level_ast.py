@@ -1,9 +1,7 @@
 # -*- coding: utf-8 -*-
-# from collections import OrderedDict
 from __future__ import absolute_import, division, print_function, unicode_literals
 import ast
 import six
-# from ubelt.orderedset import OrderedSet as oset
 from ordered_set import OrderedSet as oset
 
 __all__ = [
@@ -103,8 +101,16 @@ class TopLevelVisitor(ast.NodeVisitor):
     @classmethod
     def parse(TopLevelVisitor, source):
         self = TopLevelVisitor()
-        source_utf8 = source.encode('utf8')
-        pt = ast.parse(source_utf8)
+
+        if six.PY2:
+            try:
+                source_utf8 = source.encode('utf8')
+                pt = ast.parse(source_utf8)
+            except UnicodeDecodeError:
+                pt = ast.parse(source)
+        else:
+            source_utf8 = source.encode('utf8')
+            pt = ast.parse(source_utf8)
 
         self.visit(pt)
         return self

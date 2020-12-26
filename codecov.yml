@@ -1,0 +1,32 @@
+codecov:
+  require_ci_to_pass: no
+
+coverage:
+  precision: 2
+  round: down
+  range: "50...80"
+
+  status:
+    project: # settings affecting project coverage
+      enabled: yes
+      target: auto # auto % coverage target
+      threshold: 20%  # allow for 20% reduction of coverage without failing
+
+    # do not run coverage on patch nor changes
+    patch:
+      default:
+        enabled: false
+    changes: no
+
+parsers:
+  gcov:
+    branch_detection:
+      conditional: yes
+      loop: yes
+      method: no
+      macro: no
+
+comment:
+  layout: "reach,diff,flags,files,footer"
+  behavior: default
+  require_changes: no
