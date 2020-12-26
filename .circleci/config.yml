@@ -187,7 +187,6 @@ __doc__: &__doc__
         git tag --delete test-tag4
         ```
 
-
         """ # "  # hack for vim yml syntax highlighter
 
 version: 2
