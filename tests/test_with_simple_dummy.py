@@ -78,7 +78,7 @@ def test_simple_lazy_import():
         mkinit_demo_pkg.submod_func()
         mkinit_demo_pkg.submod_func()
 
-    if 1:
-        info = ub.cmd('tree ' + dpath, tee=1)
-        info = ub.cmd('cat ' + paths['subpkg_init'], tee=1)
-        info = ub.cmd('cat ' + paths['root_init'], tee=1)
+    # if 0:
+    #     info = ub.cmd('tree ' + dpath, tee=1)
+    #     info = ub.cmd('cat ' + paths['subpkg_init'], tee=1)
+    #     info = ub.cmd('cat ' + paths['root_init'], tee=1)

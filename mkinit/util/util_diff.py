@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """
 Port of ubelt utilities + difftext wrapper around difflib
 """
+from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import sys
 import six

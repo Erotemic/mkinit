@@ -10,7 +10,6 @@ Developing:
 """
 import sys
 from os.path import exists
-
 from setuptools import find_packages
 from setuptools import setup
 
@@ -156,7 +155,6 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
         plat_impl = platform.python_implementation()
 
     if version_info is None:
-        import sys
         version_info = sys.version_info
 
     major, minor = version_info[0:2]
@@ -190,14 +188,6 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
 
 NAME = 'mkinit'
 VERSION = parse_version('mkinit/__init__.py')
-
-extras_require={
-    'all': parse_requirements('requirements.txt'),
-    'tests': parse_requirements('requirements/tests.txt'),
-    'optional': parse_requirements('requirements/optional.txt'),
-}
-
-print(extras_require)
 
 if __name__ == '__main__':
     setup(
