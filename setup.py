@@ -189,14 +189,6 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
 NAME = 'mkinit'
 VERSION = parse_version('mkinit/__init__.py')
 
-extras_require={
-    'all': parse_requirements('requirements.txt'),
-    'tests': parse_requirements('requirements/tests.txt'),
-    'optional': parse_requirements('requirements/optional.txt'),
-}
-
-print(extras_require)
-
 if __name__ == '__main__':
     setup(
         name=NAME,
