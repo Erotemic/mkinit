@@ -205,7 +205,7 @@ def _indent(text, indent='    '):
 
 def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
              private=set(), options=None):
-    """
+    r"""
     Calls the other string makers
 
     CommandLine:
@@ -266,23 +266,22 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         >>> initstr = _initstr(modname, imports, from_imports, options=options)
         >>> print(initstr.replace('\n\n', '\n'))
         from importlib import lazy_import
-        __getattr__ = lazy_install(
-            __name__,
-            submodules={
-                'bar',
-                'baz',
-            },
-            submod_attrs={
-                'bar': [
-                    'func1',
-                    'func2',
-                ],
-            },
+          __getattr__ = lazy_install(
+              __name__,
+              submodules={
+                  'bar',
+                  'baz',
+              },
+              submod_attrs={
+                  'bar': [
+                      'func1',
+                      'func2',
+                  ],
+              },
         )
         def __dir__():
             return __all__
         __all__ = ['bar', 'baz', 'func1', 'func2']
-
     """
     options = _ensure_options(options)
 
@@ -338,9 +337,9 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             parts.append(new_part)
 
     if options['lazy_import']:
-        import ubelt as ub
-
-        default_lazy_boilerplate = ub.codeblock(
+        # NOTE: We are not using f-strings so the code can still be parsed
+        # in older versions of python.
+        default_lazy_boilerplate = textwrap.dedent(
             r'''
 
             def lazy_install(module_name, submodules, submod_attrs):
@@ -367,7 +366,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                     try:
                         module = importlib.util.module_from_spec(spec)
                     except:
-                        raise ImportError(f'Could not lazy import module {fullname}') from None
+                        raise ImportError('Could not lazy import module {fullname}'.format(fullname=fullname)) from None
                     loader = importlib.util.LazyLoader(spec.loader)
 
                     sys.modules[fullname] = module
@@ -379,30 +378,30 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
                 def __getattr__(name):
                     if name in submodules:
-                        fullname = f'{module_name}.{name}'
+                        fullname = '{module_name}.{name}'.format(module_name=module_name, name=name)
                         attr = require(fullname)
                     elif name in name_to_submod:
                         modname = name_to_submod[name]
                         module = importlib.import_module(
-                            f'{module_name}.{modname}'
+                            '{module_name}.{modname}'.format(module_name=module_name, name=name)
                         )
                         attr = getattr(module, name)
                     else:
-                        raise AttributeError(f'No {module_name} attribute {name}')
+                        raise AttributeError('No {module_name} attribute {name}'.format(module_name=module_name, name=name))
                     # Set module-level attribute so getattr is not called again
                     globals()[name] = attr
                     return attr
                 return __getattr__
             '''
-        )
-        template = ub.codeblock(
+        ).rstrip('\n')
+        template = textwrap.dedent(
             '''
             __getattr__ = lazy_install(
                 __name__,
                 submodules={submodules},
                 submod_attrs={submod_attrs},
             )
-            ''')
+            ''').rstrip('\n')
         submod_attrs = {}
         if options.get('with_attrs', True):
             for submod, attrs in from_imports:
@@ -412,14 +411,22 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             submodules = {m.lstrip('.') for m in imports}
         else:
             submodules = set()
+
+        # Currently this is the only use of ubelt, but repr2
+        # is easier to use in testing than pprint, so perhaps
+        # we can remove complexity and just use ubelt elsewhere
+        import ubelt as ub
         initstr = template.format(
-            submodules=ub.repr2(submodules),
-            submod_attrs=ub.repr2(submod_attrs)
+            submodules=ub.repr2(submodules).replace('\n', '\n    '),
+            submod_attrs=ub.repr2(submod_attrs).replace('\n', '\n    '),
         )
 
-        import black
-        initstr = black.format_str(
-            initstr, mode=black.Mode(string_normalization=False))
+        try:
+            import black
+            initstr = black.format_str(
+                initstr, mode=black.Mode(string_normalization=False))
+        except ImportError:
+            pass
 
         if options['lazy_boilerplate'] is None:
             append_part(default_lazy_boilerplate)
@@ -439,11 +446,11 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     if options.get('with_all', True):
         if options['lazy_import']:
-            append_part(ub.codeblock(
+            append_part(textwrap.dedent(
                 '''
                 def __dir__():
                     return __all__
-                '''))
+                ''').rstrip())
         exports_repr = ["'{}'".format(e)
                         for e in sorted(explicit_exports)]
         rhs_body = ', '.join(exports_repr)
@@ -452,12 +459,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     initstr = '\n'.join([p for p in parts])
     return initstr
-
-
-# def _make_module_header():
-#     return '\n'.join([
-#         '# flake8:' + ' noqa',  # the plus prevents it from triggering on this file
-#         'from __future__ import absolute_import, division, print_function, unicode_literals'])
 
 
 def _make_imports_str(imports, rootmodname='.'):
