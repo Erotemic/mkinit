@@ -259,7 +259,7 @@ def _extract_attributes(modpath, respect_all=True):
 
     Example:
         >>> modpath = util_import.modname_to_modpath('mkinit', hide_init=False)
-        >>> modpath = util_import.modname_to_modpath('ubelt.util_path', hide_init=False)
+        >>> modpath = util_import.modname_to_modpath('mkinit.util.util_diff', hide_init=False)
         >>> _extract_attributes(modpath)
     """
     try:
@@ -359,7 +359,7 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
         try:
             valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
         except SyntaxError as ex:
-            warnings.warn('Failed to parse module {} ex = {!r}'.format(rel_modname, ex))
+            warnings.warn('Failed to parse module {!r}, ex = {!r}'.format(rel_modname, ex))
         else:
             from_imports.append(('.' + rel_modname, sorted(valid_attrs)))
 
@@ -371,7 +371,7 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
             try:
                 valid_attrs = _extract_attributes(ext_modpath, respect_all=respect_all)
             except SyntaxError as ex:
-                warnings.warn('Failed to parse {} module ex = {!r}'.format(ext_modname, ex))
+                warnings.warn('Failed to parse {!r}, ex = {!r}'.format(ext_modname, ex))
             else:
                 from_imports.append((ext_modname, sorted(valid_attrs)))
 

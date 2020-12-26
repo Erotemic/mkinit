@@ -1,3 +1,39 @@
+"""
+Port of ubelt utilities + difftext wrapper around difflib
+"""
+import os
+import sys
+import six
+
+# Global state that determines if ANSI-coloring text is allowed
+# (which is mainly to address non-ANSI complient windows consoles)
+# complient with https://no-color.org/
+NO_COLOR = bool(os.environ.get('NO_COLOR'))
+
+
+def ensure_unicode(text):
+    r"""
+    Casts bytes into utf8 (mostly for python2 compatibility)
+
+    References:
+        http://stackoverflow.com/questions/12561063/extract-data-from-file
+
+    Example:
+        >>> import codecs  # NOQA
+        >>> assert ensure_unicode('my ünicôdé strįng') == 'my ünicôdé strįng'
+        >>> assert ensure_unicode('text1') == 'text1'
+        >>> assert ensure_unicode('text1'.encode('utf8')) == 'text1'
+        >>> assert ensure_unicode('ï»¿text1'.encode('utf8')) == 'ï»¿text1'
+        >>> assert (codecs.BOM_UTF8 + 'text»¿'.encode('utf8')).decode('utf8')
+    """
+    if isinstance(text, six.text_type):
+        return text
+    elif isinstance(text, six.binary_type):
+        return text.decode('utf8')
+    else:  # nocover
+        raise ValueError('unknown input type {!r}'.format(text))
+
+
 def difftext(text1, text2, context_lines=0, ignore_whitespace=False,
              colored=False):
     r"""
@@ -37,10 +73,9 @@ def difftext(text1, text2, context_lines=0, ignore_whitespace=False,
         >>> # verify results
         >>> print(result)
     """
-    import ubelt as ub
     import difflib
-    text1 = ub.ensure_unicode(text1)
-    text2 = ub.ensure_unicode(text2)
+    text1 = ensure_unicode(text1)
+    text2 = ensure_unicode(text2)
     text1_lines = text1.splitlines()
     text2_lines = text2.splitlines()
     if ignore_whitespace:
@@ -81,8 +116,61 @@ def difftext(text1, text2, context_lines=0, ignore_whitespace=False,
                         diff_lines.append(visual_break)
                 prev = valid
         else:
-            diff_lines = list(ub.compress(all_diff_lines, isvalid_list))
+            diff_lines = [
+                line for line, flag in zip(all_diff_lines, isvalid_list)
+                if flag
+            ]
     text = '\n'.join(diff_lines)
     if colored:
-        text = ub.highlight_code(text, lexer_name='diff')
+        text = highlight_code(text, lexer_name='diff')
     return text
+
+
+def highlight_code(text, lexer_name='python', **kwargs):
+    """
+    Highlights a block of text using ANSI tags based on language syntax.
+
+    Args:
+        text (str): plain text to highlight
+        lexer_name (str): name of language. eg: python, docker, c++
+        **kwargs: passed to pygments.lexers.get_lexer_by_name
+
+    Returns:
+        str: text - highlighted text
+            If pygments is not installed, the plain text is returned.
+
+    Example:
+        >>> text = 'import mkinit; print(mkinit)'
+        >>> new_text = highlight_code(text)
+        >>> print(new_text)
+    """
+    if NO_COLOR:
+        return text
+    # Resolve extensions to languages
+    lexer_name = {
+        'py': 'python',
+        'h': 'cpp',
+        'cpp': 'cpp',
+        'cxx': 'cpp',
+        'c': 'cpp',
+    }.get(lexer_name.replace('.', ''), lexer_name)
+    try:
+        import pygments
+        import pygments.lexers
+        import pygments.formatters
+        import pygments.formatters.terminal
+
+        if sys.platform.startswith('win32'):  # nocover
+            # Hack on win32 to support colored output
+            import colorama
+            colorama.init()
+
+        formater = pygments.formatters.terminal.TerminalFormatter(bg='dark')
+        lexer = pygments.lexers.get_lexer_by_name(lexer_name, **kwargs)
+        new_text = pygments.highlight(text, lexer, formater)
+
+    except ImportError:  # nocover
+        import warnings
+        warnings.warn('pygments is not installed, code will not be highlighted')
+        new_text = text
+    return new_text
