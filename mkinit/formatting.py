@@ -12,6 +12,9 @@ from mkinit import static_analysis as static
 logger = logging.getLogger(__name__)
 
 
+USE_BLACK = 0
+
+
 def _ensure_options(given_options=None):
     """
     Ensures dict contains all formatting options.
@@ -383,7 +386,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                     elif name in name_to_submod:
                         modname = name_to_submod[name]
                         module = importlib.import_module(
-                            '{module_name}.{modname}'.format(module_name=module_name, name=name)
+                            '{module_name}.{modname}'.format(module_name=module_name, modname=modname)
                         )
                         attr = getattr(module, name)
                     else:
@@ -421,12 +424,13 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             submod_attrs=ub.repr2(submod_attrs).replace('\n', '\n    '),
         )
 
-        try:
-            import black
-            initstr = black.format_str(
-                initstr, mode=black.Mode(string_normalization=False))
-        except ImportError:
-            pass
+        if USE_BLACK:
+            try:
+                import black
+                initstr = black.format_str(
+                    initstr, mode=black.Mode(string_normalization=False))
+            except ImportError:
+                pass
 
         if options['lazy_boilerplate'] is None:
             append_part(default_lazy_boilerplate)
@@ -513,7 +517,6 @@ def _packed_rhs_text(lhs_text, rhs_text):
     # filler = '-' * (len(lhs_text) - 1) + ' '
     # fill_text = filler + rhs_text
 
-    USE_BLACK = 0
     if USE_BLACK:
         import black
         raw_text = lhs_text + rhs_text
