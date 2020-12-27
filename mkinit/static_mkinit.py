@@ -8,7 +8,7 @@ import os
 from six.moves import builtins
 from mkinit import static_analysis as static
 from mkinit.util import util_import
-from mkinit.util import util_diff
+from mkinit.util.util_diff import difftext
 from mkinit.top_level_ast import TopLevelVisitor
 from mkinit.formatting import _initstr, _insert_autogen_text
 from os.path import abspath
@@ -101,7 +101,6 @@ def autogen_init(modpath_or_name, submodules=None, respect_all=True, options=Non
                         old_text = file.read()
                 except Exception:
                     old_text = ''
-                from mkinit.util.util_diff import difftext
                 display_text = difftext(
                     old_text, new_text, colored=True, context_lines=3)
                 print(display_text)

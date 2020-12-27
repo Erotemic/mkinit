@@ -64,6 +64,10 @@ def main():
                         action='store_true', default=False,
                         help='Use lazy imports (Python >= 3.7 only!)')
 
+    parser.add_argument('--lazy_boilerplate',
+                        default=None,
+                        help='Code that defines a custom lazy_import callable')
+
     parser.add_argument('--recursive',
                         dest='recursive',
                         action='store_false', default=True,
@@ -103,6 +107,7 @@ def main():
         'with_all': ns['with_all'],
         'relative': ns['relative'],
         'lazy_import': ns['lazy'],
+        'lazy_boilerplate': ns['lazy_boilerplate'],
     }
 
     diff = ns['diff']

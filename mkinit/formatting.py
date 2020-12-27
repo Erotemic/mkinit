@@ -293,44 +293,62 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         modname = '.'
 
     explicit_exports = list(explicit)
+    exposed_from_imports = []
     parts = []
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())
 
+    submodules = {e.lstrip('.') for e in imports}
+    protected = set(protected)
+    private = set(private)
+    exposed_submodules = set()
+    exposed_all = set()
+
+    protected_submodules = submodules & protected
+
     if options.get('with_mods', True):
-        explicit_exports.extend([e.lstrip('.') for e in imports])
+        exposed_submodules.update(submodules)
+        exposed_all.extend(list(submodules))
+
+    exposed_submodules.update(protected_submodules)
+    exposed_all.update(protected_submodules)
+
+    from fnmatch import fnmatch
+    # TODO: allow pattern matching here
+    # step1: separate into explicit vs glob-pattern strings
+    private_pats =  {p for p in private if '*' in p}
+    private_set = private - private_pats
+
+    protected_pats =  {p for p in protected if '*' in p}
+    protected_set = protected - protected_pats
+
+    _pp_pats = protected_pats | private_pats
+    _pp_set = private_set | protected_set
+
+    def _private_matches(x):
+        x = x.lstrip('.')
+        return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
+
+    def _pp_matches(x):
+        # TODO: standardize how explicit vs submodules are handled
+        x = x.lstrip('.')
+        return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
+
+    raw_from_imports = [
+        (m, sub) for m, sub in from_imports if not _pp_matches(m)
+    ]
+
     if options.get('with_attrs', True):
-        from fnmatch import fnmatch
-        # TODO: allow pattern matching here
-        # step1: separate into explicit vs glob-pattern strings
-        private = set(private)
-        private_pats =  {p for p in private if '*' in p}
-        private_set = private - private_pats
-
-        protected = set(protected)
-        protected_pats =  {p for p in protected if '*' in p}
-        protected_set = protected - protected_pats
-
-        _pp_pats = protected_pats | private_pats
-        _pp_set = private_set | protected_set
-
-        def _private_matches(x):
-            x = x.lstrip('.')
-            return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
-
-        def _pp_matches(x):
-            # TODO: standardize how explicit vs submodules are handled
-            x = x.lstrip('.')
-            return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
-
-        _from_imports = [
-            (m, sub) for m, sub in from_imports if not _pp_matches(m)
-        ]
-
-        explicit_exports.extend([
-            n for m, sub in _from_imports for n in sub
-            if not _private_matches(n)
-        ])
+        exposed_from_imports = raw_from_imports
+    elif protected:
+        exposed_from_imports = [
+            (m, set(sub) & protected) for m, sub in raw_from_imports]
+    exposed_from_imports = [
+        (m, sub) for m, sub in exposed_from_imports if sub]
+    exposed_all.update({
+        n for m, sub in exposed_from_imports for n in sub
+        if not _private_matches(n)
+    })
 
     def append_part(new_part):
         """ appends a new part if it is nonempty """
@@ -413,12 +431,14 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             )
             ''').rstrip('\n')
         submod_attrs = {}
-        if options.get('with_attrs', True):
-            for submod, attrs in from_imports:
+        if exposed_from_imports:
+            for submod, attrs in exposed_from_imports:
                 submod = submod.lstrip('.')
                 submod_attrs[submod] = attrs
-        if options.get('with_mods', True):
-            submodules = {m.lstrip('.') for m in imports}
+
+        if explicit_exports:
+            submodules = submodules
+            print('submodules = {!r}'.format(submodules))
         else:
             submodules = set()
 
@@ -427,7 +447,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         # we can remove complexity and just use ubelt elsewhere
         import ubelt as ub
         initstr = template.format(
-            submodules=ub.repr2(submodules).replace('\n', '\n    '),
+            submodules=ub.repr2(exposed_submodules).replace('\n', '\n    '),
             submod_attrs=ub.repr2(submod_attrs).replace('\n', '\n    '),
         )
 
@@ -439,6 +459,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             except ImportError:
                 pass
 
+        print('options = {!r}'.format(options))
         if options['lazy_boilerplate'] is None:
             append_part(default_lazy_boilerplate)
         else:
@@ -447,12 +468,11 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
         append_part(initstr.rstrip())
     else:
-        if options.get('with_mods', True):
-            append_part(_make_imports_str(imports, modname))
+        if exposed_submodules:
+            append_part(_make_imports_str(exposed_submodules, modname))
 
-        if options.get('with_attrs', True):
-
-            attr_part = _make_fromimport_str(_from_imports, modname)
+        if exposed_from_imports:
+            attr_part = _make_fromimport_str(exposed_from_imports, modname)
             append_part(attr_part)
 
     if options.get('with_all', True):
@@ -463,7 +483,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                     return __all__
                 ''').rstrip())
         exports_repr = ["'{}'".format(e)
-                        for e in sorted(explicit_exports)]
+                        for e in sorted(exposed_all)]
         rhs_body = ', '.join(exports_repr)
         packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
         append_part(packed)
