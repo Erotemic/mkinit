@@ -19,7 +19,7 @@ __private__ = ['setup']
 __protected__ = ['rank']
 
 __submodules__ = [
-    'rank'
+    'rank',
     'lpi_filter',
     '_gaussian',
     'edges',
@@ -39,4 +39,11 @@ cat skimage/filters/__init__.py
 
 python -c "from skimage import filters; print(repr(filters.equalize))"
 python -c "import skimage; print(skimage.filters)"
+"""
+
+"""
+
+
+mkinit networkx --recursive --black -w
+
 """

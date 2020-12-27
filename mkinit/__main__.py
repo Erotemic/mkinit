@@ -87,13 +87,6 @@ def main():
     )
 
     parser.add_argument(
-        "--exposeall",
-        action="store_true",
-        default=False,
-        help="If specified, runs mkinit on all subpackages in a package",
-    )
-
-    parser.add_argument(
         "--lazy",
         action="store_true",
         default=False,
@@ -116,9 +109,9 @@ def main():
     parser.add_argument(
         "--recursive",
         dest="recursive",
-        action="store_false",
-        default=True,
-        help="if False does not respect __all__ attributes of submodules when parsing",
+        action="store_true",
+        default=False,
+        help="If specified, runs mkinit on all subpackages in a package",
     )
 
     parser.add_argument(
@@ -182,8 +175,10 @@ def main():
         level=level,
     )
 
+    print('ns = {!r}'.format(ns))
     static_mkinit.autogen_init(
-        modname_or_path, respect_all=respect_all, options=options, dry=dry, diff=diff
+        modname_or_path, respect_all=respect_all, options=options, dry=dry,
+        diff=diff, recursive=ns['recursive'],
     )
 
 
