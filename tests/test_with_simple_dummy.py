@@ -12,44 +12,50 @@ def make_simple_dummy_package():
     ANY EXISTING FILES ARE DELETED
     """
     # Fresh start
-    dpath = ub.ensure_app_cache_dir('mkinit/test/simple_demo/')
+    dpath = ub.ensure_app_cache_dir("mkinit/test/simple_demo/")
     ub.delete(dpath)
     ub.ensuredir(dpath)
     rel_paths = {
-        'root':        'mkinit_demo_pkg',
-        'root_init':   'mkinit_demo_pkg/__init__.py',
-        'submod':      'mkinit_demo_pkg/submod.py',
-        'subpkg':      'mkinit_demo_pkg/subpkg',
-        'subpkg_init': 'mkinit_demo_pkg/subpkg/__init__.py',
-        'nested':      'mkinit_demo_pkg/subpkg/nested.py',
+        "root": "mkinit_demo_pkg",
+        "root_init": "mkinit_demo_pkg/__init__.py",
+        "submod": "mkinit_demo_pkg/submod.py",
+        "subpkg": "mkinit_demo_pkg/subpkg",
+        "subpkg_init": "mkinit_demo_pkg/subpkg/__init__.py",
+        "nested": "mkinit_demo_pkg/subpkg/nested.py",
     }
     paths = {key: join(dpath, path) for key, path in rel_paths.items()}
 
     for key, path in paths.items():
-        if not path.endswith('.py'):
+        if not path.endswith(".py"):
             ub.ensuredir(path)
 
     for key, path in paths.items():
-        if path.endswith('.py'):
+        if path.endswith(".py"):
             ub.touch(path)
 
-    with open(paths['submod'], 'w') as file:
-        file.write(ub.codeblock(
-            '''
+    with open(paths["submod"], "w") as file:
+        file.write(
+            ub.codeblock(
+                """
             print('SUBMOD SIDE EFFECT')
 
             def submod_func():
                 print('This is a submod func in {}'.format(__file__))
-            '''))
+            """
+            )
+        )
 
-    with open(paths['nested'], 'w') as file:
-        file.write(ub.codeblock(
-            '''
+    with open(paths["nested"], "w") as file:
+        file.write(
+            ub.codeblock(
+                """
             print('NESTED SIDE EFFECT')
 
             def nested_func():
                 print('This is a nested func in {}'.format(__file__))
-            '''))
+            """
+            )
+        )
     return paths
 
 
@@ -59,18 +65,20 @@ def test_simple_lazy_import():
     """
     import mkinit
     import pytest
+
     paths = make_simple_dummy_package()
-    pkg_path = paths['root']
+    pkg_path = paths["root"]
 
-    mkinit.autogen_init(pkg_path, options={'lazy_import': 1}, dry=False, recursive=True)
+    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
 
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion('3.7'):
+    if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
 
-    dpath = dirname(paths['root'])
+    dpath = dirname(paths["root"])
     with ub.util_import.PythonPathContext(dpath):
         import mkinit_demo_pkg
-        print('mkinit_demo_pkg = {!r}'.format(mkinit_demo_pkg))
+
+        print("mkinit_demo_pkg = {!r}".format(mkinit_demo_pkg))
 
         mkinit_demo_pkg.nested_func()
         mkinit_demo_pkg.nested_func()
