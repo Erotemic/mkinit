@@ -365,10 +365,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             r'''
 
             def lazy_import(module_name, submodules, submod_attrs):
-                """
-                Boilerplate to define PEP 562 __getattr__ for lazy import
-                https://www.python.org/dev/peps/pep-0562/
-                """
                 import sys
                 import importlib
                 import importlib.util
@@ -383,7 +379,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                 def require(fullname):
                     if fullname in sys.modules:
                         return sys.modules[fullname]
-
                     spec = importlib.util.find_spec(fullname)
                     try:
                         module = importlib.util.module_from_spec(spec)
@@ -392,12 +387,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                             'Could not lazy import module {fullname}'.format(
                                 fullname=fullname)) from None
                     loader = importlib.util.LazyLoader(spec.loader)
-
                     sys.modules[fullname] = module
-
-                    # Make module with proper locking and add to sys.modules
                     loader.exec_module(module)
-
                     return module
 
                 def __getattr__(name):
@@ -416,7 +407,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
                         raise AttributeError(
                             'No {module_name} attribute {name}'.format(
                                 module_name=module_name, name=name))
-                    # Set module-level attribute so getattr is not called again
                     globals()[name] = attr
                     return attr
                 return __getattr__
