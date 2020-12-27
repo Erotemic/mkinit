@@ -13,9 +13,6 @@ from mkinit import static_analysis as static
 logger = logging.getLogger(__name__)
 
 
-USE_BLACK = 0
-
-
 def _ensure_options(given_options=None):
     """
     Ensures dict contains all formatting options.
@@ -40,6 +37,7 @@ def _ensure_options(given_options=None):
         'relative': False,
         'lazy_import': False,
         'lazy_boilerplate': None,
+        'use_black': False,
     }
     options = default_options.copy()
     for k in given_options.keys():
@@ -298,7 +296,9 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
     # if options.get('with_header', False):
     #     parts.append(_make_module_header())
 
-    submodules = {e.lstrip('.') for e in imports}
+    # map each submodule to its import statement
+    submod_to_import = {e.lstrip('.'): e for e in imports}
+    submodules = set(submod_to_import.keys())
     protected = set(protected)
     private = set(private)
     exposed_submodules = set()
@@ -308,7 +308,7 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
 
     if options.get('with_mods', True):
         exposed_submodules.update(submodules)
-        exposed_all.extend(list(submodules))
+        exposed_all.update(submodules)
 
     exposed_submodules.update(protected_submodules)
     exposed_all.update(protected_submodules)
@@ -451,14 +451,6 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
             submod_attrs=ub.repr2(submod_attrs).replace('\n', '\n    '),
         )
 
-        if USE_BLACK:
-            try:
-                import black
-                initstr = black.format_str(
-                    initstr, mode=black.Mode(string_normalization=False))
-            except ImportError:
-                pass
-
         print('options = {!r}'.format(options))
         if options['lazy_boilerplate'] is None:
             append_part(default_lazy_boilerplate)
@@ -469,7 +461,8 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         append_part(initstr.rstrip())
     else:
         if exposed_submodules:
-            append_part(_make_imports_str(exposed_submodules, modname))
+            exposed_imports = [submod_to_import[k] for k in exposed_submodules]
+            append_part(_make_imports_str(exposed_imports, modname))
 
         if exposed_from_imports:
             attr_part = _make_fromimport_str(exposed_from_imports, modname)
@@ -489,6 +482,14 @@ def _initstr(modname, imports, from_imports, explicit=set(), protected=set(),
         append_part(packed)
 
     initstr = '\n'.join([p for p in parts])
+
+    if options['use_black']:
+        try:
+            import black
+            initstr = black.format_str(
+                initstr, mode=black.Mode(string_normalization=True))
+        except ImportError:
+            pass
     return initstr
 
 
@@ -544,7 +545,8 @@ def _packed_rhs_text(lhs_text, rhs_text):
     # filler = '-' * (len(lhs_text) - 1) + ' '
     # fill_text = filler + rhs_text
 
-    if USE_BLACK:
+    if 0:
+        # options['use_black']:
         import black
         raw_text = lhs_text + rhs_text
         packstr = black.format_str(

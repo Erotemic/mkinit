@@ -64,6 +64,10 @@ def main():
                         action='store_true', default=False,
                         help='Use lazy imports (Python >= 3.7 only!)')
 
+    parser.add_argument('--black',
+                        action='store_true', default=False,
+                        help='Use black formatting (Python >= 3.6 only!)')
+
     parser.add_argument('--lazy_boilerplate',
                         default=None,
                         help='Code that defines a custom lazy_import callable')
@@ -108,6 +112,7 @@ def main():
         'relative': ns['relative'],
         'lazy_import': ns['lazy'],
         'lazy_boilerplate': ns['lazy_boilerplate'],
+        'use_black': ns['black'],
     }
 
     diff = ns['diff']
