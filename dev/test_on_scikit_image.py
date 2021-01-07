@@ -44,6 +44,6 @@ python -c "import skimage; print(skimage.filters)"
 """
 
 
-mkinit networkx --recursive --black -w
+mkinit ./networkx/algorithms --recursive --black -w
 
 """
