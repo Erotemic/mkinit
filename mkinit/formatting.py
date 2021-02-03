@@ -356,6 +356,7 @@ def _initstr(
     exposed_all.update(
         {n for m, sub in exposed_from_imports for n in sub if not _private_matches(n)}
     )
+    exposed_all.update(explicit)
 
     def append_part(new_part):
         """ appends a new part if it is nonempty """
