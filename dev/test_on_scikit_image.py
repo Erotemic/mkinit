@@ -33,7 +33,8 @@ __submodules__ = [
     '_window',
 ]
 # End of custom init code" > skimage/filters/__init__.py
-mkinit skimage/filters/__init__.py --relative --lazy --nomods -w --lazy_boilerplate="from ..util.lazy import lazy_import"
+# mkinit skimage/filters/__init__.py --relative --lazy --nomods -w --lazy_boilerplate="from ..util.lazy import lazy_import"
+mkinit skimage/filters/__init__.py --relative --lazy --nomods -w
 
 cat skimage/filters/__init__.py
 
