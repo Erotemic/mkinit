@@ -8,13 +8,15 @@
 #
 #     # Multiple files for a checksum
 #     https://discuss.circleci.com/t/cant-checksum-multiple-files-with-slashes-in-the-file-path/20667/2
+#     
+#     # Auto Cancel Redundant Builds
+#     https://circleci.com/docs/2.0/skip-build/#steps-to-enable-auto-cancel-for-pipelines-triggered-by-pushes-to-github-or-the-api
+#     https://app.circleci.com/settings/project/github/Erotemic/mkinit/advanced?return-to=https%3A%2F%2Fapp.circleci.com%2Fpipelines%2Fgithub%2FErotemic%2Fmkinit
 
 
 # Abuse YAML notation to make a heredoc. This will be ignored by the CI.
 __doc__: &__doc__
     - | 
-
-        __doc__="""
 
         ============
         CIRCLECI INSTRUCTIONS
@@ -26,11 +28,13 @@ __doc__: &__doc__
 
         ```bash
         cat .circleci/config.yml | \
-            sed 's|Erotemic|<YOUR-GITHUB-USERNAME>|g' | \
-            sed 's|mkinit|<YOUR-REPO>|g' | \
-            sed 's|travis-ci-Erotemic|<YOUR-GPG-ID>|g' | \
-            sed 's|CIRCLE_CI_SECRET|<YOUR_CI_SECRET>|g' | \
+            sed 's|GITHUB_USER|Erotemic|g' | \
+            sed 's|PYPKG|mkinit|g' | \
+            sed 's|GPG_ID|travis-ci-Erotemic|g' | \
+            sed 's|CIRCLE_CI_SECRET|CIRCLE_CI_SECRET|g' | \
         tee /tmp/repl && colordiff .circleci/config.yml /tmp/repl
+        # overwrite if you like the diff
+        cp /tmp/repl .circleci/config.yml
         ```
 
         To use this script you need the following configurations on your
@@ -40,17 +44,11 @@ __doc__: &__doc__
         -----
 
         * This script will require matainence for new releases of Python
-
-        * Make sure you add Runners to your project 
-        https://gitlab.kitware.com/computer-vision/mkinit/-/settings/ci_cd 
-        in Runners-> Shared Runners
-        and Runners-> Available specific runners
         
 
         CIRCLECI SECRETS  # NOQA
         --------------
 
-        https://app.circleci.com/settings/project/github/Erotemic/mkinit/environment-variables
 
         Almost all of the stages in this pipeline can be performed on a local
         machine (making it much easier to debug) as well as the circleci-ci
@@ -72,13 +70,29 @@ __doc__: &__doc__
             To make a API token go to:
                 https://docs.github.com/en/free-pro-team@latest/github/authenticating-to-github/creating-a-personal-access-token
 
-        Register these secret variables in your projects secret environment variables
-            https://app.circleci.com/settings/project/github/Erotemic/mkinit/environment-variables
+        Instructions:
+
+            Browse to: 
+                https://app.circleci.com/settings/project/github/Erotemic/mkinit/environment-variables
+
+            Do whatever you need to locally access the values of these variables
+
+            echo $TWINE_USERNAME
+            echo $GITHUB_PUSH_TOKEN
+            echo $CIRCLE_CI_SECRET
+            echo $TWINE_PASSWORD
+
+            For each one, click "Add Environment Variable" and enter the name
+            and value. Unfortunately this is a manual process.
 
         WARNING: Ensure that your CircleCI project settings do not allow Forks
             to view environment variables.
 
         TODO: Can you protect branches on CircleCI, is that the default?
+
+            - ANS: CircleCI provides contexts: https://circleci.com/docs/2.0/contexts/
+
+        TODO: Look into secrethub
 
         WARNING: If an untrusted actor gains the ability to write to a
         protected branch, then they will be able to exfiltrate your secrets.
@@ -187,40 +201,86 @@ __doc__: &__doc__
         git tag --delete test-tag4
         ```
 
-        """ # "  # hack for vim yml syntax highlighter
 
 version: 2
 workflows:
   version: 2
   test:
     jobs:
-      - test_full/cp38-38-linux
-      - test_full/cp37-37m-linux
-      - test_full/cp36-36m-linux
-      - test_full/cp35-35m-linux
-      #- test_full/cp27-27mu-linux
+      - test_full/cp3_10-3_10-linux:
+          filters: &__ignore_release__ # this yaml anchor to ignore tests on the release branch
+              branches:
+                  ignore: 
+                      - release
+      - test_full/cp39-39-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp38-38-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp37-37m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp36-36m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp35-35m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp34-34m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_full/cp27-27mu-linux:
+          filters:
+              <<: *__ignore_release__
 
-      - test_minimal/cp38-38-linux
-      - test_minimal/cp37-37m-linux
-      - test_minimal/cp36-36m-linux
-      - test_minimal/cp35-35m-linux
-      #- test_minimal/cp27-27mu-linux
+      - test_minimal/cp3_10-3_10-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp39-39-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp38-38-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp37-37m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp36-36m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp35-35m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp34-34m-linux:
+          filters:
+              <<: *__ignore_release__
+      - test_minimal/cp27-27mu-linux:
+          filters:
+              <<: *__ignore_release__
 
-      - test_minimal/pypy3
-      - test_full/pypy3
+      - test_minimal/pypy3:
+          filters:
+              <<: *__ignore_release__
+      - test_full/pypy3:
+          filters:
+              <<: *__ignore_release__
 
-      - gpgsign/cp38-cp38-linux:
+      - gpgsign/cp38-38-linux:
           filters:
             branches:
               only: 
                  - master
                  - release
 
-      - deploy/cp38-cp38-linux:
+      - deploy/cp38-38-linux:
+          requires:
+              - gpgsign/cp38-38-linux
           filters:
             branches:
               only: 
                  - release
+
 
 
 jobs:
@@ -228,15 +288,18 @@ jobs:
   ###########
   # TEMPLATES
   ###########
-
+  
   .common_template: &common_template
     environment:
       # Setting the python executable environ allows template reuse for pypy
       - PYTHON_EXE: python
     docker:
       - image: circleci/python
+    # We shouldnt need a lot of resources to run
+    resource_class: small 
     steps:
       - checkout
+    #working_directory: ~/{{ .Environment.CIRCLE_JOB }}
 
   .test_minimal_template: &test_minimal_template  
     <<: 
@@ -245,7 +308,6 @@ jobs:
       - checkout
       # ### INITIALIZE AND CACHE REQUIREMENTS ###
       - restore_cache:
-          # NOTE: cache keys should contain the Python Version
           keys:
           - v3-dependencies-{{ checksum "requirements/runtime.txt" }}-{{ checksum "requirements/tests.txt" }}-{{ .Environment.CIRCLE_JOB }}
       - run:
@@ -254,10 +316,10 @@ jobs:
             $PYTHON_EXE -m venv venv || virtualenv -v venv  # first command is python3 || second is python2
             . venv/bin/activate
             # The "minimal" tests install barebones requirements
-            #python setup.py bdist_wheel --universal
-            #pip install -r requirements/tests.txt
-            #pip install -r requirements/runtime.txt 
-            pip install .[tests] -v
+            pip install pip -U
+            pip install -r requirements/tests.txt
+            pip install -r requirements/runtime.txt 
+            pip install .
       - save_cache:
           paths:
             - ./venv
@@ -267,10 +329,15 @@ jobs:
           name: run tests
           command: |
             . venv/bin/activate
-            python run_tests.py
+            $PYTHON_EXE run_tests.py
+            # Upload to codecov.io (requires a CODECOV_TOKEN environ or github+circleci integration)
+            codecov
       - store_artifacts:
           path: test-reports
           destination: test-reports
+      - store_artifacts:
+          path: .coverage
+          destination: .coverage
 
 
   .test_full_template: &test_full_template  
@@ -281,30 +348,35 @@ jobs:
       # ### INITIALIZE AND CACHE REQUIREMENTS ###
       - restore_cache:
           keys:
-          - v2-dependencies-{{ checksum "requirements/runtime.txt" }}-{{ checksum "requirements/optional.txt" }}-{{ checksum "requirements/tests.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          - v3-dependencies-{{ checksum "requirements/runtime.txt" }}-{{ checksum "requirements/optional.txt" }}-{{ checksum "requirements/tests.txt" }}-{{ .Environment.CIRCLE_JOB }}
       - run:
           name: install dependencies
           command: |
             $PYTHON_EXE -m venv venv || virtualenv -v venv  # first command is python3 || second is python2
             . venv/bin/activate
             # The "full" dependency install
-            # TODO: Test the installed wheel instead of the developer install
-            # python setup.py bdist_wheel --universal
-            pip install .[all] -v
+            pip install pip -U
+            pip install scikit-build
+            pip install -r requirements.txt
+            pip install .
       - save_cache:
           paths:
             - ./venv
-          key: v2-dependencies-{{ checksum "requirements/runtime.txt" }}-{{ checksum "requirements/optional.txt" }}-{{ checksum "requirements/tests.txt" }}-{{ .Environment.CIRCLE_JOB }}
+          key: v3-dependencies-{{ checksum "requirements/runtime.txt" }}-{{ checksum "requirements/optional.txt" }}-{{ checksum "requirements/tests.txt" }}-{{ .Environment.CIRCLE_JOB }}
       # ### RUN TESTS ###
       - run:
           name: run tests
           command: |
             . venv/bin/activate
-            python run_tests.py
+            $PYTHON_EXE run_tests.py
+            # Upload to codecov.io (requires a CODECOV_TOKEN environ or github+circleci integration)
+            codecov
       - store_artifacts:
           path: test-reports
           destination: test-reports
-
+      - store_artifacts:
+          path: .coverage
+          destination: .coverage
 
   .gpgsign_template: &gpgsign_template  
     <<: 
@@ -335,10 +407,10 @@ jobs:
             GLKWS=$CIRCLE_CI_SECRET openssl enc -aes-256-cbc -pbkdf2 -md SHA512 -pass env:GLKWS -d -a -in dev/ci_secret_gpg_key.pgp.enc | $GPG_EXECUTABLE --import 
             $GPG_EXECUTABLE --list-keys  || echo "first one fails for some reason"
             $GPG_EXECUTABLE --list-keys  
-            # The publish script only builds wheels and does gpg signing if TAG_AND_UPLOAD is no
+            # The publish script only builds wheels and does gpg signing if DO_UPLOAD is no
             pip install requests[security] twine wheel
             echo "Execute the publish script in dry mode"
-            MB_PYTHON_TAG=$MB_PYTHON_TAG USE_GPG=True GPG_KEYID=$GPG_KEYID TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE CURRENT_BRANCH=release DEPLOY_BRANCH=release TAG_AND_UPLOAD=no ./publish.sh 
+            MB_PYTHON_TAG=$MB_PYTHON_TAG DO_GPG=True GPG_KEYID=$GPG_KEYID TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE CURRENT_BRANCH=release DEPLOY_BRANCH=release DO_UPLOAD=False DO_TAG=False ./publish.sh 
       - store_artifacts:
           path: dist
           destination: dist
@@ -367,16 +439,23 @@ jobs:
             pip install six pyopenssl ndg-httpsclient pyasn1 -U 
             pip install requests[security] twine wheel
             # Execute the publish script for real this time
-            MB_PYTHON_TAG=$MB_PYTHON_TAG USE_GPG=True GPG_KEYID=$GPG_KEYID TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE CURRENT_BRANCH=release DEPLOY_BRANCH=release TAG_AND_UPLOAD=yes ./publish.sh 
+            MB_PYTHON_TAG=$MB_PYTHON_TAG DO_GPG=True GPG_KEYID=$GPG_KEYID TWINE_PASSWORD=$TWINE_PASSWORD TWINE_USERNAME=$TWINE_USERNAME GPG_EXECUTABLE=$GPG_EXECUTABLE CURRENT_BRANCH=release DEPLOY_BRANCH=release DO_UPLOAD=True DO_TAG=False ./publish.sh 
             # Have the server git-tag the release and push the tags
-            VERSION=$(python -c "import setup; print(setup.VERSION)")
+            VERSION=$($PYTHON_EXE -c "import setup; print(setup.VERSION)")
             # do sed twice to handle the case of https clone with and without a read token
             URL_HOST=$(git remote get-url origin | sed -e 's|https\?://.*@||g' | sed -e 's|https\?://||g')
             echo "URL_HOST = $URL_HOST"
-            git config user.email "ci@circleci.com"
-            git config user.name "CircleCI"
-            git tag $VERSION -m "tarball tag $VERSION"
-            git push --tags "https://${GIT_PUSH_TOKEN}@${URL_HOST}"
+            # A git config user name and email is required. Set if needed.
+            if [[ "$(git config user.email)" == "" ]]; then
+                git config user.email "ci@circleci.com"
+                git config user.name "CircleCI"
+            fi
+            if [ $(git tag -l "$VERSION") ]; then
+                echo "Tag already exists"
+            else
+                git tag $VERSION -m "tarball tag $VERSION"
+                git push --tags "https://${GITHUB_PUSH_TOKEN}@${URL_HOST}"
+            fi
 
 
   ###################################
@@ -388,80 +467,87 @@ jobs:
   #
   # All we need to do is change the base docker image so python is the
   # version we want we can reuse everything else from the template
+  #
+  test_full/cp3_10-3_10-linux:
+    <<: *test_full_template
+    docker:
+      - image: circleci/python:3.10-rc
   
-  test_full/cp39-cp39-linux:
+  test_full/cp39-39-linux:
     <<: *test_full_template
     docker:
       - image: circleci/python:3.9
-    working_directory: ~/repo-full-39
   
   test_full/cp38-38-linux:
     <<: *test_full_template
     docker:
       - image: circleci/python:3.8
-    working_directory: ~/repo-full-38
   
   test_full/cp37-37m-linux:
     <<: *test_full_template
     docker:
       - image: circleci/python:3.7
-    working_directory: ~/repo-full-37
 
   test_full/cp36-36m-linux:
     <<: *test_full_template
     docker:
       - image: circleci/python:3.5
-    working_directory: ~/repo-full-36
 
   test_full/cp35-35m-linux:
     <<: *test_full_template
     docker:
       - image: circleci/python:3.5
-    working_directory: ~/repo-full-35
 
-  #test_full/cp27-27mu-linux:
-  #  <<: *test_full_template
-  #  docker:
-  #    - image: circleci/python:2.7
-  #  working_directory: ~/repo-full-27
-
-  # ------------
-  
-  test_minimal/cp39-cp39-linux:
+  test_full/cp34-34m-linux:
     <<: *test_full_template
     docker:
+      - image: circleci/python:3.4
+
+  test_full/cp27-27mu-linux:
+    <<: *test_full_template
+    docker:
+      - image: circleci/python:2.7
+
+  # ------------
+  test_minimal/cp3_10-3_10-linux:
+    <<: *test_minimal_template
+    docker:
+      - image: circleci/python:3.10-rc
+  
+  test_minimal/cp39-39-linux:
+    <<: *test_minimal_template
+    docker:
       - image: circleci/python:3.9
-    working_directory: ~/{{ .Environment.CIRCLE_JOB }}
   
   test_minimal/cp38-38-linux:
     <<: *test_minimal_template
     docker:
       - image: circleci/python:3.8
-    working_directory: ~/repo-minimal-38
 
   test_minimal/cp37-37m-linux:
     <<: *test_minimal_template
     docker:
       - image: circleci/python:3.7
-    working_directory: ~/test_minimal/cp37-37m-linux
 
   test_minimal/cp36-36m-linux:
     <<: *test_minimal_template
     docker:
       - image: circleci/python:3.6
-    working_directory: ~/repo-minimal-36
 
   test_minimal/cp35-35m-linux:
     <<: *test_minimal_template
     docker:
       - image: circleci/python:3.5
-    working_directory: ~/repo-minimal-35
 
-  #test_minimal/cp27-27mu-linux:
-  #  <<: *test_minimal_template
-  #  docker:
-  #    - image: circleci/python:2.7
-  #  working_directory: ~/repo-minimal-27
+  test_minimal/cp34-34m-linux:
+    <<: *test_minimal_template
+    docker:
+      - image: circleci/python:3.4
+
+  test_minimal/cp27-27mu-linux:
+    <<: *test_minimal_template
+    docker:
+      - image: circleci/python:2.7
 
   # --- pypy ----
 
@@ -471,7 +557,6 @@ jobs:
       - image: pypy:3
     environment:
       - PYTHON_EXE: pypy3
-    working_directory: ~/repo-minimal-pypy3
 
   test_full/pypy3:
     <<: *test_full_template
@@ -479,32 +564,108 @@ jobs:
       - image: pypy:3
     environment:
       - PYTHON_EXE: pypy3
-    working_directory: ~/repo-full-pypy3
 
  
   # -- gpgsign + deploy
   
-  gpgsign/cp38-cp38-linux:
+  gpgsign/cp38-38-linux:
     <<: *gpgsign_template
     docker:
       - image: circleci/python:3.8
-    working_directory: ~/gpgsign/cp38-cp38-linux
 
 
-  deploy/cp38-cp38-linux:
+  deploy/cp38-38-linux:
     <<: *deploy_template
     docker:
-      - image: circleci/python:3.9
-    working_directory: ~/deploy/cp38-cp38-linux
-        
+      - image: circleci/python:3.8
 
-__scratch_work__:
-    docker:
-      - image: pypy:3
-    working_directory: ~/dev-only-not-a-real-job
-    steps:
-      - | 
-        __doc__=" 
+        
+.__doc__: &__doc__
+    - | 
+
+
+        # Test GPG sign works
+        load_secrets
+        circleci local execute \
+            -e CIRCLE_CI_SECRET=$CIRCLE_CI_SECRET \
+            --job gpgsign/cp38-38-linux
+
+        IMAGE_NAME=circleci/python:3.9
+        docker pull $IMAGE_NAME
+        IMAGE_NAME=pypy:3
+        docker pull $IMAGE_NAME
+        docker run -v $HOME/code/mkinit:/io -it $IMAGE_NAME bash
+        IMAGE_NAME=circleci/python:3.10-rc
+        docker pull $IMAGE_NAME
+
+        docker run -v $HOME/code/mkinit:/io -it pypy:3 bash
+        docker run -v $HOME/code/mkinit:/io -it $IMAGE_NAME bash
+        cd /io
+        
+        # Logic to print out the commands to reproduce CI steps
+        source $HOME/local/init/utils.sh
+        pyblock "
+            import yaml
+            import ubelt as ub
+            data = yaml.safe_load(open(ub.expandpath('$HOME/code/mkinit/.circleci/config.yml')))
+            JOB_NAME = 'test_minimal/pypy3'
+            job = data['jobs'][JOB_NAME]
+            IMAGE_NAME = job['docker'][0]['image']
+            print('IMAGE_NAME={}'.format(IMAGE_NAME))
+            print('docker run -v $HOME/code/mkinit:/io -it {} bash'.format(IMAGE_NAME))
+            print(ub.codeblock(
+            '''
+            ###
+            ###
+            # Clone the mounted repo for a fresh start
+            mkdir -p $HOME/code
+            git clone /io /root/{JOB_NAME}
+            cd /root/{JOB_NAME}
+            ''').format(JOB_NAME=JOB_NAME))
+            for kv in job['environment']:
+                for k, v in kv.items():
+                    print('{}={}'.format(k, v))
+            for step in job['steps']:
+                if 'run' in step:
+                    print(step['run']['command'])
+        "
+
+
+        IMAGE_NAME=pypy:3
+        docker run -v $HOME/code/mkinit:/io -it pypy:3 bash
+        ###
+        ###
+        # Clone the mounted repo for a fresh start
+        mkdir -p /home/joncrall/code
+        git clone /io /root/test_minimal/pypy3
+        cd /root/test_minimal/pypy3
+        PYTHON_EXE=pypy3
+        $PYTHON_EXE -m venv venv || virtualenv -v venv  # first command is python3 || second is python2
+        . venv/bin/activate
+        # The "minimal" tests install barebones requirements
+        pip install pip -U
+        pip install -r requirements/tests.txt
+        pip install -r requirements/runtime.txt 
+        pip install .
+
+        . venv/bin/activate
+        python -m pytest --cov=mkinit --cov-config .coveragerc --cov-report term -s
+        # pip install pytest-cov==2.8.1  # hack to avoid regression
+        #python run_tests.py
+
+
+        # TO RUN A JOB ON YOUR LOCAL MACHINE
+        # INSTALL CIRCLE CI
+        curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=$HOME/.local/bin bash
+
+        JOB_NAME=test_minimal/pypy3
+        circleci local execute --job $JOB_NAME
+
+        circleci local execute --job gpgsign/cp38-38-linux
+
+        JOB_NAME=test_full/pypy3
+        circleci local execute --job $JOB_NAME
+
         # Run circleci scripts on a local machine
         mkdir -p $HOME/Downloads
         curl -fLSs https://raw.githubusercontent.com/CircleCI-Public/circleci-cli/master/install.sh | DESTDIR=$HOME/Downloads bash
@@ -513,23 +674,4 @@ __scratch_work__:
         $HOME/.local/bin/circleci switch
 
         $HOME/.local/bin/circleci config validate
-        $HOME/.local/bin/circleci local execute --job test_minimal_3.9
-        $HOME/.local/bin/circleci local execute --config .circleci/config.yml --job test_full/cp38-38-linux
-        $HOME/.local/bin/circleci local execute --config .circleci/config.yml 
-
-
-        # Manual testing scratch work
-        docker run -v $(pwd):/io -it pypy:3 bash
-
-        cd /io
-
-        pypy3 -m venv venv 
-        . venv/bin/activate
-        # The "minimal" tests install barebones requirements
-        pip install -r requirements/tests.txt
-        pip install -r requirements/runtime.txt 
-        pip install -e .
-
-        ./run_doctests.sh || echo "pypy failed, but this is allowed"
-        ./run_tests.sh || echo "pypy failed, but this is allowed"
-        "
+        $HOME/.local/bin/circleci local execute --job test_full/cp27-27mu-linux

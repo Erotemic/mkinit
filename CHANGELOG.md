@@ -1,4 +1,13 @@
 
+version: 0.3.1
+---------------
+
+
+### Changed
+* protected modules will still be exposed even if `--nomod` is specified.
+* tweaked filtering behavior
+
+
 version: 0.3.0
 ---------------
 

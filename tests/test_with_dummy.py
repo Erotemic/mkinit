@@ -8,7 +8,7 @@ from os.path import join
 from os.path import dirname
 
 
-def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
+def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
     """
     Creates a dummy package structure with or without __init__ files
 
@@ -18,36 +18,48 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
     ub.delete(root)
     ub.ensuredir(root)
     paths = {
-        'root': root,
-        'submod1': ub.touch(join(root, 'submod1.py')),
-        'submod2': ub.touch(join(root, 'submod2.py')),
-        'subdir1': ub.ensuredir(join(root, 'subdir1')),
-        'subdir2': ub.ensuredir(join(root, 'subdir2')),
-        'longsubdir': ub.ensuredir(join(root, 'avery/long/subdir/that/goes/over80chars')),
+        "root": root,
+        "submod1": ub.touch(join(root, "submod1.py")),
+        "submod2": ub.touch(join(root, "submod2.py")),
+        "subdir1": ub.ensuredir(join(root, "subdir1")),
+        "subdir2": ub.ensuredir(join(root, "subdir2")),
+        "longsubdir": ub.ensuredir(
+            join(root, "avery/long/subdir/that/goes/over80chars")
+        ),
     }
-    paths['subdir1_init'] = ub.touch(join(paths['subdir1'], '__init__.py'))
-    paths['subdir2_init'] = ub.touch(join(paths['subdir2'], '__init__.py'))
-    paths['root_init'] = ub.touch(join(paths['root'], '__init__.py'))
-    paths['long_subdir_init'] = ub.touch(join(paths['longsubdir'], '__init__.py'))
-    paths['long_submod'] = ub.touch(join(paths['longsubdir'], 'long_submod.py'))
+    paths["subdir1_init"] = ub.touch(join(paths["subdir1"], "__init__.py"))
+    paths["subdir2_init"] = ub.touch(join(paths["subdir2"], "__init__.py"))
+    paths["root_init"] = ub.touch(join(paths["root"], "__init__.py"))
+    paths["long_subdir_init"] = ub.touch(join(paths["longsubdir"], "__init__.py"))
+    paths["long_submod"] = ub.touch(join(paths["longsubdir"], "long_submod.py"))
 
-    ub.writeto(paths['subdir1_init'], ub.codeblock(
-        '''
+    ub.writeto(
+        paths["subdir1_init"],
+        ub.codeblock(
+            """
         simple_subattr1 = "hello world"
         simple_subattr2 = "hello world"
         _private_attr = "hello world"
-        '''))
+        """
+        ),
+    )
 
-    ub.writeto(paths['subdir2_init'], ub.codeblock(
-        '''
+    ub.writeto(
+        paths["subdir2_init"],
+        ub.codeblock(
+            """
         __all__ = ['public_attr']
 
         public_attr = "hello world"
         private_attr = "hello world"
-        '''))
+        """
+        ),
+    )
 
-    ub.writeto(paths['submod1'], ub.codeblock(
-        '''
+    ub.writeto(
+        paths["submod1"],
+        ub.codeblock(
+            """
         import six
 
         attr1 = True
@@ -198,11 +210,13 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
 
         if __name__ == 'something_else':
             bad_something_else = None
-        '''))
+        """
+        ),
+    )
 
     # Ensure that each submodule has an __init__
     # (do we need this with PEP 420 anymore?)
-    root = paths['root']
+    root = paths["root"]
     from os.path import relpath, exists, dirname
     import os
 
@@ -213,18 +227,20 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
         suffix = []
         parts = relative.split(os.sep)
         for part in parts:
-            if '.' not in part:
+            if "." not in part:
                 suffix.append(part)
                 middir = join(dpath, os.sep.join(suffix))
-                fpath = join(middir, '__init__.py')
+                fpath = join(middir, "__init__.py")
                 init_fpaths.add(fpath)
 
     for fpath in init_fpaths:
         if not exists(fpath):
             ub.touch(fpath)
 
-    ub.writeto(paths['long_submod'], ub.codeblock(
-        '''
+    ub.writeto(
+        paths["long_submod"],
+        ub.codeblock(
+            """
         def a_very_nested_function():
             print('a_very_nested_function in {}'.format(__file__))
         def another_func1():
@@ -235,29 +251,32 @@ def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
             pass
         def another_func4():
             pass
-        '''
-    ))
+        """
+        ),
+    )
 
     if side_effects:
-        with open(paths['long_submod'], 'a') as file:
-            file.write(ub.codeblock(
-                '''
+        with open(paths["long_submod"], "a") as file:
+            file.write(
+                ub.codeblock(
+                    """
                 print('NESTED SIDE EFFECT')
-                '''
-            ))
+                """
+                )
+            )
     return paths
 
 
 def check_dummy_root_init(text):
     for i in range(1, 15):
-        want = 'good_attr_{:02d}'.format(i)
-        assert want in text, 'missing {}'.format(want)
-    assert 'bad_attr' not in text
-    assert 'public_attr' in text
-    assert 'private_attr' not in text
-    assert 'simple_subattr1' in text
-    assert 'simple_subattr2' in text
-    assert '_private_attr' not in text
+        want = "good_attr_{:02d}".format(i)
+        assert want in text, "missing {}".format(want)
+    assert "bad_attr" not in text
+    assert "public_attr" in text
+    assert "private_attr" not in text
+    assert "simple_subattr1" in text
+    assert "simple_subattr2" in text
+    assert "_private_attr" not in text
     # print('ans = {!r}'.format(ans))
 
 
@@ -266,15 +285,16 @@ def test_static_import_without_init():
     python ~/code/mkinit/tests/test_with_dummy.py test_static_import_without_init
     """
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
-    paths = make_dummy_package(cache_dpath)
-    ub.delete(paths['root_init'])
 
-    text = mkinit.static_init(paths['long_subdir_init'])
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    paths = make_dummy_package(cache_dpath)
+    ub.delete(paths["root_init"])
+
+    text = mkinit.static_init(paths["long_subdir_init"])
     print(text)
     # check_dummy_root_init(text)
 
-    modpath = paths['root']
+    modpath = paths["root"]
     text = mkinit.static_init(modpath)
     print(text)
     check_dummy_root_init(text)
@@ -285,10 +305,11 @@ def test_static_init():
     python ~/code/mkinit/tests/test_with_dummy.py test_static_import_without_init
     """
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
+
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
     paths = make_dummy_package(cache_dpath)
 
-    modpath = paths['root']
+    modpath = paths["root"]
     text = mkinit.static_init(modpath)
     check_dummy_root_init(text)
 
@@ -298,12 +319,13 @@ def test_static_find_locals():
     python ~/code/mkinit/tests/test_with_dummy.py test_static_find_locals
     """
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
+
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
     paths = make_dummy_package(cache_dpath)
-    ub.delete(paths['root_init'])
-    modpath = paths['root']
+    ub.delete(paths["root_init"])
+    modpath = paths["root"]
     imports = list(mkinit.static_mkinit._find_local_submodules(modpath))
-    print('imports = {!r}'.format(imports))
+    print("imports = {!r}".format(imports))
 
 
 def test_dynamic_init():
@@ -311,14 +333,15 @@ def test_dynamic_init():
     python ~/code/mkinit/tests/test_with_dummy.py test_dynamic_init
     """
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
-    paths = make_dummy_package(cache_dpath, 'dynamic_dummy_mod1')
-    module = ub.import_module_from_path(paths['root'])
+
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    paths = make_dummy_package(cache_dpath, "dynamic_dummy_mod1")
+    module = ub.import_module_from_path(paths["root"])
     text = mkinit.dynamic_mkinit.dynamic_init(module.__name__)
     print(text)
     for i in range(1, 15):
-        want = 'good_attr_{:02d}'.format(i)
-        assert want in text, 'missing {}'.format(want)
+        want = "good_attr_{:02d}".format(i)
+        assert want in text, "missing {}".format(want)
 
 
 def test_lazy_import():
@@ -328,21 +351,29 @@ def test_lazy_import():
     import pytest
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
+
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
     paths = make_dummy_package(cache_dpath)
 
-    pkg_path = paths['root']
-    mkinit.autogen_init(pkg_path, options={'lazy_import': 1}, dry=False, recursive=True)
+    pkg_path = paths["root"]
+    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
 
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion('3.7'):
+    if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
 
-    dpath = dirname(paths['root'])
+    dpath = dirname(paths["root"])
     with ub.util_import.PythonPathContext(dpath):
         import mkinit_dummy_module
-        print('mkinit_dummy_module = {!r}'.format(mkinit_dummy_module))
+
+        print("mkinit_dummy_module = {!r}".format(mkinit_dummy_module))
         print(dir(mkinit_dummy_module))
-        print('mkinit_dummy_module.a_very_nested_function = {!r}'.format(mkinit_dummy_module.a_very_nested_function))
+        print(
+            "mkinit_dummy_module.a_very_nested_function = {!r}".format(
+                mkinit_dummy_module.a_very_nested_function
+            )
+        )
         mkinit_dummy_module.a_very_nested_function()
 
 
@@ -352,22 +383,45 @@ def test_recursive_lazy_autogen():
     """
     import pytest
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
-    paths = make_dummy_package(cache_dpath, pkgname='mkinit_rec_lazy_autogen', side_effects=True)
-    pkg_path = paths['root']
 
-    mkinit.autogen_init(pkg_path, options={'lazy_import': 1}, dry=False, recursive=True)
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
 
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion('3.7'):
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    paths = make_dummy_package(
+        cache_dpath, pkgname="mkinit_rec_lazy_autogen", side_effects=True
+    )
+    pkg_path = paths["root"]
+
+    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
+
+    if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
 
     with ub.util_import.PythonPathContext(cache_dpath):
         import mkinit_rec_lazy_autogen
-        print('mkinit_rec_lazy_autogen = {!r}'.format(mkinit_rec_lazy_autogen))
-        print('mkinit_rec_lazy_autogen.good_attr_01 = {!r}'.format(mkinit_rec_lazy_autogen.good_attr_01))
-        print('mkinit_rec_lazy_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_lazy_autogen.a_very_nested_function))
-        print('mkinit_rec_lazy_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_lazy_autogen.a_very_nested_function))
-        print('mkinit_rec_lazy_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_lazy_autogen.a_very_nested_function))
+
+        print("mkinit_rec_lazy_autogen = {!r}".format(mkinit_rec_lazy_autogen))
+        print(
+            "mkinit_rec_lazy_autogen.good_attr_01 = {!r}".format(
+                mkinit_rec_lazy_autogen.good_attr_01
+            )
+        )
+        print(
+            "mkinit_rec_lazy_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_lazy_autogen.a_very_nested_function
+            )
+        )
+        print(
+            "mkinit_rec_lazy_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_lazy_autogen.a_very_nested_function
+            )
+        )
+        print(
+            "mkinit_rec_lazy_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_lazy_autogen.a_very_nested_function
+            )
+        )
         mkinit_rec_lazy_autogen.a_very_nested_function()
 
 
@@ -376,27 +430,48 @@ def test_recursive_eager_autogen():
     xdoctest ~/code/mkinit/tests/test_with_dummy.py test_recursive_eager_autogen
     """
     import mkinit
-    cache_dpath = ub.ensure_app_cache_dir('mkinit/tests')
-    paths = make_dummy_package(cache_dpath, pkgname='mkinit_rec_eager_autogen', side_effects=True)
-    pkg_path = paths['root']
 
-    mkinit.autogen_init(pkg_path, options={'lazy_import': 0}, dry=False, recursive=True)
+    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    paths = make_dummy_package(
+        cache_dpath, pkgname="mkinit_rec_eager_autogen", side_effects=True
+    )
+    pkg_path = paths["root"]
+
+    mkinit.autogen_init(pkg_path, options={"lazy_import": 0}, dry=False, recursive=True)
 
     with ub.util_import.PythonPathContext(cache_dpath):
         import mkinit_rec_eager_autogen
-        print('mkinit_rec_eager_autogen = {!r}'.format(mkinit_rec_eager_autogen))
-        print('mkinit_rec_eager_autogen = {!r}'.format(mkinit_rec_eager_autogen))
-        print('mkinit_rec_eager_autogen.good_attr_01 = {!r}'.format(mkinit_rec_eager_autogen.good_attr_01))
-        print('mkinit_rec_eager_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_eager_autogen.a_very_nested_function))
-        print('mkinit_rec_eager_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_eager_autogen.a_very_nested_function))
-        print('mkinit_rec_eager_autogen.a_very_nested_function = {!r}'.format(mkinit_rec_eager_autogen.a_very_nested_function))
+
+        print("mkinit_rec_eager_autogen = {!r}".format(mkinit_rec_eager_autogen))
+        print("mkinit_rec_eager_autogen = {!r}".format(mkinit_rec_eager_autogen))
+        print(
+            "mkinit_rec_eager_autogen.good_attr_01 = {!r}".format(
+                mkinit_rec_eager_autogen.good_attr_01
+            )
+        )
+        print(
+            "mkinit_rec_eager_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_eager_autogen.a_very_nested_function
+            )
+        )
+        print(
+            "mkinit_rec_eager_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_eager_autogen.a_very_nested_function
+            )
+        )
+        print(
+            "mkinit_rec_eager_autogen.a_very_nested_function = {!r}".format(
+                mkinit_rec_eager_autogen.a_very_nested_function
+            )
+        )
         mkinit_rec_eager_autogen.a_very_nested_function()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     CommandLine:
         python -B %HOME%/code/mkinit/tests/test_with_dummy.py all
     """
     import xdoctest
+
     xdoctest.doctest_module(__file__)

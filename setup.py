@@ -19,16 +19,19 @@ def parse_version(fpath):
     Statically parse the version number from a python file
     """
     import ast
+
     if not exists(fpath):
-        raise ValueError('fpath={!r} does not exist'.format(fpath))
-    with open(fpath, 'r') as file_:
+        raise ValueError("fpath={!r} does not exist".format(fpath))
+    with open(fpath, "r") as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
+
     class VersionVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, 'id', None) == '__version__':
+                if getattr(target, "id", None) == "__version__":
                     self.version = node.value.s
+
     visitor = VersionVisitor()
     visitor.visit(pt)
     return visitor.version
@@ -43,16 +46,17 @@ def parse_description():
         python -c "import setup; print(setup.parse_description())"
     """
     from os.path import dirname, join, exists
-    readme_fpath = join(dirname(__file__), 'README.rst')
+
+    readme_fpath = join(dirname(__file__), "README.rst")
     # This breaks on pip install, so check that it exists.
     if exists(readme_fpath):
-        with open(readme_fpath, 'r') as f:
+        with open(readme_fpath, "r") as f:
             text = f.read()
         return text
-    return ''
+    return ""
 
 
-def parse_requirements(fname='requirements.txt', with_version=False):
+def parse_requirements(fname="requirements.txt", with_version=False):
     """
     Parse the package dependencies listed in a requirements file but strips
     specific versioning information.
@@ -66,9 +70,10 @@ def parse_requirements(fname='requirements.txt', with_version=False):
     """
     from os.path import exists, dirname, join
     import re
+
     require_fpath = fname
 
-    def parse_line(line, dpath=''):
+    def parse_line(line, dpath=""):
         """
         Parse information from a line in a requirements text file
 
@@ -76,65 +81,65 @@ def parse_requirements(fname='requirements.txt', with_version=False):
         line = '-e git+https://a.com/somedep@sometag#egg=SomeDep'
         """
         # Remove inline comments
-        comment_pos = line.find(' #')
+        comment_pos = line.find(" #")
         if comment_pos > -1:
             line = line[:comment_pos]
 
-        if line.startswith('-r '):
+        if line.startswith("-r "):
             # Allow specifying requirements in other files
-            target = join(dpath, line.split(' ')[1])
+            target = join(dpath, line.split(" ")[1])
             for info in parse_require_file(target):
                 yield info
         else:
             # See: https://www.python.org/dev/peps/pep-0508/
-            info = {'line': line}
-            if line.startswith('-e '):
-                info['package'] = line.split('#egg=')[1]
+            info = {"line": line}
+            if line.startswith("-e "):
+                info["package"] = line.split("#egg=")[1]
             else:
-                if ';' in line:
-                    pkgpart, platpart = line.split(';')
+                if ";" in line:
+                    pkgpart, platpart = line.split(";")
                     # Handle platform specific dependencies
                     # setuptools.readthedocs.io/en/latest/setuptools.html
                     # #declaring-platform-specific-dependencies
                     plat_deps = platpart.strip()
-                    info['platform_deps'] = plat_deps
+                    info["platform_deps"] = plat_deps
                 else:
                     pkgpart = line
                     platpart = None
 
                 # Remove versioning from the package
-                pat = '(' + '|'.join(['>=', '==', '>']) + ')'
+                pat = "(" + "|".join([">=", "==", ">"]) + ")"
                 parts = re.split(pat, pkgpart, maxsplit=1)
                 parts = [p.strip() for p in parts]
 
-                info['package'] = parts[0]
+                info["package"] = parts[0]
                 if len(parts) > 1:
                     op, rest = parts[1:]
                     version = rest  # NOQA
-                    info['version'] = (op, version)
+                    info["version"] = (op, version)
             yield info
 
     def parse_require_file(fpath):
         dpath = dirname(fpath)
-        with open(fpath, 'r') as f:
+        with open(fpath, "r") as f:
             for line in f.readlines():
                 line = line.strip()
-                if line and not line.startswith('#'):
+                if line and not line.startswith("#"):
                     for info in parse_line(line, dpath=dpath):
                         yield info
 
     def gen_packages_items():
         if exists(require_fpath):
             for info in parse_require_file(require_fpath):
-                parts = [info['package']]
-                if with_version and 'version' in info:
-                    parts.extend(info['version'])
-                if not sys.version.startswith('3.4'):
+                parts = [info["package"]]
+                if with_version and "version" in info:
+                    parts.extend(info["version"])
+                if not sys.version.startswith("3.4"):
                     # apparently package_deps are broken in 3.4
-                    plat_deps = info.get('platform_deps')
+                    plat_deps = info.get("platform_deps")
                     if plat_deps is not None:
-                        parts.append(';' + plat_deps)
-                item = ''.join(parts)
+                        parts.append(";" + plat_deps)
+                item = "".join(parts)
                 yield item
 
     packages = list(gen_packages_items())
@@ -152,78 +157,77 @@ def native_mb_python_tag(plat_impl=None, version_info=None):
     """
     if plat_impl is None:
         import platform
+
         plat_impl = platform.python_implementation()
 
     if version_info is None:
         version_info = sys.version_info
 
     major, minor = version_info[0:2]
-    ver = '{}{}'.format(major, minor)
+    ver = "{}{}".format(major, minor)
 
-    if plat_impl == 'CPython':
+    if plat_impl == "CPython":
         # TODO: get if cp27m or cp27mu
-        impl = 'cp'
-        if ver == '27':
+        impl = "cp"
+        if ver == "27":
             IS_27_BUILT_WITH_UNICODE = True  # how to determine this?
             if IS_27_BUILT_WITH_UNICODE:
-                abi = 'mu'
+                abi = "mu"
             else:
-                abi = 'm'
+                abi = "m"
         else:
             if sys.version_info[:2] >= (3, 8):
                 # bpo-36707: 3.8 dropped the m flag
-                abi = ''
+                abi = ""
             else:
-                abi = 'm'
-        mb_tag = '{impl}{ver}-{impl}{ver}{abi}'.format(**locals())
-    elif plat_impl == 'PyPy':
-        abi = ''
-        impl = 'pypy'
-        ver = '{}{}'.format(major, minor)
-        mb_tag = '{impl}-{ver}'.format(**locals())
+                abi = "m"
+        mb_tag = "{impl}{ver}-{impl}{ver}{abi}".format(**locals())
+    elif plat_impl == "PyPy":
+        abi = ""
+        impl = "pypy"
+        ver = "{}{}".format(major, minor)
+        mb_tag = "{impl}-{ver}".format(**locals())
     else:
         raise NotImplementedError(plat_impl)
     return mb_tag
 
 
-NAME = 'mkinit'
-VERSION = parse_version('mkinit/__init__.py')
+NAME = "mkinit"
+VERSION = parse_version("mkinit/__init__.py")
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     setup(
         name=NAME,
         version=VERSION,
-        author='Jon Crall',
-        author_email='erotemic@gmail.com',
-        description='Create __init__.py files',
-        url='https://github.com/Erotemic/mkinit',
+        author="Jon Crall",
+        author_email="erotemic@gmail.com",
+        description="Create __init__.py files",
+        url="https://github.com/Erotemic/mkinit",
         long_description=parse_description(),
-        long_description_content_type='text/x-rst',
+        long_description_content_type="text/x-rst",
         entry_points={
             # the console_scripts entry point creates the package CLI
-            'console_scripts': [
-                'mkinit = mkinit.__main__:main'
-            ]
+            "console_scripts": ["mkinit = mkinit.__main__:main"]
         },
-        install_requires=parse_requirements('requirements/runtime.txt'),
+        install_requires=parse_requirements("requirements/runtime.txt"),
         extras_require={
-            'all': parse_requirements('requirements.txt'),
-            'tests': parse_requirements('requirements/tests.txt'),
-            'optional': parse_requirements('requirements/optional.txt'),
+            "all": parse_requirements("requirements.txt"),
+            "tests": parse_requirements("requirements/tests.txt"),
+            "optional": parse_requirements("requirements/optional.txt"),
         },
-        license='Apache 2',
-        packages=find_packages('.'),
+        license="Apache 2",
+        packages=find_packages("."),
         classifiers=[
             # List of classifiers available at:
             # https://pypi.python.org/pypi?%3Aaction=list_classifiers
-            'Development Status :: 4 - Beta',
-            'Intended Audience :: Developers',
-            'Topic :: Software Development :: Libraries :: Python Modules',
-            'Topic :: Utilities',
+            "Development Status :: 4 - Beta",
+            "Intended Audience :: Developers",
+            "Topic :: Software Development :: Libraries :: Python Modules",
+            "Topic :: Utilities",
             # This should be interpreted as Apache License v2.0
-            'License :: OSI Approved :: Apache Software License',
+            "License :: OSI Approved :: Apache Software License",
             # Supported Python versions
-            'Programming Language :: Python :: 2.7',
-            'Programming Language :: Python :: 3',
+            "Programming Language :: Python :: 2.7",
+            "Programming Language :: Python :: 3",
         ],
     )

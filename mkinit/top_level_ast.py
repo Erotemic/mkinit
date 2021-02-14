@@ -5,7 +5,7 @@ import six
 from ordered_set import OrderedSet as oset
 
 __all__ = [
-    'TopLevelVisitor',
+    "TopLevelVisitor",
 ]
 
 
@@ -79,6 +79,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
         attrnames = ['d', 'f']
     """
+
     def __init__(self):
         super(TopLevelVisitor, self).__init__()
         self.attrnames = oset()
@@ -104,12 +105,12 @@ class TopLevelVisitor(ast.NodeVisitor):
 
         if six.PY2:
             try:
-                source_utf8 = source.encode('utf8')
+                source_utf8 = source.encode("utf8")
                 pt = ast.parse(source_utf8)
             except UnicodeDecodeError:
                 pt = ast.parse(source)
         else:
-            source_utf8 = source.encode('utf8')
+            source_utf8 = source.encode("utf8")
             pt = ast.parse(source_utf8)
 
         self.visit(pt)
@@ -126,7 +127,7 @@ class TopLevelVisitor(ast.NodeVisitor):
 
     def visit_Assign(self, node):
         for target in node.targets:
-            if hasattr(target, 'id'):
+            if hasattr(target, "id"):
                 self._register(target.id)
         # TODO: assign constants to self.const_lookup?
         self.generic_visit(node)
@@ -140,11 +141,13 @@ class TopLevelVisitor(ast.NodeVisitor):
         """
         if isinstance(node.test, ast.Compare):  # pragma: nobranch
             try:
-                if all([
-                    isinstance(node.test.ops[0], ast.Eq),
-                    node.test.left.id == '__name__',
-                    node.test.comparators[0].s == '__main__',
-                ]):
+                if all(
+                    [
+                        isinstance(node.test.ops[0], ast.Eq),
+                        node.test.left.id == "__name__",
+                        node.test.comparators[0].s == "__main__",
+                    ]
+                ):
                     # Ignore main block
                     return
             except Exception:  # nocover
@@ -179,7 +182,7 @@ class TopLevelVisitor(ast.NodeVisitor):
                 # Ignore branches that are unconditionally false
                 continue
             else:
-                raise AssertionError('cannot happen')
+                raise AssertionError("cannot happen")
 
         if not has_unconditional and else_body:
             # If we havent found an unconditional branch we need an else
@@ -285,9 +288,9 @@ def static_truthiness(node):
         return bool(node.value)
     elif six.PY2 and isinstance(node, ast.Name):  # nocover
         constants_lookup = {
-            'True': True,
-            'False': False,
-            'None': None,
+            "True": True,
+            "False": False,
+            "None": None,
         }
         try:
             return bool(constants_lookup[node.id])
@@ -308,10 +311,11 @@ def get_conditional_attrnames(body):
     return sub_visitor.attrnames
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     """
     CommandLine:
         python -m mkinit.top_level_ast all
     """
     import xdoctest
+
     xdoctest.doctest_module(__file__)
