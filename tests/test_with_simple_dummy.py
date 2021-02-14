@@ -66,10 +66,14 @@ def test_simple_lazy_import():
     import mkinit
     import pytest
 
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
+
     paths = make_simple_dummy_package()
     pkg_path = paths["root"]
 
-    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
+    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False,
+                        recursive=True)
 
     if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()

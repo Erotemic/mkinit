@@ -351,6 +351,9 @@ def test_lazy_import():
     import pytest
     import mkinit
 
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
+
     cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
     paths = make_dummy_package(cache_dpath)
 
@@ -380,6 +383,9 @@ def test_recursive_lazy_autogen():
     """
     import pytest
     import mkinit
+
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
 
     cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
     paths = make_dummy_package(

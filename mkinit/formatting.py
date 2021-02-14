@@ -265,6 +265,10 @@ def _initstr(
                    'y', 'z']
 
     Example:
+        >>> import pytest
+        >>> import sys
+        >>> if sys.version_info < (3, 7):
+        >>>     pytest.skip('lazy only works on 3.7+')
         >>> modname = 'foo'
         >>> imports = ['.bar', '.baz']
         >>> from_imports = [('.bar', ['func1', 'func2'])]
@@ -358,6 +362,9 @@ def _initstr(
     )
     exposed_all.update(explicit)
 
+    exposed_all = sorted(exposed_all)
+    exposed_submodules = sorted(exposed_submodules)
+
     def append_part(new_part):
         """ appends a new part if it is nonempty """
         if new_part:
@@ -393,7 +400,7 @@ def _initstr(
                     except Exception:
                         raise ImportError(
                             'Could not lazy import module {fullname}'.format(
-                                fullname=fullname)) from None
+                                fullname=fullname)) #  from None
                     loader = importlib.util.LazyLoader(spec.loader)
                     sys.modules[fullname] = module
                     loader.exec_module(module)
