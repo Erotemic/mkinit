@@ -376,11 +376,11 @@ def _initstr(
     if options["lazy_import"]:
         # NOTE: We are not using f-strings so the code can still be parsed
         # in older versions of python.
+        # NOTE: We differentiate between submodule and submodule_attrs, as
+        # the keys in submodule_attrs aren't added by default.
         default_lazy_boilerplate = textwrap.dedent(
             r"""
-
             def lazy_import(module_name, submodules, submod_attrs):
-                import sys
                 import importlib
                 import importlib.util
                 all_funcs = []
@@ -394,8 +394,8 @@ def _initstr(
                 def __getattr__(name):
                     if name in submodules:
                         attr = importlib.import_module(
-                            '{module_name}.{modname}'.format(
-                                module_name=module_name, modname=modname)
+                            '{module_name}.{name}'.format(
+                                module_name=module_name, name=name)
                         )
                     elif name in name_to_submod:
                         modname = name_to_submod[name]

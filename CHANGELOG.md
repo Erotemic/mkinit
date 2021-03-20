@@ -1,6 +1,9 @@
 version: 0.3.2
 ---------------
 
+### Changed
+* `__submodules__` can now be a dictionary of submodule names that point to submodule attributes.
+
 
 version: 0.3.1 - released 2020-02-14
 ---------------
