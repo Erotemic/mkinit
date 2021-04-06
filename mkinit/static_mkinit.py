@@ -154,6 +154,7 @@ def static_init(modpath_or_name, submodules=None, respect_all=True, options=None
     modpath = _rectify_to_modpath(modpath_or_name)
 
     user_decl = parse_user_declarations(modpath)
+    logger.debug('user_decl = {}'.format(user_decl))
     if submodules is not None:
         user_decl["__submodules__"] = submodules
 
@@ -379,7 +380,7 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
     if submodules is None:
         logger.debug("Parsing implicit submodules!")
         import_paths = dict(_find_local_submodules(modpath))
-        submodules = sorted(import_paths.keys())
+        submodules = {k: None for k in sorted(import_paths.keys())}
         # logger.debug('Found {} import paths'.format(len(import_paths)))
         # logger.debug('Found {} submodules'.format(len(submodules)))
     else:
