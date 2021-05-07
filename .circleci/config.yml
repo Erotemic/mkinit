@@ -227,9 +227,9 @@ workflows:
       - test_full/cp35-35m-linux:
           filters:
               <<: *__ignore_release__
-      - test_full/cp34-34m-linux:
-          filters:
-              <<: *__ignore_release__
+      #- test_full/cp34-34m-linux:
+      #    filters:
+      #        <<: *__ignore_release__
       - test_full/cp27-27mu-linux:
           filters:
               <<: *__ignore_release__
