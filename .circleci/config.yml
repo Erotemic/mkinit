@@ -252,9 +252,9 @@ workflows:
       - test_minimal/cp35-35m-linux:
           filters:
               <<: *__ignore_release__
-      - test_minimal/cp34-34m-linux:
-          filters:
-              <<: *__ignore_release__
+      #- test_minimal/cp34-34m-linux:
+      #    filters:
+      #        <<: *__ignore_release__
       - test_minimal/cp27-27mu-linux:
           filters:
               <<: *__ignore_release__
