@@ -1,5 +1,17 @@
+version: 0.3.2
+---------------
 
-version: 0.3.1
+### Changed
+* Dropped Python 3.4 support
+* Modified generated lazy init code
+* `__submodules__` can now be a dictionary of submodule names that point to submodule attributes.
+
+### Fixed
+* Fixed issues in lazy init
+* Fixed issue with ast.Constant
+
+
+version: 0.3.1 - released 2020-02-14
 ---------------
 
 

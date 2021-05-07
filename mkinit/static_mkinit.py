@@ -154,6 +154,7 @@ def static_init(modpath_or_name, submodules=None, respect_all=True, options=None
     modpath = _rectify_to_modpath(modpath_or_name)
 
     user_decl = parse_user_declarations(modpath)
+    logger.debug('user_decl = {}'.format(user_decl))
     if submodules is not None:
         user_decl["__submodules__"] = submodules
 
@@ -360,6 +361,18 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
         >>> print('submodules = {!r}'.format(submodules))
         >>> print('from_imports = {!r}'.format(from_imports))
         >>> # assert 'autogen_init' in submodules
+
+    Example:
+        >>> from mkinit.static_mkinit import *  # NOQA
+        >>> modpath = util_import.modname_to_modpath('mkinit')
+        >>> external = ['textwrap']
+        >>> submodules = {'foo': ['bar', 'baz', 'biz']}
+        >>> tup = _static_parse_imports(modpath, submodules=submodules, external=external)
+        >>> modname, submodules, from_imports = tup
+        >>> print('modname = {!r}'.format(modname))
+        >>> print('submodules = {!r}'.format(submodules))
+        >>> print('from_imports = {!r}'.format(from_imports))
+        >>> # assert 'autogen_init' in submodules
     """
     logger.debug("Parse static submodules: {}".format(modpath))
     # FIXME: handle the case where the __init__.py file doesn't exist yet
@@ -367,7 +380,7 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
     if submodules is None:
         logger.debug("Parsing implicit submodules!")
         import_paths = dict(_find_local_submodules(modpath))
-        submodules = sorted(import_paths.keys())
+        submodules = {k: None for k in sorted(import_paths.keys())}
         # logger.debug('Found {} import paths'.format(len(import_paths)))
         # logger.debug('Found {} submodules'.format(len(submodules)))
     else:
@@ -375,9 +388,13 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
         if modname is None:
             raise AssertionError("modname is None")
 
+        if isinstance(submodules, list):
+            # Make a dict mapping module names to None
+            submodules = {m: None for m in submodules}
+
         import_paths = {
             m: util_import.modname_to_modpath(modname + "." + m, hide_init=False)
-            for m in submodules
+            for m in submodules.keys()
         }
         # FIX for relative nested import_paths
         for m in import_paths.keys():
@@ -391,21 +408,25 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
                     if exists(newval):
                         import_paths[m] = newval
                         break
-    imports = ["." + m for m in submodules]
+    imports = ["." + m for m in submodules.keys()]
 
     from_imports = []
-    for rel_modname in submodules:
-        sub_modpath = import_paths[rel_modname]
-        if sub_modpath is None:
-            raise Exception("Failed to submodule lookup {!r}".format(rel_modname))
-        try:
-            valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
-        except SyntaxError as ex:
-            warnings.warn(
-                "Failed to parse module {!r}, ex = {!r}".format(rel_modname, ex)
-            )
+    for rel_modname, attr_list in submodules.items():
+        if attr_list is None:
+            sub_modpath = import_paths[rel_modname]
+            if sub_modpath is None:
+                raise Exception("Failed to submodule lookup {!r}".format(rel_modname))
+            try:
+                valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
+            except SyntaxError as ex:
+                warnings.warn(
+                    "Failed to parse module {!r}, ex = {!r}".format(rel_modname, ex)
+                )
+            else:
+                from_imports.append(("." + rel_modname, sorted(valid_attrs)))
         else:
-            from_imports.append(("." + rel_modname, sorted(valid_attrs)))
+            valid_attrs = attr_list
+            from_imports.append(("." + rel_modname, attr_list))
 
     if external:
         for ext_modname in external:

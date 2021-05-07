@@ -283,10 +283,10 @@ def _initstr(
         from importlib import lazy_import
         __getattr__ = lazy_import(
             __name__,
-            submodules=[
+            submodules={
                 'bar',
                 'baz',
-            ],
+            },
             submod_attrs={
                 'bar': [
                     'func1',
@@ -376,16 +376,12 @@ def _initstr(
     if options["lazy_import"]:
         # NOTE: We are not using f-strings so the code can still be parsed
         # in older versions of python.
+        # NOTE: We differentiate between submodule and submodule_attrs, as
+        # the keys in submodule_attrs aren't added by default.
         default_lazy_boilerplate = textwrap.dedent(
             r"""
-
             def lazy_import(module_name, submodules, submod_attrs):
-                import sys
                 import importlib
-                import importlib.util
-                all_funcs = []
-                for mod, funcs in submod_attrs.items():
-                    all_funcs.extend(funcs)
                 name_to_submod = {
                     func: mod for mod, funcs in submod_attrs.items()
                     for func in funcs
@@ -394,14 +390,14 @@ def _initstr(
                 def __getattr__(name):
                     if name in submodules:
                         attr = importlib.import_module(
-                            '{module_name}.{modname}'.format(
-                                module_name=module_name, modname=modname)
+                            '{module_name}.{name}'.format(
+                                module_name=module_name, name=name)
                         )
                     elif name in name_to_submod:
-                        modname = name_to_submod[name]
+                        submodname = name_to_submod[name]
                         module = importlib.import_module(
-                            '{module_name}.{modname}'.format(
-                                module_name=module_name, modname=modname)
+                            '{module_name}.{submodname}'.format(
+                                module_name=module_name, submodname=submodname)
                         )
                         attr = getattr(module, name)
                     else:
@@ -439,8 +435,13 @@ def _initstr(
         # we can remove complexity and just use ubelt elsewhere
         import ubelt as ub
 
+        # exposed_submodules = set(exposed_submodules)
+        submodules_repr = ub.repr2(exposed_submodules).replace("\n", "\n    ")
+        # hack for python <3.7 tests
+        submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
+
         initstr = template.format(
-            submodules=ub.repr2(exposed_submodules).replace("\n", "\n    "),
+            submodules=submodules_repr,
             submod_attrs=ub.repr2(submod_attrs).replace("\n", "\n    "),
         )
 

@@ -35,6 +35,10 @@ def _parse_static_node_value(node):
         values = map(_parse_static_node_value, node.values)
         value = OrderedDict(zip(keys, values))
         # value = dict(zip(keys, values))
+    elif hasattr(ast, 'Constant') and isinstance(node, (ast.Constant)):
+        # Constant added in 3.6?
+        # https://bugs.python.org/issue26146
+        value = node.value
     else:
         raise TypeError(
             "Cannot parse a static value from non-static node "
@@ -78,12 +82,12 @@ def parse_static_value(key, source=None, fpath=None):
     class AssignentVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, "id", None) == key:
+                target_id = getattr(target, "id", None)
+                if target_id == key:
                     try:
                         self.value = _parse_static_node_value(node.value)
                     except TypeError as ex:
                         import warnings
-
                         warnings.warn(repr(ex))
 
     sentinal = object()
