@@ -1,6 +1,9 @@
 version: 0.3.2
 ---------------
 
+### Added
+* new `__ignore__` special attribute.
+
 ### Changed
 * Dropped Python 3.4 support
 * Modified generated lazy init code

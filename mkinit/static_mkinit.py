@@ -163,9 +163,11 @@ def static_init(modpath_or_name, submodules=None, respect_all=True, options=None
     private = user_decl.get("__private__", [])
     protected = user_decl.get("__protected__", [])
     external = user_decl.get("__external__", [])
+    ignore = user_decl.get("__ignore__", [])
 
     modname, imports, from_imports = _static_parse_imports(
-        modpath, submodules=submodules, respect_all=respect_all, external=external
+        modpath, submodules=submodules, respect_all=respect_all,
+        external=external, ignore=ignore
     )
 
     logger.debug("Found {} imports".format(len(imports)))
@@ -249,6 +251,12 @@ def parse_user_declarations(modpath):
         try:
             # Private items and their attributes are not exposed
             user_decl["__private__"] = static.parse_static_value("__private__", source)
+        except NameError:
+            pass
+
+        try:
+            # Ignore these modules and attributes
+            user_decl["__ignore__"] = static.parse_static_value("__ignore__", source)
         except NameError:
             pass
     return user_decl
@@ -340,7 +348,7 @@ def _extract_attributes(modpath, respect_all=True):
     return valid_attrs
 
 
-def _static_parse_imports(modpath, submodules=None, external=None, respect_all=True):
+def _static_parse_imports(modpath, submodules=None, external=None, respect_all=True, ignore=None):
     """
     Args:
         modpath (PathLike): base path to a package (with an __init__)
@@ -423,10 +431,16 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
                     "Failed to parse module {!r}, ex = {!r}".format(rel_modname, ex)
                 )
             else:
+                if ignore:
+                    ignore = set(ignore)
+                    valid_attrs = [v for v in valid_attrs if v not in ignore]
                 from_imports.append(("." + rel_modname, sorted(valid_attrs)))
         else:
             valid_attrs = attr_list
-            from_imports.append(("." + rel_modname, attr_list))
+            if ignore:
+                ignore = set(ignore)
+                valid_attrs = [v for v in valid_attrs if v not in ignore]
+            from_imports.append(("." + rel_modname, valid_attrs))
 
     if external:
         for ext_modname in external:

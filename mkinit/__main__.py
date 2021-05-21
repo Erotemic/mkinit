@@ -28,6 +28,8 @@ def main():
             `__protected__` -  Protected modules are exposed, but their attributes are not.
 
             `__private__` - Private modules and their attributes are not exposed.
+
+            `__ignore__` - Tells mkinit to ignore particular attributes
         """
     ).strip("\n")
 
