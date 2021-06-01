@@ -1,4 +1,7 @@
 def main():
+    """
+    The mkinit CLI main
+    """
     from mkinit import static_mkinit
     import textwrap
     import argparse
@@ -139,7 +142,6 @@ def main():
 
     if ns["version"]:
         import mkinit
-
         print(mkinit.__version__)
         return
 
@@ -181,7 +183,7 @@ def main():
         level=level,
     )
 
-    print('ns = {!r}'.format(ns))
+    # print('ns = {!r}'.format(ns))
     static_mkinit.autogen_init(
         modname_or_path, respect_all=respect_all, options=options, dry=dry,
         diff=diff, recursive=ns['recursive'],

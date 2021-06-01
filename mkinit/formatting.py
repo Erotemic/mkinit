@@ -382,6 +382,7 @@ def _initstr(
             r"""
             def lazy_import(module_name, submodules, submod_attrs):
                 import importlib
+                import os
                 name_to_submod = {
                     func: mod for mod, funcs in submod_attrs.items()
                     for func in funcs
@@ -406,6 +407,14 @@ def _initstr(
                                 module_name=module_name, name=name))
                     globals()[name] = attr
                     return attr
+
+                if os.environ.get('EAGER_IMPORT', ''):
+                    for name in name_to_submod.values():
+                        __getattr__(name)
+
+                    for attrs in submod_attrs.values():
+                        for attr in attrs:
+                            __getattr__(attr)
                 return __getattr__
             """
         ).rstrip("\n")
