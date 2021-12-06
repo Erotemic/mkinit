@@ -1,3 +1,12 @@
+version: 0.3.3
+---------------
+
+### Fixed
+
+* GH Issue #14: async functions were not respected
+
+
+
 version: 0.3.2
 ---------------
 

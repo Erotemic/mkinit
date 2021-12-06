@@ -21,7 +21,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         http://greentreesnakes.readthedocs.io/en/latest/nodes.html
 
     CommandLine:
-        python ~/code/mkinit/mkinit/top_level_ast.py TopLevelVisitor
+        python ~/code/mkinit/mkinit/top_level_ast.py TopLevelVisitor:1
 
     Example:
         >>> from xdoctest import utils
@@ -42,6 +42,26 @@ class TopLevelVisitor(ast.NodeVisitor):
         >>> self = TopLevelVisitor.parse(source)
         >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
         attrnames = ['Spam', 'bar', 'foo']
+
+    Example:
+        >>> from mkinit.top_level_ast import *  # NOQA
+        >>> from xdoctest import utils
+        >>> source = utils.codeblock(
+        ...    '''
+        ...    async def asyncfoo():
+        ...        var = 1
+        ...    def bar():
+        ...        pass
+        ...    class Spam(object):
+        ...        def eggs(self):
+        ...            pass
+        ...        @staticmethod
+        ...        def hams():
+        ...            pass
+        ...    ''')
+        >>> self = TopLevelVisitor.parse(source)
+        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        attrnames = ['Spam', 'asyncfoo', 'bar']
 
     Example:
         >>> from xdoctest import utils
@@ -120,6 +140,11 @@ class TopLevelVisitor(ast.NodeVisitor):
     #     super(TopLevelVisitor, self).visit(node)
 
     def visit_FunctionDef(self, node):
+        print('node.name = {!r}'.format(node.name))
+        self._register(node.name)
+
+    def visit_AsyncFunctionDef(self, node):
+        print('node.name = {!r}'.format(node.name))
         self._register(node.name)
 
     def visit_ClassDef(self, node):
