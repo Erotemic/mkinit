@@ -73,6 +73,9 @@ def test_async():
     import mkinit
     import pytest
 
+    if sys.version_info[0] < 3):
+        pytest.skip('Only 3.x+ has async')
+
     paths = make_simple_dummy_package()
     pkg_path = paths["root"]
 
