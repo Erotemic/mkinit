@@ -140,11 +140,9 @@ class TopLevelVisitor(ast.NodeVisitor):
     #     super(TopLevelVisitor, self).visit(node)
 
     def visit_FunctionDef(self, node):
-        print('node.name = {!r}'.format(node.name))
         self._register(node.name)
 
     def visit_AsyncFunctionDef(self, node):
-        print('node.name = {!r}'.format(node.name))
         self._register(node.name)
 
     def visit_ClassDef(self, node):
