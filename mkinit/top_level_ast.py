@@ -44,6 +44,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         attrnames = ['Spam', 'bar', 'foo']
 
     Example:
+        >>> # xdoctest: +REQUIRES(PY3)
         >>> from mkinit.top_level_ast import *  # NOQA
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
