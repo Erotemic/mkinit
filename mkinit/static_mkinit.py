@@ -17,6 +17,7 @@ from os.path import join
 from os.path import basename
 from os.path import dirname
 import logging
+import fnmatch
 import warnings
 
 
@@ -386,6 +387,10 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = util_import.modpath_to_modname(modpath, check=False)
     if submodules is None:
+        # Equivalent to case submodules = {'*': ['*']}
+        # TODO: refactor to reduce code size and collapse cases
+        # TODO: could pull in pattern matching generalization from xdev and
+        # allow regex or glob-type matches.
         logger.debug("Parsing implicit submodules!")
         import_paths = dict(_find_local_submodules(modpath))
         submodules = {k: None for k in sorted(import_paths.keys())}
@@ -399,6 +404,24 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
         if isinstance(submodules, list):
             # Make a dict mapping module names to None
             submodules = {m: None for m in submodules}
+
+        # Determine which submodules were given as a pattern
+        implicit_submodules = {k: v for k, v in submodules.items() if '*' in k}
+        if implicit_submodules:
+            submodule_patterns = submodules.copy()
+            explicit_keys = set(submodule_patterns) - set(implicit_submodules)
+            explicit_submodules = {k: submodules[k] for k in explicit_keys}
+            implicit_candidates = {
+                k: v for k, v in dict(_find_local_submodules(modpath)).items() if k not in explicit_keys
+            }
+            matched_submodules = {}
+            for pat_key, pat_val in implicit_submodules.items():
+                matched_submodules.update({
+                    k: pat_val for k, v in implicit_candidates.items()
+                    if fnmatch.fnmatch(k, pat_key)
+                })
+            submodules = explicit_submodules.copy()
+            submodules.update(matched_submodules)
 
         import_paths = {
             m: util_import.modname_to_modpath(modname + "." + m, hide_init=False)
@@ -418,24 +441,48 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
                         break
     imports = ["." + m for m in submodules.keys()]
 
+    def _lookup_extractable_attrs(rel_modname):
+        sub_modpath = import_paths[rel_modname]
+        if sub_modpath is None:
+            raise Exception("Failed to submodule lookup {!r}".format(rel_modname))
+        try:
+            extracted_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
+        except SyntaxError as ex:
+            warnings.warn(
+                "Failed to parse module {!r}, ex = {!r}".format(rel_modname, ex)
+            )
+            extracted_attrs = None
+        return extracted_attrs
+
     from_imports = []
     for rel_modname, attr_list in submodules.items():
         if attr_list is None:
-            sub_modpath = import_paths[rel_modname]
-            if sub_modpath is None:
-                raise Exception("Failed to submodule lookup {!r}".format(rel_modname))
-            try:
-                valid_attrs = _extract_attributes(sub_modpath, respect_all=respect_all)
-            except SyntaxError as ex:
-                warnings.warn(
-                    "Failed to parse module {!r}, ex = {!r}".format(rel_modname, ex)
-                )
-            else:
+            # Equivalent to case where attr_list = ['*']
+            # TODO: refactor to reduce code size and collapse cases
+            valid_attrs = _lookup_extractable_attrs(rel_modname)
+            if valid_attrs is not None:
                 if ignore:
                     ignore = set(ignore)
                     valid_attrs = [v for v in valid_attrs if v not in ignore]
                 from_imports.append(("." + rel_modname, sorted(valid_attrs)))
         else:
+            # Determine which attrs were given as a pattern
+            implicit_attrs = {a for a in attr_list if '*' in a}
+            if implicit_attrs:
+                # pattern matching on implicit attrs
+                explicit_attrs = set(attr_list) - implicit_attrs
+                matched_attrs = set()
+                extracted_attrs = _lookup_extractable_attrs(rel_modname)
+                if extracted_attrs is not None:
+                    for pat in implicit_attrs:
+                        matched_attrs.update({
+                            cand for cand in extracted_attrs if fnmatch.fnmatch(cand, pat)
+                        })
+                resolved_attrs = set()
+                resolved_attrs.update(explicit_attrs)
+                resolved_attrs.update(matched_attrs)
+                attr_list = sorted(resolved_attrs)
+
             valid_attrs = attr_list
             if ignore:
                 ignore = set(ignore)

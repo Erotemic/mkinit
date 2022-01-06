@@ -7,6 +7,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version: 0.3.4
 
+### Added
+* Can now specify `"*"` in `__submodules__` to pattern match on available submodules.
+
 ### Fixed
 * GH Issue #14: async functions are now handled correctly
 
