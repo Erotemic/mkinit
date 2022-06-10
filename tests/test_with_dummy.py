@@ -60,10 +60,8 @@ def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
         paths["submod1"],
         ub.codeblock(
             """
-        import six
-
         attr1 = True
-        attr2 = six.moves.zip
+        attr2 = zip
 
         # ------------------------
 

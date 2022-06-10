@@ -1,8 +1,5 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import, division, print_function, unicode_literals
 import ast
-import six
-from ordered_set import OrderedSet as oset
+from mkinit.util.orderedset import OrderedSet as oset
 
 __all__ = [
     "TopLevelVisitor",
@@ -124,15 +121,8 @@ class TopLevelVisitor(ast.NodeVisitor):
     def parse(TopLevelVisitor, source):
         self = TopLevelVisitor()
 
-        if six.PY2:
-            try:
-                source_utf8 = source.encode("utf8")
-                pt = ast.parse(source_utf8)
-            except UnicodeDecodeError:
-                pt = ast.parse(source)
-        else:
-            source_utf8 = source.encode("utf8")
-            pt = ast.parse(source_utf8)
+        source_utf8 = source.encode("utf8")
+        pt = ast.parse(source_utf8)
 
         self.visit(pt)
         return self
@@ -306,20 +296,10 @@ def static_truthiness(node):
         return bool(node.elts)
     elif isinstance(node, ast.Num):
         return bool(node.n)
-    elif six.PY3 and isinstance(node, ast.Bytes):  # nocover
+    elif isinstance(node, ast.Bytes):  # nocover
         return bool(node.s)
-    elif six.PY3 and isinstance(node, ast.NameConstant):
+    elif isinstance(node, ast.NameConstant):
         return bool(node.value)
-    elif six.PY2 and isinstance(node, ast.Name):  # nocover
-        constants_lookup = {
-            "True": True,
-            "False": False,
-            "None": None,
-        }
-        try:
-            return bool(constants_lookup[node.id])
-        except KeyError:
-            return _UNHANDLED
     else:
         return _UNHANDLED
 

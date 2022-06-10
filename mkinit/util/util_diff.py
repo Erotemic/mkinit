@@ -5,35 +5,11 @@ Port of ubelt utilities + difftext wrapper around difflib
 from __future__ import print_function, division, absolute_import, unicode_literals
 import os
 import sys
-import six
 
 # Global state that determines if ANSI-coloring text is allowed
 # (which is mainly to address non-ANSI complient windows consoles)
 # complient with https://no-color.org/
 NO_COLOR = bool(os.environ.get("NO_COLOR"))
-
-
-def ensure_unicode(text):
-    r"""
-    Casts bytes into utf8 (mostly for python2 compatibility)
-
-    References:
-        http://stackoverflow.com/questions/12561063/extract-data-from-file
-
-    Example:
-        >>> import codecs  # NOQA
-        >>> assert ensure_unicode('my ünicôdé strįng') == 'my ünicôdé strįng'
-        >>> assert ensure_unicode('text1') == 'text1'
-        >>> assert ensure_unicode('text1'.encode('utf8')) == 'text1'
-        >>> assert ensure_unicode('ï»¿text1'.encode('utf8')) == 'ï»¿text1'
-        >>> assert (codecs.BOM_UTF8 + 'text»¿'.encode('utf8')).decode('utf8')
-    """
-    if isinstance(text, six.text_type):
-        return text
-    elif isinstance(text, six.binary_type):
-        return text.decode("utf8")
-    else:  # nocover
-        raise ValueError("unknown input type {!r}".format(text))
 
 
 def difftext(text1, text2, context_lines=0, ignore_whitespace=False, colored=False):
@@ -75,9 +51,6 @@ def difftext(text1, text2, context_lines=0, ignore_whitespace=False, colored=Fal
         >>> print(result)
     """
     import difflib
-
-    text1 = ensure_unicode(text1)
-    text2 = ensure_unicode(text2)
     text1_lines = text1.splitlines()
     text2_lines = text2.splitlines()
     if ignore_whitespace:

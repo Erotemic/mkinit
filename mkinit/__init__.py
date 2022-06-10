@@ -1,9 +1,17 @@
 # -*- coding: utf-8 -*-
 """
+The MkInit Module
+-----------------
+
+A tool to autogenerate explicit top-level imports
+"""
+
+__autogen__ = """
 Regenerate Input Command
 mkinit ~/code/mkinit/mkinit
 """
-__version__ = "0.3.4"
+
+__version__ = "1.0.0"
 
 __submodules__ = [
     "dynamic_mkinit",

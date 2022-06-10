@@ -1,11 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Static version of dynamic_autogen.py
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
-import six
 import os
-from six.moves import builtins
 from mkinit import static_analysis as static
 from mkinit.util import util_import
 from mkinit.util.util_diff import difftext
@@ -315,12 +311,8 @@ def _extract_attributes(modpath, respect_all=True):
         >>> _extract_attributes(modpath)
     """
     try:
-        if six.PY2:
-            with open(modpath, "r") as file:
-                source = file.read()
-        else:
-            with open(modpath, "r", encoding="utf8") as file:
-                source = file.read()
+        with open(modpath, "r", encoding="utf8") as file:
+            source = file.read()
     except Exception as ex:  # nocover
         raise IOError("Error reading {}, caused by {}".format(modpath, repr(ex)))
     valid_attrs = None
@@ -330,6 +322,7 @@ def _extract_attributes(modpath, respect_all=True):
         except NameError:
             pass
     if valid_attrs is None:
+        import builtins
         # The __all__ variable is not specified or we dont care
         try:
             top_level = TopLevelVisitor.parse(source)
@@ -502,13 +495,3 @@ def _static_parse_imports(modpath, submodules=None, external=None, respect_all=T
                 from_imports.append((ext_modname, sorted(valid_attrs)))
 
     return modname, imports, from_imports
-
-
-if __name__ == "__main__":
-    """
-    CommandLine:
-        python -m mkinit.static_autogen all
-    """
-    import xdoctest
-
-    xdoctest.doctest_module(__file__)
