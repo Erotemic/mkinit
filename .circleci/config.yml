@@ -473,7 +473,7 @@ jobs:
   test_full/cp36-36m-linux:
     <<: *test_full_template
     docker:
-      - image: circleci/python:3.5
+      - image: circleci/python:3.6
 
   #test_full/cp34-34m-linux:
   #  <<: *test_full_template
