@@ -1,12 +1,9 @@
-# -*- coding: utf-8 -*-
 """
 A paired down version of static_anslysis from xdoctest
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 import os
 import sys
 import ast
-import six
 from collections import OrderedDict
 from mkinit.util import util_import
 from os.path import join, exists, splitext, isfile
@@ -196,12 +193,10 @@ def is_balanced_statement(lines):
         >>> #assert is_balanced_statement(['== ']) is False
 
     """
-    from six.moves import cStringIO as StringIO
+    from io import StringIO
     import tokenize
 
     block = "\n".join(lines)
-    if six.PY2:
-        block = block.encode("utf8")
     stream = StringIO()
     stream.write(block)
     stream.seek(0)
@@ -326,13 +321,3 @@ def _workaround_16806(ps1_linenos, exec_source_lines):
         b = a
     ps1_linenos = set(new_ps1_lines)
     return ps1_linenos
-
-
-if __name__ == "__main__":
-    """
-    CommandLine:
-        python -m mkinit.static_analysis all
-    """
-    import xdoctest
-
-    xdoctest.doctest_module(__file__)

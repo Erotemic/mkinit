@@ -5,13 +5,17 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Version: 0.3.4
+## Version: 1.0.0
 
 ### Added
 * Can now specify `"*"` in `__submodules__` to pattern match on available submodules.
 
 ### Fixed
 * GH Issue #14: async functions are now handled correctly
+
+### Changed
+* Drop support for Python 2.7 and 3.5
+* Vendored in orderedset
 
 
 

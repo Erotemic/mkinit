@@ -1,9 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Contains logic for formatting statically / dynamically extracted information
 into the final product.
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import join, exists
 import textwrap
 import logging
@@ -647,13 +645,3 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)
     return from_str
-
-
-if __name__ == "__main__":
-    """
-    CommandLine:
-        python -m mkinit.formatting all
-    """
-    import xdoctest
-
-    xdoctest.doctest_module(__file__)
