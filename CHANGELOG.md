@@ -16,6 +16,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 * Drop support for Python 2.7 and 3.5
 * Vendored in orderedset
+* Can now detect other existing names in the file and insert them into `__all__`
 
 
 
