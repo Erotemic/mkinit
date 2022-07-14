@@ -172,8 +172,14 @@ def static_init(modpath_or_name, submodules=None, respect_all=True, options=None
         else:
             lines = []
         startline, endline, init_indent = _find_insert_points(lines)
-        user_text = '\n'.join(lines[:startline] + lines[endline:])
-        user_attrs = _extract_attributes(source=user_text)
+        user_text = ''.join(lines[:startline] + lines[endline:])
+
+        try:
+            user_attrs = _extract_attributes(source=user_text)
+        except Exception:
+            logger.error('Unable to parse user attributes')
+            raise
+
         logger.debug('Updating explicit with variable names parsed from existing text: {}'.format(user_attrs))
         explicit.extend(user_attrs)
 

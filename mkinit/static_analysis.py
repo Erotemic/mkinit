@@ -74,6 +74,7 @@ def parse_static_value(key, source=None, fpath=None):
     if source is None:  # pragma: no branch
         with open(fpath, "rb") as file_:
             source = file_.read().decode("utf-8")
+
     pt = ast.parse(source)
 
     class AssignentVisitor(ast.NodeVisitor):
