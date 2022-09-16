@@ -3,6 +3,7 @@ Tests run on a dummy package
 """
 import ubelt as ub
 import sys
+import os
 from os.path import join
 from os.path import dirname
 try:
@@ -361,7 +362,7 @@ def test_lazy_import():
         pytest.skip()
 
     dpath = dirname(paths["root"])
-    with ub.util_import.PythonPathContext(dpath):
+    with ub.util_import.PythonPathContext(os.fspath(dpath)):
         import mkinit_dummy_module
 
         print("mkinit_dummy_module = {!r}".format(mkinit_dummy_module))
@@ -380,6 +381,7 @@ def test_recursive_lazy_autogen():
     """
     import pytest
     import mkinit
+    import os
 
     if sys.version_info[0:2] < (3, 7):
         pytest.skip('Only 3.7+ has lazy imports')
@@ -395,7 +397,9 @@ def test_recursive_lazy_autogen():
     if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
 
-    with ub.util_import.PythonPathContext(cache_dpath):
+    print(f'cache_dpath={cache_dpath}')
+    with ub.util_import.PythonPathContext(os.fspath(cache_dpath)):
+        print('sys.path = {}'.format(ub.repr2(sys.path, nl=1)))
         import mkinit_rec_lazy_autogen
 
         print("mkinit_rec_lazy_autogen = {!r}".format(mkinit_rec_lazy_autogen))
@@ -436,7 +440,7 @@ def test_recursive_eager_autogen():
 
     mkinit.autogen_init(pkg_path, options={"lazy_import": 0}, dry=False, recursive=True)
 
-    with ub.util_import.PythonPathContext(cache_dpath):
+    with ub.util_import.PythonPathContext(os.fspath(cache_dpath)):
         import mkinit_rec_eager_autogen
 
         print("mkinit_rec_eager_autogen = {!r}".format(mkinit_rec_eager_autogen))

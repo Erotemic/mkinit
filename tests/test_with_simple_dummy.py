@@ -1,4 +1,5 @@
 import ubelt as ub
+import os
 from os.path import join
 from os.path import dirname
 import sys
@@ -82,7 +83,7 @@ def test_simple_lazy_import():
         pytest.skip()
 
     dpath = dirname(paths["root"])
-    with ub.util_import.PythonPathContext(dpath):
+    with ub.util_import.PythonPathContext(os.fspath(dpath)):
         import mkinit_demo_pkg
 
         print("mkinit_demo_pkg = {!r}".format(mkinit_demo_pkg))
