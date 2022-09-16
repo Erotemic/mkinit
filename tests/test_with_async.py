@@ -2,7 +2,10 @@ import ubelt as ub
 from os.path import join
 from os.path import dirname
 import sys
-from distutils.version import LooseVersion
+try:
+    from packaging.version import parse as LooseVersion
+except ImportError:
+    from distutils.version import LooseVersion
 
 
 def make_simple_dummy_package():
@@ -12,7 +15,7 @@ def make_simple_dummy_package():
     ANY EXISTING FILES ARE DELETED
     """
     # Fresh start
-    dpath = ub.ensure_app_cache_dir("mkinit/test/test_async/")
+    dpath = ub.Path.appdir("mkinit/test/test_async/").ensuredir()
     ub.delete(dpath)
     ub.ensuredir(dpath)
     rel_paths = {

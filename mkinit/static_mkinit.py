@@ -162,6 +162,27 @@ def static_init(modpath_or_name, submodules=None, respect_all=True, options=None
     external = user_decl.get("__external__", [])
     ignore = user_decl.get("__ignore__", [])
 
+    PARSE_USER_TEXT_FOR_OTHER_NAMES = True
+    if PARSE_USER_TEXT_FOR_OTHER_NAMES:
+        from mkinit.formatting import _find_insert_points  # NOQA
+        init_fpath = join(modpath, "__init__.py")
+        if exists(init_fpath):
+            with open(init_fpath, "r") as file_:
+                lines = file_.readlines()
+        else:
+            lines = []
+        startline, endline, init_indent = _find_insert_points(lines)
+        user_text = ''.join(lines[:startline] + lines[endline:])
+
+        try:
+            user_attrs = _extract_attributes(source=user_text)
+        except Exception:
+            logger.error('Unable to parse user attributes')
+            raise
+
+        logger.debug('Updating explicit with variable names parsed from existing text: {}'.format(user_attrs))
+        explicit.extend(user_attrs)
+
     modname, imports, from_imports = _static_parse_imports(
         modpath, submodules=submodules, respect_all=respect_all,
         external=external, ignore=ignore
@@ -300,7 +321,7 @@ def _find_local_submodules(pkgpath):
             yield rel_modname, sub_modpath
 
 
-def _extract_attributes(modpath, respect_all=True):
+def _extract_attributes(modpath=None, source=None, respect_all=True):
     """
     This is the function that basically simulates import *
 
@@ -310,11 +331,12 @@ def _extract_attributes(modpath, respect_all=True):
         >>> modpath = util_import.modname_to_modpath('mkinit.util.util_diff', hide_init=False)
         >>> _extract_attributes(modpath)
     """
-    try:
-        with open(modpath, "r", encoding="utf8") as file:
-            source = file.read()
-    except Exception as ex:  # nocover
-        raise IOError("Error reading {}, caused by {}".format(modpath, repr(ex)))
+    if source is None:
+        try:
+            with open(modpath, "r", encoding="utf8") as file:
+                source = file.read()
+        except Exception as ex:  # nocover
+            raise IOError("Error reading {}, caused by {}".format(modpath, repr(ex)))
     valid_attrs = None
     if respect_all:  # pragma: nobranch
         try:

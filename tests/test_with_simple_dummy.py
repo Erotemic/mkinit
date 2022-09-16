@@ -1,8 +1,12 @@
 import ubelt as ub
+import os
 from os.path import join
 from os.path import dirname
 import sys
-from distutils.version import LooseVersion
+try:
+    from packaging.version import parse as LooseVersion
+except ImportError:
+    from distutils.version import LooseVersion
 
 
 def make_simple_dummy_package():
@@ -12,7 +16,7 @@ def make_simple_dummy_package():
     ANY EXISTING FILES ARE DELETED
     """
     # Fresh start
-    dpath = ub.ensure_app_cache_dir("mkinit/test/simple_demo/")
+    dpath = ub.Path.appdir("mkinit/test/simple_demo/").ensuredir()
     ub.delete(dpath)
     ub.ensuredir(dpath)
     rel_paths = {
@@ -79,7 +83,7 @@ def test_simple_lazy_import():
         pytest.skip()
 
     dpath = dirname(paths["root"])
-    with ub.util_import.PythonPathContext(dpath):
+    with ub.util_import.PythonPathContext(os.fspath(dpath)):
         import mkinit_demo_pkg
 
         print("mkinit_demo_pkg = {!r}".format(mkinit_demo_pkg))
