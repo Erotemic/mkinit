@@ -2,10 +2,13 @@
 Tests run on a dummy package
 """
 import ubelt as ub
-from distutils.version import LooseVersion
 import sys
 from os.path import join
 from os.path import dirname
+try:
+    from packaging.version import parse as LooseVersion
+except ImportError:
+    from distutils.version import LooseVersion
 
 
 def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
@@ -33,8 +36,7 @@ def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
     paths["long_subdir_init"] = ub.touch(join(paths["longsubdir"], "__init__.py"))
     paths["long_submod"] = ub.touch(join(paths["longsubdir"], "long_submod.py"))
 
-    ub.writeto(
-        paths["subdir1_init"],
+    ub.Path(paths["subdir1_init"]).write_text(
         ub.codeblock(
             """
         simple_subattr1 = "hello world"
@@ -44,8 +46,7 @@ def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
         ),
     )
 
-    ub.writeto(
-        paths["subdir2_init"],
+    ub.Path(paths["subdir2_init"]).write_text(
         ub.codeblock(
             """
         __all__ = ['public_attr']
@@ -56,8 +57,7 @@ def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
         ),
     )
 
-    ub.writeto(
-        paths["submod1"],
+    ub.Path(paths["submod1"]).write_text(
         ub.codeblock(
             """
         attr1 = True
@@ -235,8 +235,7 @@ def make_dummy_package(dpath, pkgname="mkinit_dummy_module", side_effects=0):
         if not exists(fpath):
             ub.touch(fpath)
 
-    ub.writeto(
-        paths["long_submod"],
+    ub.Path(paths["long_submod"]).write_text(
         ub.codeblock(
             """
         def a_very_nested_function():
@@ -284,7 +283,7 @@ def test_static_import_without_init():
     """
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(cache_dpath)
     ub.delete(paths["root_init"])
 
@@ -304,7 +303,7 @@ def test_static_init():
     """
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(cache_dpath)
 
     modpath = paths["root"]
@@ -318,7 +317,7 @@ def test_static_find_locals():
     """
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(cache_dpath)
     ub.delete(paths["root_init"])
     modpath = paths["root"]
@@ -332,7 +331,7 @@ def test_dynamic_init():
     """
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(cache_dpath, "dynamic_dummy_mod1")
     module = ub.import_module_from_path(paths["root"])
     text = mkinit.dynamic_mkinit.dynamic_init(module.__name__)
@@ -352,7 +351,7 @@ def test_lazy_import():
     if sys.version_info[0:2] < (3, 7):
         pytest.skip('Only 3.7+ has lazy imports')
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(cache_dpath)
 
     pkg_path = paths["root"]
@@ -385,7 +384,7 @@ def test_recursive_lazy_autogen():
     if sys.version_info[0:2] < (3, 7):
         pytest.skip('Only 3.7+ has lazy imports')
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(
         cache_dpath, pkgname="mkinit_rec_lazy_autogen", side_effects=True
     )
@@ -429,7 +428,7 @@ def test_recursive_eager_autogen():
     """
     import mkinit
 
-    cache_dpath = ub.ensure_app_cache_dir("mkinit/tests")
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
     paths = make_dummy_package(
         cache_dpath, pkgname="mkinit_rec_eager_autogen", side_effects=True
     )
