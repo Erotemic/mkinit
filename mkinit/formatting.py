@@ -99,6 +99,7 @@ def _find_insert_points(lines):
             indentation.
 
     Examples:
+        >>> from mkinit.formatting import *  # NOQA
         >>> lines = textwrap.dedent(
             '''
             preserved1 = True
@@ -113,6 +114,7 @@ def _find_insert_points(lines):
         (3, 4, '    ')
 
     Examples:
+        >>> from mkinit.formatting import *  # NOQA
         >>> lines = textwrap.dedent(
             '''
             preserved1 = True
@@ -164,13 +166,24 @@ def _find_insert_points(lines):
         "'''",
     )
     for lineno, line in enumerate(lines):
-        if skipto is not None:
-            if lineno != skipto:
-                continue
-            else:
-                print('SKIPPED TO = {!r}'.format(lineno))
-                skipto = None
+
+        # Check explicit modes regardless of skipping
+        if line.strip().startswith("# <AUTOGEN_INIT>"):  # allow tags too
+            print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
+            init_indent = line[: line.find("#")]
+            explicit_flag = True
+            startline = lineno + 1
+        if explicit_flag and line.strip().startswith("# </AUTOGEN_INIT>"):
+            print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
+            endline = lineno
+
         if not explicit_flag:
+            if skipto is not None:
+                if lineno != skipto:
+                    continue
+                else:
+                    print('SKIPPED TO = {!r}'.format(lineno))
+                    skipto = None
             if line.strip().startswith(implicit_patterns):
                 print('[mkinit] RESPECTING LINE {}: {}'.format(lineno, line.rstrip('\n')))
                 startline = lineno + 1
@@ -198,14 +211,6 @@ def _find_insert_points(lines):
                     ...
                 except IndexError:
                     ...
-        if line.strip().startswith("# <AUTOGEN_INIT>"):  # allow tags too
-            print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
-            init_indent = line[: line.find("#")]
-            explicit_flag = True
-            startline = lineno + 1
-        if explicit_flag and line.strip().startswith("# </AUTOGEN_INIT>"):
-            print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
-            endline = lineno
 
     # print('startline = {}'.format(startline))
     # print('endline = {}'.format(endline))
