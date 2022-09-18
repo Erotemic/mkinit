@@ -1,10 +1,19 @@
 mkinit package
 ==============
 
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   mkinit.util
+
 Submodules
 ----------
 
 .. toctree::
+   :maxdepth: 4
 
    mkinit.dynamic_mkinit
    mkinit.formatting
