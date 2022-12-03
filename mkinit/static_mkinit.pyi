@@ -7,9 +7,9 @@ logger: Incomplete
 
 
 def autogen_init(modpath_or_name: Union[PathLike, str],
-                 submodules: List[str] = None,
+                 submodules: Union[List[str], None] = None,
                  respect_all: bool = True,
-                 options: dict = None,
+                 options: Union[dict, None] = None,
                  dry: bool = False,
                  diff: bool = ...,
                  recursive: bool = False):

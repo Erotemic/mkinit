@@ -183,8 +183,20 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         >>> modpath = _syspath_modname_to_modpath(modname)
         >>> exclude = [split_modpath(modpath)[0]]
         >>> found = _syspath_modname_to_modpath(modname, exclude=exclude)
-        >>> # this only works if installed in dev mode, pypi fails
-        >>> assert found is None, 'should not have found {} because we excluded'.format(found, exclude)
+        >>> if found is not None:
+        >>>     # Note: the basic form of this test may fail if there are
+        >>>     # multiple versions of the package installed. Try and fix that.
+        >>>     other = split_modpath(found)[0]
+        >>>     assert other not in exclude
+        >>>     exclude.append(other)
+        >>>     found = _syspath_modname_to_modpath(modname, exclude=exclude)
+        >>> if found is not None:
+        >>>     raise AssertionError(
+        >>>         'should not have found {}.'.format(found) +
+        >>>         ' because we excluded: {}.'.format(exclude) +
+        >>>         ' cwd={} '.format(os.getcwd()) +
+        >>>         ' sys.path={} '.format(sys.path)
+        >>>     )
     """
     import glob
 
@@ -243,6 +255,10 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
 
     _egglink_fname1 = _pkg_name + '.egg-link'
     _egglink_fname2 = _pkg_name_hypen + '.egg-link'
+    # FIXME! suffixed modules will clobber break!
+    # Currently mitigating this by looping over all possible matches,
+    # but it would be nice to ensure we are not matching suffixes.
+    # however, we should probably match and handle different versions.
     _editable_fname_pth_pat = '__editable__.' + _pkg_name + '-*.pth'
     _editable_fname_finder_py_pat = '__editable___' + _pkg_name + '_*finder.py'
 
@@ -268,14 +284,20 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             # ultimately be good. Hopefully the new standards mean it does not
             # break with pytest anymore? Nope, pytest still doesn't work right
             # with it.
-            finder_fpath = new_editable_finder_paths[-1]
-            mapping = _static_parse('MAPPING', finder_fpath)
-            target = dirname(mapping[_pkg_name])
-            if not exclude or normalize(target) not in real_exclude:  # pragma: nobranch
-                modpath = check_dpath(target)
-                if modpath:  # pragma: nobranch
-                    found_modpath = modpath
-                    break
+            for finder_fpath in new_editable_finder_paths:
+                mapping = _static_parse('MAPPING', finder_fpath)
+                try:
+                    target = dirname(mapping[_pkg_name])
+                except KeyError:
+                    ...
+                else:
+                    if not exclude or normalize(target) not in real_exclude:  # pragma: nobranch
+                        modpath = check_dpath(target)
+                        if modpath:  # pragma: nobranch
+                            found_modpath = modpath
+                            break
+            if found_modpath is not None:
+                break
 
         # If a finder does not exist, then the __editable__ pth file might hold
         # the path itself. Check for that.
@@ -284,13 +306,16 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             # Disable coverage because the test that covers this is too slow.
             # It can be made faster, re-enable when that lands.
             import pathlib
-            editable_pth = pathlib.Path(new_editable_pth_paths[-1])
-            target = editable_pth.read_text().strip().split('\n')[-1]
-            if not exclude or normalize(target) not in real_exclude:
-                modpath = check_dpath(target)
-                if modpath:  # pragma: nobranch
-                    found_modpath = modpath
-                    break
+            for editable_pth in new_editable_pth_paths:
+                editable_pth = pathlib.Path(editable_pth)
+                target = editable_pth.read_text().strip().split('\n')[-1]
+                if not exclude or normalize(target) not in real_exclude:
+                    modpath = check_dpath(target)
+                    if modpath:  # pragma: nobranch
+                        found_modpath = modpath
+                        break
+            if found_modpath is not None:
+                break
 
         # If file path checks fails, check for egg-link based modules
         # (Python usually puts egg links into sys.path, but if the user is
@@ -446,7 +471,7 @@ def modpath_to_modname(modpath, hide_init=True, hide_main=False, check=True,
         hide_main (bool, default=False): removes the __main__ suffix
         check (bool, default=True): if False, does not raise an error if
             modpath is a dir and does not contain an __init__ file.
-        relativeto (str, default=None): if specified, all checks are ignored
+        relativeto (str | None, default=None): if specified, all checks are ignored
             and this is considered the path to the root module.
 
     TODO:

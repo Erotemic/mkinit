@@ -53,8 +53,8 @@ def parse_static_value(key, source=None, fpath=None):
 
     Args:
         key (str): name of the variable
-        source (str): python text
-        fpath (str): filepath to read if source is not specified
+        source (str | None): python text
+        fpath (str | None): filepath to read if source is not specified
 
     Example:
         >>> key = 'foo'
