@@ -34,6 +34,7 @@ def _ensure_options(given_options=None):
         "with_all": True,
         "relative": False,
         "lazy_import": False,
+        "lazy_loader": False,
         "lazy_boilerplate": None,
         "use_black": False,
     }
@@ -391,7 +392,57 @@ def _initstr(
                 parts.append("")
             parts.append(new_part)
 
-    if options["lazy_import"]:
+    if options["lazy_loader"]:
+        default_lazy_boilerplate = textwrap.dedent(
+            r"""
+            import lazy_loader
+            """
+        ).rstrip("\n")
+        template = textwrap.dedent(
+            """
+            __getattr__, __dir__, __all__ = lazy_loader.attach(
+                __name__,
+                submodules={submodules},
+                submod_attrs={submod_attrs},
+            )
+            """
+        ).rstrip("\n")
+        submod_attrs = {}
+        if exposed_from_imports:
+            for submod, attrs in exposed_from_imports:
+                submod = submod.lstrip(".")
+                submod_attrs[submod] = attrs
+
+        if explicit_exports:
+            submodules = submodules
+            print("submodules = {!r}".format(submodules))
+        else:
+            submodules = set()
+
+        # Currently this is the only use of ubelt, but repr2
+        # is easier to use in testing than pprint, so perhaps
+        # we can remove complexity and just use ubelt elsewhere
+        import ubelt as ub
+
+        # exposed_submodules = set(exposed_submodules)
+        submodules_repr = ub.repr2(exposed_submodules).replace("\n", "\n    ")
+        # hack for python <3.7 tests
+        submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
+
+        initstr = template.format(
+            submodules=submodules_repr,
+            submod_attrs=ub.repr2(submod_attrs).replace("\n", "\n    "),
+        )
+
+        # print("options = {!r}".format(options))
+        if options["lazy_boilerplate"] is None:
+            append_part(default_lazy_boilerplate)
+        else:
+            # Customize lazy boilerplate
+            append_part(options["lazy_boilerplate"])
+
+        append_part(initstr.rstrip())
+    elif options["lazy_import"]:
         # NOTE: We are not using f-strings so the code can still be parsed
         # in older versions of python.
         # NOTE: We differentiate between submodule and submodule_attrs, as
@@ -472,7 +523,6 @@ def _initstr(
             submod_attrs=ub.repr2(submod_attrs).replace("\n", "\n    "),
         )
 
-        print("options = {!r}".format(options))
         if options["lazy_boilerplate"] is None:
             append_part(default_lazy_boilerplate)
         else:

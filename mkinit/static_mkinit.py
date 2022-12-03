@@ -93,6 +93,10 @@ def autogen_init(
         )
         all_init_fpaths = sorted(all_init_fpaths, key=lambda x: x.count(os.sep))
         for fpath in reversed(all_init_fpaths):
+            if diff:
+                # TODO: use a real diff patch format
+                print('--- ' + str(fpath))
+                print('+++ ' + str(fpath))
             autogen_init(
                 fpath,
                 submodules=None,

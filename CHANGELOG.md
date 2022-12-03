@@ -9,12 +9,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Added
 * Can now specify `"*"` in `__submodules__` to pattern match on available submodules.
+* Added `--lazy_loader` option to use the `lazy_loader` package for reduced boilerplate.
 
 ### Fixed
 * GH Issue #14: async functions are now handled correctly
 * Issue with `EAGER_IMPORT`
 
 ### Changed
+* The CLI now errors on unknown arguments unless the `MKINIT_ARGPARSE_LOOSE` environ is et.
 * Drop support for Python 2.7 and 3.5
 * Vendored in orderedset
 * Can now detect other existing names in the file and insert them into `__all__`

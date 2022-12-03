@@ -95,18 +95,27 @@ def main():
         help="Use relative . imports instead of <modname>",
     )
 
-    parser.add_argument(
+    lazy_group = parser.add_mutually_exclusive_group()
+
+    lazy_group.add_argument(
         "--lazy",
         action="store_true",
         default=False,
-        help="Use lazy imports (Python >= 3.7 only!)",
+        help="Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)",
+    )
+
+    lazy_group.add_argument(
+        "--lazy_loader",
+        action="store_true",
+        default=False,
+        help="Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)",
     )
 
     parser.add_argument(
         "--black",
         action="store_true",
         default=False,
-        help="Use black formatting (Python >= 3.6 only!)",
+        help="Use black formatting",
     )
 
     parser.add_argument(
@@ -137,7 +146,11 @@ def main():
 
     parser.add_argument("--version", action="store_true", help="print version and exit")
 
-    args, unknown = parser.parse_known_args()
+    import os
+    if os.environ.get('MKINIT_ARGPARSE_LOOSE', ''):
+        args, unknown = parser.parse_known_args()
+    else:
+        args = parser.parse_args()
     ns = args.__dict__.copy()
 
     if ns["version"]:
@@ -153,6 +166,9 @@ def main():
     verbose = ns["verbose"]
     dry = ns["dry"]
 
+    if ns['lazy_boilerplate'] and ns['lazy_loader']:
+        raise ValueError('--lazy_boilerplate cannot be specified with --lazy_loader. Use --lazy instead.')
+
     # Formatting options
     options = {
         "with_attrs": ns["with_attrs"],
@@ -160,6 +176,7 @@ def main():
         "with_all": ns["with_all"],
         "relative": ns["relative"],
         "lazy_import": ns["lazy"],
+        "lazy_loader": ns["lazy_loader"],
         "lazy_boilerplate": ns["lazy_boilerplate"],
         "use_black": ns["black"],
     }
