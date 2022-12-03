@@ -229,7 +229,7 @@ if __name__ == "__main__":
     setupkw["packages"] = find_packages(".")
     setupkw["python_requires"] = ">=3.6"
     setupkw["classifiers"] = [
-        "Production",
+        "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
