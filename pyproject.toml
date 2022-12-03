@@ -18,7 +18,7 @@ author_email = "erotemic@gmail.com"
 description = "Autogenerate __init__.py files"
 url="https://github.com/Erotemic/mkinit"
 license = "Apache 2"
-dev_status = "Production"
+dev_status = "stable"
 typing = true
 [tool.xcookie.entry_points]
 # the console_scripts entry point creates the xdoctest executable
