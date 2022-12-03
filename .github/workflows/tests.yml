@@ -100,13 +100,13 @@ jobs:
         arch:
         - auto
         include:
-        - python-version: '3.7'
+        - python-version: '3.6'
           os: ubuntu-latest
           install-extras: tests-strict,runtime-strict
-        - python-version: '3.7'
+        - python-version: '3.6'
           os: macOS-latest
           install-extras: tests-strict,runtime-strict
-        - python-version: '3.7'
+        - python-version: '3.6'
           os: windows-latest
           install-extras: tests-strict,runtime-strict
         - python-version: '3.11'
@@ -124,6 +124,9 @@ jobs:
         - python-version: '3.11'
           os: windows-latest
           install-extras: tests
+        - python-version: '3.6'
+          os: ubuntu-latest
+          install-extras: tests,optional
         - python-version: '3.7'
           os: ubuntu-latest
           install-extras: tests,optional
@@ -139,6 +142,9 @@ jobs:
         - python-version: '3.11'
           os: ubuntu-latest
           install-extras: tests,optional
+        - python-version: '3.6'
+          os: macOS-latest
+          install-extras: tests,optional
         - python-version: '3.7'
           os: macOS-latest
           install-extras: tests,optional
@@ -153,6 +159,9 @@ jobs:
           install-extras: tests,optional
         - python-version: '3.11'
           os: macOS-latest
+          install-extras: tests,optional
+        - python-version: '3.6'
+          os: windows-latest
           install-extras: tests,optional
         - python-version: '3.7'
           os: windows-latest

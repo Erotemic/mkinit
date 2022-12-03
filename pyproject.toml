@@ -11,13 +11,20 @@ mod_name = "mkinit"
 repo_name = "mkinit"
 rel_mod_parent_dpath = "."
 os = [ "all", "win", "linux", "osx",]
-min_python = 3.7
+min_python = 3.6
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
-description = "The mkinit module"
+description = "Autogenerate __init__.py files"
+url="https://github.com/Erotemic/mkinit"
 license = "Apache 2"
-dev_status = "planning"
+dev_status = "Production"
+typing = true
+[tool.xcookie.entry_points]
+# the console_scripts entry point creates the xdoctest executable
+console_scripts = [
+    "mkinit = mkinit.__main__:main",
+]
 
 [tool.pytest.ini_options]
 addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=dev --ignore-glob=docs"
