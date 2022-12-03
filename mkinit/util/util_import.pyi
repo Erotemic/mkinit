@@ -23,7 +23,7 @@ def modpath_to_modname(modpath: str,
                        hide_init: bool = True,
                        hide_main: bool = False,
                        check: bool = True,
-                       relativeto: str = None) -> str:
+                       relativeto: Union[str, None] = None) -> str:
     ...
 
 

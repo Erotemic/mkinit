@@ -44,7 +44,7 @@ def autogen_init(
             dirname not the __init__.py file.  If specified by name, must be
             findable from the PYTHONPATH.
 
-        submodules (List[str], default=None):
+        submodules (List[str] | None, default=None):
             if specified, then only these specific submodules are used in
             package generation. Otherwise, all non underscore prefixed modules
             are used.
@@ -52,7 +52,7 @@ def autogen_init(
         respect_all (bool, default=True):
             if False the `__all__` attribute is ignored while parsing.
 
-        options (dict):
+        options (dict | None):
             formatting options; customizes how output is formatted.
             See `formatting._ensure_options` for defaults.
 

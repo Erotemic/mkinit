@@ -1,7 +1,10 @@
+from typing import Union
 from collections.abc import Generator
 
 
-def parse_static_value(key: str, source: str = None, fpath: str = None):
+def parse_static_value(key: str,
+                       source: Union[str, None] = None,
+                       fpath: Union[str, None] = None):
     ...
 
 
