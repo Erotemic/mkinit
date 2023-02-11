@@ -17,6 +17,8 @@ It can do this dynamically, or it can statically autogenerate the ``__init__``
 for faster import times. Its kinda like using the ``fromimport *`` syntax, but
 its easy to replace with text that wont make other developers lose their hair.
 
+This module supports Scientific Python `SPEC1 <https://scientific-python.org/specs/spec-0001/>`_.
+
 Installation
 ============
 

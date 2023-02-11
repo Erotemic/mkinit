@@ -1,8 +1,6 @@
-# -*- coding: utf-8 -*-
 """
 Dynamically generate the import exec
 """
-from __future__ import absolute_import, division, print_function, unicode_literals
 from os.path import dirname, join, exists
 import sys
 import multiprocessing
