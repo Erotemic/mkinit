@@ -19,6 +19,11 @@ its easy to replace with text that wont make other developers lose their hair.
 
 This module supports Scientific Python `SPEC1 <https://scientific-python.org/specs/spec-0001/>`_.
 
+Also note that the docs in this readme are somewhat old, and need to be updated
+to make best practices more clear. There are a lot of ways you can use the
+module, but the current recommended way is to use
+``mkinit --lazy_loader <path-to-init.py>``
+
 Installation
 ============
 
@@ -489,10 +494,9 @@ following:
 TODO
 ----
 
-    - [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.
+- [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.
 
-    - [ ] If an attribute would be defined twice, then don't define it at all.
-      Currently, it is defined, but its value is not well-defined.
+- [ ] If an attribute would be defined twice, then don't define it at all.  Currently, it is defined, but its value is not well-defined.
 
 
 .. |CircleCI| image:: https://circleci.com/gh/Erotemic/mkinit.svg?style=svg
