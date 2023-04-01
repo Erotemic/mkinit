@@ -197,10 +197,10 @@ boilerplate is no longer needed.
 Command Line Usage
 ------------------
 
-The following command will statically autogenerate an `__init__` file in the
+The following command will statically autogenerate an ``__init__`` file in the
 specified path or module name. If one exists, it will only replace text after
-the final comment. This means `mkinit` wont clobber your custom logic and can
-be used to help maintain customized `__init__.py` files.
+the final comment. This means ``mkinit`` wont clobber your custom logic and can
+be used to help maintain customized ``__init__.py`` files.
 
 .. code:: bash
 
@@ -274,7 +274,7 @@ Dynamic Usage
 NOTE: Dynamic usage is NOT recommended.
 
 In most cases, we recommend using mkinit command line tool to statically
-generate / update the `__init__.py` file, but there is an option to to use it
+generate / update the ``__init__.py`` file, but there is an option to to use it
 dynamically (although this might be considered worse practice than using
 ``import *``).
 
@@ -286,17 +286,17 @@ dynamically (although this might be considered worse practice than using
 Examples
 ========
 
-The `mkinit` module is used by the `ubelt <https://www.github.com/Erotemic/ubelt>`_ library to explicitly
-auto-generate part of the `__init__.py` file. This example walks through the
-design of this module to illustrate the usage of `mkinit`.
+The ``mkinit`` module is used by the `ubelt <https://www.github.com/Erotemic/ubelt>`_ library to explicitly
+auto-generate part of the ``__init__.py`` file. This example walks through the
+design of this module to illustrate the usage of ``mkinit``.
 
 Step 1 (Optional): Write any custom `__init__` code
 ----------------------------------------------------
 
-The first section of the `ubelt` module consists of manually written code. It
-contains coding, `flake8` directives, a docstring a few comments, a future
-import, and a custom `__version__` attribute. Here is an example of this
-manually written code in the `0.2.0.dev0` version of `ubelt`.
+The first section of the ``ubelt`` module consists of manually written code. It
+contains coding, ``flake8`` directives, a docstring a few comments, a future
+import, and a custom ``__version__`` attribute. Here is an example of this
+manually written code in the ``0.2.0.dev0`` version of ``ubelt``.
 
 .. code:: python
 
@@ -318,7 +318,7 @@ manually written code in the `0.2.0.dev0` version of `ubelt`.
     __version__ = '0.2.0'
 
 It doesn't particularly matter what the above code is, the point is to
-illustrate that `mkinit` does not prevent you from customizing your code. By
+illustrate that ``mkinit`` does not prevent you from customizing your code. By
 default auto-generation will only start clobbering existing code after the
 final comment, in the file, which is a decent heuristic, but as we will see,
 there are other more explicit ways to define exactly where auto-generated code
@@ -329,9 +329,9 @@ Step 2 (Optional): Enumerate relevant submodules
 
 After optionally writing any custom code, you may optionally specify exactly
 what submodules should be considered when auto-generating imports. This is done
-by setting the `__submodules__` attribute to a list of submodule names.
+by setting the ``__submodules__`` attribute to a list of submodule names.
 
-In `ubelt` this section looks similar to the following:
+In ``ubelt`` this section looks similar to the following:
 
 .. code:: python
 
@@ -346,23 +346,23 @@ In `ubelt` this section looks similar to the following:
         'progiter',
     ]
 
-Note that this step is optional, but recommended. If the `__submodules__`
-package is not specified, then all paths matching the glob expressions `*.py`
-or `*/__init__.py` are considered as part of the package.
+Note that this step is optional, but recommended. If the ``__submodules__``
+package is not specified, then all paths matching the glob expressions ``*.py``
+or ``*/__init__.py`` are considered as part of the package.
 
 Step 3: Autogenerate explicitly
 -------------------------------
 
-To provide the fastest import times and most readable `__init__.py` files, use
-the `mkinit` command line script to statically parse the submodules and
-populate the `__init__.py` file with the submodules and their top-level
+To provide the fastest import times and most readable ``__init__.py`` files, use
+the ``mkinit`` command line script to statically parse the submodules and
+populate the ``__init__.py`` file with the submodules and their top-level
 members.
 
 Before running this script it is good practice to paste the XML-like comment
-directives into the `__init__.py` file. This restricts where `mkinit` is
+directives into the ``__init__.py`` file. This restricts where ``mkinit`` is
 allowed to autogenerate code, and it also uses the same indentation of the
 comments in case you want to run the auto-generated code conditionally. Note,
-if the second tag is not specified, then it is assumed that `mkinit` can
+if the second tag is not specified, then it is assumed that ``mkinit`` can
 overwrite everything after the first tag.
 
 .. code:: python
@@ -372,11 +372,11 @@ overwrite everything after the first tag.
     # </AUTOGEN_INIT>
 
 Now that we have inserted the auto-generation tags, we can actually run
-`mkinit`.  In general this is done by running `mkinit <path-to-pkg-directory>`.
+``mkinit``.  In general this is done by running ``mkinit <path-to-pkg-directory>``.
 
-Assuming the `ubelt` repo is checked out in `~/code/`, the command to
-autogenerate its `__init__.py` file would be: `mkinit ~/code/ubelt/ubelt`.
-Given the previously specified `__submodules__`, the resulting auto-generated
+Assuming the ``ubelt`` repo is checked out in ``~/code/``, the command to
+autogenerate its ``__init__.py`` file would be: ``mkinit ~/code/ubelt/ubelt``.
+Given the previously specified ``__submodules__``, the resulting auto-generated
 portion of the code looks like this:
 
 
@@ -414,21 +414,21 @@ portion of the code looks like this:
                'modpath_to_modname', 'split_modpath', 'OrderedSet', 'oset',
                'ProgIter']
 
-When running the command-line `mkinit` tool, the target module is inspected
+When running the command-line ``mkinit`` tool, the target module is inspected
 using static analysis, so no code from the target module is ever run. This
 avoids unintended side effects, prevents arbitrary code execution, and ensures
-that `mkinit` will do something useful even if there would otherwise be a
+that ``mkinit`` will do something useful even if there would otherwise be a
 runtime error.
 
 Step 3 (alternate): Autogenerate dynamically
 --------------------------------------------
 
-While running `mkinit` from the command line produces the cleanest and most
-readable `__init__.py`, you have to run it every time you make a change to your
+While running ``mkinit`` from the command line produces the cleanest and most
+readable ``__init__.py``, you have to run it every time you make a change to your
 library. This is not always desirable especially during rapid development of a
-new Python package. In this case it is possible to dynamically execute `mkinit`
+new Python package. In this case it is possible to dynamically execute ``mkinit``
 on import of your module. To use dynamic initialization simply paste the
-following lines into the `__init__.py` file.
+following lines into the ``__init__.py`` file.
 
 .. code:: python
 
@@ -440,19 +440,19 @@ instead of using static analysis, this will use the Python interpreter to
 execute and import all submodules and dynamically inspect the defined members.
 This is faster than using static analysis, and in most circumstances there will
 be no difference in the resulting imported attributes. To avoid all differences
-simply specify the `__all__` attribute in each submodule.
+simply specify the ``__all__`` attribute in each submodule.
 
-Note that inclusion of the `__submodules__` attribute is not strictly
+Note that inclusion of the ``__submodules__`` attribute is not strictly
 necessary. The dynamic version of this function will look in the parent stack
 frame for this attribute if it is not specified explicitly as an argument.
 
 It is also possible to achieve a "best of both worlds" trade-off using
 conditional logic. Use a conditional block to execute dynamic initialization
 and place the static auto-generation tags in the block that is not executed.
-This lets you develop without worrying about updating the `__init__.py` file,
+This lets you develop without worrying about updating the ``__init__.py`` file,
 and lets you statically generate the code for documentation purposes when you
 want to. Once the rapid development phase is over, you can remove the dynamic
-conditional, keep the auto-generated portion, and forget you ever used `mkinit`
+conditional, keep the auto-generated portion, and forget you ever used ``mkinit``
 in the first place!
 
 
@@ -474,12 +474,12 @@ in the first place!
 Behavior Notes
 --------------
 
-The `mkinit` module is a simple way to execute a complex task. At times it may
+The ``mkinit`` module is a simple way to execute a complex task. At times it may
 seem like magic, although I assure you it is not. To minimize perception of
 magic and maximize understanding of its behaviors, please consider the
 following:
 
-    * When discovering attributes of submodules `mkinit` will respect the `__all__`
+    * When discovering attributes of submodules ``mkinit`` will respect the ``__all__``
       attribute by default. In general it is good practice to specify this
       property; doing so will also avoid the following caveats.
 
@@ -487,10 +487,10 @@ following:
       if will also extract attributes defined on all non-error raising paths of
       conditional if-else or try-except statements.
 
-    * Static analysis currently does not look or account for the usage of the `del`
+    * Static analysis currently does not look or account for the usage of the ``del``
       operator. Again, these will be accounted for by dynamic analysis.
 
-    * In the case where no `__init__.py` file exists, the `mkinit` command line
+    * In the case where no ``__init__.py`` file exists, the ``mkinit`` command line
       tool will create one.
 
     * By default we ignore attributes that are marked as non-public by a leading
@@ -499,7 +499,7 @@ following:
 TODO
 ----
 
-- [ ] Give `dynamic_init` an options dict to maintain a compatible API with `static_init`.
+- [ ] Give ``dynamic_init`` an options dict to maintain a compatible API with ``static_init``.
 
 - [ ] If an attribute would be defined twice, then don't define it at all.  Currently, it is defined, but its value is not well-defined.
 
