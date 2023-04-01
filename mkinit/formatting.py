@@ -68,9 +68,14 @@ def _insert_autogen_text(modpath, initstr):
     startline, endline, init_indent = _find_insert_points(lines)
     initstr_ = _indent(initstr, init_indent) + "\n"
 
+    QUICKFIX_REMOVE_LEADING_NEWLINES = 1
+    if QUICKFIX_REMOVE_LEADING_NEWLINES:
+        initstr_ = initstr_.lstrip('\n')
+
     new_lines = lines[:startline] + [initstr_] + lines[endline:]
 
     new_text = "".join(new_lines).rstrip() + "\n"
+    print(new_text)
     return init_fpath, new_text
 
 
