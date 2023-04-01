@@ -286,8 +286,7 @@ dynamically (although this might be considered worse practice than using
 Examples
 ========
 
-The `mkinit` module is used by the
-`ubelt`(https://www.github.com/Erotemic/ubelt) library to explicitly
+The `mkinit` module is used by the `ubelt <https://www.github.com/Erotemic/ubelt>`_ library to explicitly
 auto-generate part of the `__init__.py` file. This example walks through the
 design of this module to illustrate the usage of `mkinit`.
 
