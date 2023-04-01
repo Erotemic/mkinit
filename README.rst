@@ -43,7 +43,7 @@ Say you have a python module structured like so:
 
 
 And you would like to make all functions inside of ``submod.py`` and
-``nested.py`` available at the top-level of the package. 
+``nested.py`` available at the top-level of the package.
 
 Imagine the contents of submod.py and nested.py are:
 
@@ -63,7 +63,7 @@ You could manually write:
 
 
 .. code:: python
-    
+
     from mkinit_demo_pkg.submod import *
     from mkinit_demo_pkg.subpkg.nested import *
 
@@ -71,7 +71,7 @@ You could manually write:
 But that has a few problems. Using ``import *`` makes it hard for people
 reading the code to know what is coming from where. Furthermore, if there were
 many submodules you wanted to expose attributes of, writing this would become
-tedious and hard to maintain. 
+tedious and hard to maintain.
 
 Enter the mkinit package. It has the ability to autogenerate explicit ``__init__.py``
 files using static analysis. Normally, the mkinit CLI only works on one file at
@@ -109,7 +109,7 @@ See ``mkinit --help`` for more details.
 Lastly, while exposing all attributes can be helpful for larger projects,
 import time can start to become a consideration. Thankfully, PEP 0562 outlines
 a lazy import specification for Python >= 3.7. As of 2020-12-26 mkinit
-supports autogenerating these lazy init files. 
+supports autogenerating these lazy init files.
 
 Unfortunately, there is no syntax support for lazy imports, so mkinit must
 define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
@@ -158,7 +158,7 @@ define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
                     __getattr__(attr)
         return __getattr__
 
-    
+
     __getattr__ = lazy_import(
         __name__,
         submodules={
@@ -199,10 +199,68 @@ be used to help maintain customized `__init__.py` files.
 You can also enclose the area allowed to be clobbered in the auto-generation
 with special xml-like comments.
 
+Running ``mkint --help`` displays:
+
+.. code::
+
+
+    usage: python -m mkinit [-h] [--dry] [-i] [--diff] [--noattrs] [--nomods] [--noall] [--relative] [--lazy | --lazy_loader] [--black] [--lazy_boilerplate LAZY_BOILERPLATE] [--recursive] [--norespect_all]
+                            [--verbose [VERBOSE]] [--version]
+                            [modname_or_path]
+
+    Autogenerate an `__init__.py` that exposes a top-level API.
+
+    Behavior is modified depending on the existing content of the
+    `__init__.py` file (subsequent runs of mkinit are idempotent).
+
+    The following `__init__.py` variables modify autogeneration behavior:
+
+        `__submodules__` (List[str] | Dict[str, List[str])) -
+            Indicates the list of submodules to be introspected, if
+            unspecified all submodules are introspected. Can be a list
+            of submodule names, or a dictionary mapping each submodule name
+            to a list of attribute names to expose. If the value is None,
+            then all attributes are exposed (or __all__) is respected).
+
+        `__external__` - Specify external modules to expose the attributes of.
+
+        `__explicit__` - Add custom explicitly defined names to this, and
+            they will be automatically added to the __all__ variable.
+
+        `__protected__` -  Protected modules are exposed, but their attributes are not.
+
+        `__private__` - Private modules and their attributes are not exposed.
+
+        `__ignore__` - Tells mkinit to ignore particular attributes
+
+    positional arguments:
+      modname_or_path       module or path to generate __init__.py for
+
+    options:
+      -h, --help            show this help message and exit
+      --dry
+      -i, -w, --write, --inplace
+                            modify / write to the file inplace
+      --diff                show the diff (forces dry mode)
+      --noattrs             Do not generate attribute from imports
+      --nomods              Do not generate modules imports
+      --noall               Do not generate an __all__ variable
+      --relative            Use relative . imports instead of <modname>
+      --lazy                Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)
+      --lazy_loader         Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)
+      --black               Use black formatting
+      --lazy_boilerplate LAZY_BOILERPLATE
+                            Code that defines a custom lazy_import callable
+      --recursive           If specified, runs mkinit on all subpackages in a package
+      --norespect_all       if False does not respect __all__ attributes of submodules when parsing
+      --verbose [VERBOSE]   Verbosity level
+      --version             print version and exit
+
+
 Dynamic Usage
 -------------
 
-NOTE: Dynamic usage is NOT recommended. 
+NOTE: Dynamic usage is NOT recommended.
 
 In most cases, we recommend using mkinit command line tool to statically
 generate / update the `__init__.py` file, but there is an option to to use it
@@ -261,7 +319,7 @@ Step 2 (Optional): Enumerate relevant submodules
 
 After optionally writing any custom code, you may optionally specify exactly
 what submodules should be considered when auto-generating imports. This is done
-by setting the `__submodules__` attribute to a list of submodule names. 
+by setting the `__submodules__` attribute to a list of submodule names.
 
 In `ubelt` this section looks similar to the following:
 
@@ -309,7 +367,7 @@ Now that we have inserted the auto-generation tags, we can actually run
 Assuming the `ubelt` repo is checked out in `~/code/`, the command to
 autogenerate its `__init__.py` file would be: `mkinit ~/code/ubelt/ubelt`.
 Given the previously specified `__submodules__`, the resulting auto-generated
-portion of the code looks like this: 
+portion of the code looks like this:
 
 
 .. code:: python
@@ -371,7 +429,7 @@ This is almost equivalent to running the static command line variant.  However,
 instead of using static analysis, this will use the Python interpreter to
 execute and import all submodules and dynamically inspect the defined members.
 This is faster than using static analysis, and in most circumstances there will
-be no difference in the resulting imported attributes. To avoid all differences 
+be no difference in the resulting imported attributes. To avoid all differences
 simply specify the `__all__` attribute in each submodule.
 
 Note that inclusion of the `__submodules__` attribute is not strictly
@@ -415,9 +473,9 @@ following:
       attribute by default. In general it is good practice to specify this
       property; doing so will also avoid the following caveats.
 
-    * Static analysis currently only extracts top-level module attributes. However, 
+    * Static analysis currently only extracts top-level module attributes. However,
       if will also extract attributes defined on all non-error raising paths of
-      conditional if-else or try-except statements. 
+      conditional if-else or try-except statements.
 
     * Static analysis currently does not look or account for the usage of the `del`
       operator. Again, these will be accounted for by dynamic analysis.
