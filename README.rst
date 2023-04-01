@@ -188,9 +188,10 @@ define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
     __all__ = ['nested', 'nested_func', 'submod', 'submod_func', 'subpkg']
 
 
-Although if use the ``--lazy_loader`` option (new as of 1.0.0) and you are
-willing to depend on the `lazy_loader <https://pypi.org/project/lazy_loader/>`_ package,
-then this boilerplate is no longer needed.
+Although if you are willing to depend on the
+`lazy_loader <https://pypi.org/project/lazy_loader/>`_
+package and the ``--lazy_loader`` option (new as of 1.0.0), then this
+boilerplate is no longer needed.
 
 
 Command Line Usage
