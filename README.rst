@@ -112,7 +112,8 @@ See ``mkinit --help`` for more details.
 
 
 Lastly, while exposing all attributes can be helpful for larger projects,
-import time can start to become a consideration. Thankfully, PEP 0562 outlines
+import time can start to become a consideration. Thankfully,
+`PEP 0562 <https://peps.python.org/pep-0562/>`_ outlines
 a lazy import specification for Python >= 3.7. As of 2020-12-26 mkinit
 supports autogenerating these lazy init files.
 
@@ -186,6 +187,10 @@ define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
 
     __all__ = ['nested', 'nested_func', 'submod', 'submod_func', 'subpkg']
 
+
+Although if use the ``--lazy_loader`` option (new as of 1.0.0) and you are
+willing to depend on the `lazy_loader <https://pypi.org/project/lazy_loader/>`_ package,
+then this boilerplate is no longer needed.
 
 
 Command Line Usage
