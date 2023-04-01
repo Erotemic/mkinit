@@ -1,7 +1,7 @@
 mkinit
 ======
 
-|CircleCI| |Travis| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
+|CircleCI| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
 Read the docs here: http://mkinit.readthedocs.io/en/latest/ (although this is
