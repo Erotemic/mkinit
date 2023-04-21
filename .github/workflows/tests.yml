@@ -17,7 +17,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v3
     - name: Set up Python 3.11 for linting
-      uses: actions/setup-python@v4.5.0
+      uses: actions/setup-python@v4.6.0
       with:
         python-version: '3.11'
     - name: Install dependencies
@@ -40,7 +40,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v3
     - name: Set up Python 3.11
-      uses: actions/setup-python@v4.5.0
+      uses: actions/setup-python@v4.6.0
       with:
         python-version: '3.11'
     - name: Upgrade pip
@@ -112,7 +112,7 @@ jobs:
       with:
         platforms: all
     - name: Setup Python
-      uses: actions/setup-python@v4.5.0
+      uses: actions/setup-python@v4.6.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Build pure wheel
@@ -277,7 +277,7 @@ jobs:
       with:
         platforms: all
     - name: Setup Python
-      uses: actions/setup-python@v4.5.0
+      uses: actions/setup-python@v4.6.0
       with:
         python-version: ${{ matrix.python-version }}
     - uses: actions/download-artifact@v3
