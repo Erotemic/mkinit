@@ -116,8 +116,8 @@ def main():
         action="store_true",
         default=False,
         help=(
-            "Uses lazy_loader module as in --lazy_loader, but exposes imports in a "
-            "__init__.pyi file for type checking"
+            "Use lazy imports with the lazy_loader module, additionally generating "
+            "``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)"
         ),
     )
 
