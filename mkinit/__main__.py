@@ -118,8 +118,7 @@ def main():
         help=(
             "Uses lazy_loader module as in --lazy_loader, but exposes imports in a "
             "__init__.pyi file for type checking"
-        )
-
+        ),
     )
 
     parser.add_argument(
@@ -158,7 +157,8 @@ def main():
     parser.add_argument("--version", action="store_true", help="print version and exit")
 
     import os
-    if os.environ.get('MKINIT_ARGPARSE_LOOSE', ''):
+
+    if os.environ.get("MKINIT_ARGPARSE_LOOSE", ""):
         args, unknown = parser.parse_known_args()
     else:
         args = parser.parse_args()
@@ -166,6 +166,7 @@ def main():
 
     if ns["version"]:
         import mkinit
+
         print(mkinit.__version__)
         return
 
@@ -177,8 +178,13 @@ def main():
     verbose = ns["verbose"]
     dry = ns["dry"]
 
-    if ns['lazy_boilerplate'] and ns['lazy_loader']:
-        raise ValueError('--lazy_boilerplate cannot be specified with --lazy_loader. Use --lazy instead.')
+    if ns["lazy_boilerplate"] and (ns["lazy_loader"] or ns["lazy_loader_typed"]):
+        raise ValueError(
+            "--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead."
+        )
+
+    if ns["noall"] and ns["lazy_loader_typed"]:
+        raise ValueError("--noall cannot be combined with --lazy_loader_typed")
 
     # Formatting options
     options = {
@@ -214,8 +220,12 @@ def main():
 
     # print('ns = {!r}'.format(ns))
     static_mkinit.autogen_init(
-        modname_or_path, respect_all=respect_all, options=options, dry=dry,
-        diff=diff, recursive=ns['recursive'],
+        modname_or_path,
+        respect_all=respect_all,
+        options=options,
+        dry=dry,
+        diff=diff,
+        recursive=ns["recursive"],
     )
 
 

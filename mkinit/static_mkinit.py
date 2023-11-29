@@ -6,7 +6,7 @@ from mkinit import static_analysis as static
 from mkinit.util import util_import
 from mkinit.util.util_diff import difftext
 from mkinit.top_level_ast import TopLevelVisitor
-from mkinit.formatting import _initstr, _insert_autogen_text
+from mkinit.formatting import _initstr, _insert_autogen_text, _ensure_options
 from os.path import abspath
 from os.path import exists
 from os.path import join
@@ -83,6 +83,7 @@ def autogen_init(
     logger.info(
         "Autogenerating __init__ for modpath_or_name={}".format(modpath_or_name)
     )
+    options = _ensure_options(options)
     modpath = _rectify_to_modpath(modpath_or_name)
 
     if recursive:
@@ -125,7 +126,7 @@ def autogen_init(
     init_fpath, new_text = _insert_autogen_text(
         modpath,
         initstr,
-        interface=options["lazy_loader_typed"] ^ options["lazy_loader"],
+        interface=options["lazy_loader_typed"] and not options["lazy_loader"],
     )
     if dry:
         logger.info("(DRY) would write updated file: %r" % init_fpath)
