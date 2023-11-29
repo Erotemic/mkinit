@@ -111,6 +111,17 @@ def main():
         help="Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)",
     )
 
+    lazy_group.add_argument(
+        "--lazy_loader_typed",
+        action="store_true",
+        default=False,
+        help=(
+            "Uses lazy_loader module as in --lazy_loader, but exposes imports in a "
+            "__init__.pyi file for type checking"
+        )
+
+    )
+
     parser.add_argument(
         "--black",
         action="store_true",
@@ -174,9 +185,10 @@ def main():
         "with_attrs": ns["with_attrs"],
         "with_mods": ns["with_mods"],
         "with_all": ns["with_all"],
-        "relative": ns["relative"],
+        "relative": ns["relative"] or ns["lazy_loader_typed"],
         "lazy_import": ns["lazy"],
-        "lazy_loader": ns["lazy_loader"],
+        "lazy_loader": ns["lazy_loader"] or ns["lazy_loader_typed"],
+        "lazy_loader_typed": ns["lazy_loader_typed"],
         "lazy_boilerplate": ns["lazy_boilerplate"],
         "use_black": ns["black"],
     }
