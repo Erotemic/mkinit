@@ -310,7 +310,7 @@ def static_truthiness(node):
     # elif isinstance(node, ast.Num):
     #     return bool(node.n)
     elif (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
-        return bool(node.value if IS_PY_GE_308 else node.s)
+        return bool(node.value if IS_PY_GE_308 else node.n)
     # elif isinstance(node, ast.Bytes):  # nocover
     #     return bool(node.s)
     elif (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Bytes)):
