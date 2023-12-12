@@ -9,6 +9,15 @@ from mkinit.util import util_import
 from os.path import join, exists, splitext, isfile
 
 
+IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
+IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
+
+if IS_PY_GE_312:
+    from xdoctest import _tokenize as tokenize
+else:
+    import tokenize
+
+
 def _parse_static_node_value(node):
     """
     Extract a constant value from an ast node if possible
@@ -195,7 +204,6 @@ def is_balanced_statement(lines):
 
     """
     from io import StringIO
-    import tokenize
 
     block = "\n".join(lines)
     stream = StringIO()

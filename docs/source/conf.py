@@ -441,7 +441,7 @@ class GoogleStyleDocstringProcessor:
             redone = new_text.split('\n')
             new_lines.extend(redone)
             # import ubelt as ub
-            # print('new_lines = {}'.format(ub.repr2(new_lines, nl=1)))
+            # print('new_lines = {}'.format(ub.urepr(new_lines, nl=1)))
             # new_lines.append('')
             return new_lines
 
@@ -568,7 +568,7 @@ class GoogleStyleDocstringProcessor:
         # print(f'name={name}')
         # print('BEFORE:')
         # import ubelt as ub
-        # print('lines = {}'.format(ub.repr2(lines, nl=1)))
+        # print('lines = {}'.format(ub.urepr(lines, nl=1)))
 
         self.process(lines)
 
@@ -650,7 +650,7 @@ class GoogleStyleDocstringProcessor:
                     lines[edit_slice] = new_lines
 
         # print('AFTER:')
-        # print('lines = {}'.format(ub.repr2(lines, nl=1)))
+        # print('lines = {}'.format(ub.urepr(lines, nl=1)))
 
         # if name == 'kwimage.Affine.translate':
         #     import sys
