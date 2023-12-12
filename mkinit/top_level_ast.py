@@ -309,15 +309,15 @@ def static_truthiness(node):
         return bool(node.elts)
     # elif isinstance(node, ast.Num):
     #     return bool(node.n)
-    if (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
         return bool(node.value if IS_PY_GE_308 else node.s)
     # elif isinstance(node, ast.Bytes):  # nocover
     #     return bool(node.s)
-    if (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Bytes)):
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Bytes)):
         return bool(node.value if IS_PY_GE_308 else node.s)
     # elif isinstance(node, ast.NameConstant):
     #     return bool(node.value)
-    if (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.NameConstant)):
+    elif (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.NameConstant)):
         return bool(node.value)
     else:
         return _UNHANDLED
