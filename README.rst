@@ -4,9 +4,13 @@ mkinit
 |CircleCI| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
-Read the docs here: http://mkinit.readthedocs.io/en/latest/ (although this is
-mostly an API reference, the best getting started docs are currently in this
-README)
++------------------+--------------------------------------------+
+| Read the docs    | https://mkinit.readthedocs.io              |
++------------------+--------------------------------------------+
+| Github           | https://github.com/Erotemic/mkinit         |
++------------------+--------------------------------------------+
+| Pypi             | https://pypi.org/project/mkinit            |
++------------------+--------------------------------------------+
 
 The ``mkinit`` module helps you write ``__init__`` files that expose all submodule
 attributes without ``from ? import *``.
@@ -21,8 +25,12 @@ This module supports Scientific Python `SPEC1 <https://scientific-python.org/spe
 
 Also note that the docs in this readme are somewhat old, and need to be updated
 to make best practices more clear. There are a lot of ways you can use the
-module, but the current recommended way is to use
-``mkinit --lazy_loader <path-to-init.py>``
+module, but the current recommended way is to use:
+
+
+.. code:: bash
+
+    mkinit --lazy_loader <path-to-init.py>
 
 Installation
 ============

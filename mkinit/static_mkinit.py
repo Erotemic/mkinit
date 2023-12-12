@@ -1,5 +1,5 @@
 """
-Static version of dynamic_autogen.py
+Static version of :mod:`mkinit.dynamic_autogen`
 """
 import os
 from mkinit import static_analysis as static

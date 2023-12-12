@@ -10,6 +10,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 ### Changed
 * Code cleanup
 
+* Workaround Python 3.12 tokenize changes - new format strings may not be supported yet.
+
 ### Fixed
 * Extra newlines in generated files
 
