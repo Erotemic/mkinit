@@ -424,19 +424,19 @@ def _initstr(
         else:
             submodules = set()
 
-        # Currently this is the only use of ubelt, but repr2
+        # Currently this is the only use of ubelt, but urepr
         # is easier to use in testing than pprint, so perhaps
         # we can remove complexity and just use ubelt elsewhere
         import ubelt as ub
 
         # exposed_submodules = set(exposed_submodules)
-        submodules_repr = ub.repr2(exposed_submodules).replace("\n", "\n    ")
+        submodules_repr = ub.urepr(exposed_submodules).replace("\n", "\n    ")
         # hack for python <3.7 tests
         submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
 
         initstr = template.format(
             submodules=submodules_repr,
-            submod_attrs=ub.repr2(submod_attrs).replace("\n", "\n    "),
+            submod_attrs=ub.urepr(submod_attrs).replace("\n", "\n    "),
         )
 
         # print("options = {!r}".format(options))
@@ -513,19 +513,19 @@ def _initstr(
         else:
             submodules = set()
 
-        # Currently this is the only use of ubelt, but repr2
+        # Currently this is the only use of ubelt, but urepr
         # is easier to use in testing than pprint, so perhaps
         # we can remove complexity and just use ubelt elsewhere
         import ubelt as ub
 
         # exposed_submodules = set(exposed_submodules)
-        submodules_repr = ub.repr2(exposed_submodules).replace("\n", "\n    ")
+        submodules_repr = ub.urepr(exposed_submodules).replace("\n", "\n    ")
         # hack for python <3.7 tests
         submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
 
         initstr = template.format(
             submodules=submodules_repr,
-            submod_attrs=ub.repr2(submod_attrs).replace("\n", "\n    "),
+            submod_attrs=ub.urepr(submod_attrs).replace("\n", "\n    "),
         )
 
         if options["lazy_boilerplate"] is None:
