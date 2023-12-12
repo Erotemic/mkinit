@@ -4,6 +4,15 @@ mkinit
 |CircleCI| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
++------------------+--------------------------------------------+
+| Read the docs    | https://mkinit.readthedocs.io              |
++------------------+--------------------------------------------+
+| Github           | https://github.com/Erotemic/mkinit         |
++------------------+--------------------------------------------+
+| Pypi             | https://pypi.org/project/mkinit            |
++------------------+--------------------------------------------+
+
+
 Read the docs here: http://mkinit.readthedocs.io/en/latest/ (although this is
 mostly an API reference, the best getting started docs are currently in this
 README)

@@ -111,9 +111,9 @@ check_variable(){
 normalize_boolean(){
     ARG=$1
     ARG=$(echo "$ARG" | awk '{print tolower($0)}')
-    if [ "$ARG" = "true" ] || [ "$ARG" = "1" ] || [ "$ARG" = "yes" ] || [ "$ARG" = "on" ]; then
+    if [ "$ARG" = "true" ] || [ "$ARG" = "1" ] || [ "$ARG" = "yes" ] || [ "$ARG" = "y" ] || [ "$ARG" = "on" ]; then
         echo "True"
-    elif [ "$ARG" = "false" ] || [ "$ARG" = "0" ] || [ "$ARG" = "no" ] || [ "$ARG" = "off" ]; then
+    elif [ "$ARG" = "false" ] || [ "$ARG" = "0" ] || [ "$ARG" = "no" ] || [ "$ARG" = "n" ] || [ "$ARG" = "off" ]; then
         echo "False"
     else
         echo "$ARG"
@@ -418,10 +418,10 @@ if [ "$DO_GPG" == "True" ]; then
     === <GPG SIGN> ===
     "
 
-    for WHEEL_PATH in "${WHEEL_PATHS[@]}"
+    for WHEEL_FPATH in "${WHEEL_PATHS[@]}"
     do
-        echo "WHEEL_PATH = $WHEEL_PATH"
-        check_variable WHEEL_PATH
+        echo "WHEEL_FPATH = $WHEEL_FPATH"
+        check_variable WHEEL_FPATH
             # https://stackoverflow.com/questions/45188811/how-to-gpg-sign-a-file-that-is-built-by-travis-ci
             # secure gpg --export-secret-keys > all.gpg
 
@@ -432,13 +432,13 @@ if [ "$DO_GPG" == "True" ]; then
             echo "Signing wheels"
             GPG_SIGN_CMD="$GPG_EXECUTABLE --batch --yes --detach-sign --armor --local-user $GPG_KEYID"
             echo "GPG_SIGN_CMD = $GPG_SIGN_CMD"
-            $GPG_SIGN_CMD --output "$WHEEL_PATH".asc "$WHEEL_PATH"
+            $GPG_SIGN_CMD --output "$WHEEL_FPATH".asc "$WHEEL_FPATH"
 
             echo "Checking wheels"
-            twine check "$WHEEL_PATH".asc "$WHEEL_PATH" || { echo 'could not check wheels' ; exit 1; }
+            twine check "$WHEEL_FPATH".asc "$WHEEL_FPATH" || { echo 'could not check wheels' ; exit 1; }
 
             echo "Verifying wheels"
-            $GPG_EXECUTABLE --verify "$WHEEL_PATH".asc "$WHEEL_PATH" || { echo 'could not verify wheels' ; exit 1; }
+            $GPG_EXECUTABLE --verify "$WHEEL_FPATH".asc "$WHEEL_FPATH" || { echo 'could not verify wheels' ; exit 1; }
     done
     echo "
     === <END GPG SIGN> ===
@@ -467,17 +467,11 @@ if [[ "$DO_UPLOAD" == "True" ]]; then
     check_variable TWINE_USERNAME
     check_variable TWINE_PASSWORD "hide"
 
-    for WHEEL_PATH in "${WHEEL_PATHS[@]}"
+    for WHEEL_FPATH in "${WHEEL_PATHS[@]}"
     do
-        if [ "$DO_GPG" == "True" ]; then
-            twine upload --username "$TWINE_USERNAME" "--password=$TWINE_PASSWORD"  \
-                --repository-url "$TWINE_REPOSITORY_URL" \
-                --sign "$WHEEL_PATH".asc "$WHEEL_PATH" --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
-        else
-            twine upload --username "$TWINE_USERNAME" "--password=$TWINE_PASSWORD" \
-                --repository-url "$TWINE_REPOSITORY_URL" \
-                "$WHEEL_PATH" --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
-        fi
+        twine upload --username "$TWINE_USERNAME" "--password=$TWINE_PASSWORD" \
+            --repository-url "$TWINE_REPOSITORY_URL" \
+            "$WHEEL_FPATH" --skip-existing --verbose || { echo 'failed to twine upload' ; exit 1; }
     done
     echo """
         !!! FINISH: LIVE RUN !!!
@@ -488,7 +482,7 @@ else
 
         DEPLOY_REMOTE = '$DEPLOY_REMOTE'
         DO_UPLOAD = '$DO_UPLOAD'
-        WHEEL_PATH = '$WHEEL_PATH'
+        WHEEL_FPATH = '$WHEEL_FPATH'
         WHEEL_PATHS_STR = '$WHEEL_PATHS_STR'
         MODE_LIST_STR = '$MODE_LIST_STR'
 

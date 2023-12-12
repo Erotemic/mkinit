@@ -9,8 +9,17 @@
 Welcome to mkinit's documentation!
 ==================================
 
-Autogenerates __init__.py files statically and dynamically. 
-To use the static version simply pip install and run the `mkinit` command with
+
++------------------+--------------------------------------------+
+| Read the docs    | https://mkinit.readthedocs.io              |
++------------------+--------------------------------------------+
+| Github           | https://github.com/Erotemic/mkinit         |
++------------------+--------------------------------------------+
+| Pypi             | https://pypi.org/project/mkinit            |
++------------------+--------------------------------------------+
+
+Autogenerates ``__init__.py`` files statically and dynamically.
+To use the static version simply pip install and run the ``mkinit`` command with
 the directory corresponding to the package.
 
 

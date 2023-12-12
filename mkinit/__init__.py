@@ -3,6 +3,7 @@ The MkInit Module
 -----------------
 
 A tool to autogenerate explicit top-level imports
+
 """
 
 __autogen__ = """
