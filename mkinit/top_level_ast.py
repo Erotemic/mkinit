@@ -1,5 +1,6 @@
 import ast
 from mkinit.util.orderedset import OrderedSet as oset
+import sys
 
 __all__ = [
     "TopLevelVisitor",
@@ -7,6 +8,9 @@ __all__ = [
 
 
 _UNHANDLED = None
+
+IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
+IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
 
 
 class TopLevelVisitor(ast.NodeVisitor):
@@ -155,15 +159,22 @@ class TopLevelVisitor(ast.NodeVisitor):
         """
         if isinstance(node.test, ast.Compare):  # pragma: nobranch
             try:
-                if all(
-                    [
+                if IS_PY_GE_312:
+                    if all([
                         isinstance(node.test.ops[0], ast.Eq),
-                        node.test.left.id == "__name__",
-                        node.test.comparators[0].s == "__main__",
-                    ]
-                ):
-                    # Ignore main block
-                    return
+                        node.test.left.id == '__name__',
+                        node.test.comparators[0].value == '__main__',
+                    ]):
+                        # Ignore main block
+                        return
+                else:
+                    if all([
+                        isinstance(node.test.ops[0], ast.Eq),
+                        node.test.left.id == '__name__',
+                        node.test.comparators[0].s == '__main__',
+                    ]):
+                        # Ignore main block
+                        return
             except Exception:  # nocover
                 pass
 
@@ -290,15 +301,23 @@ def static_truthiness(node):
         bool or None: True or False if a node can be statically bound to a
         truthy value, otherwise returns None.
     """
-    if isinstance(node, ast.Str):
-        return bool(node.s)
+    if (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Str)):
+        return bool(node.value if IS_PY_GE_308 else node.s)
+    # if isinstance(node, ast.Str):
+    #     return bool(node.s)
     elif isinstance(node, ast.Tuple):
         return bool(node.elts)
-    elif isinstance(node, ast.Num):
-        return bool(node.n)
-    elif isinstance(node, ast.Bytes):  # nocover
-        return bool(node.s)
-    elif isinstance(node, ast.NameConstant):
+    # elif isinstance(node, ast.Num):
+    #     return bool(node.n)
+    if (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
+        return bool(node.value if IS_PY_GE_308 else node.s)
+    # elif isinstance(node, ast.Bytes):  # nocover
+    #     return bool(node.s)
+    if (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Bytes)):
+        return bool(node.value if IS_PY_GE_308 else node.s)
+    # elif isinstance(node, ast.NameConstant):
+    #     return bool(node.value)
+    if (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.NameConstant)):
         return bool(node.value)
     else:
         return _UNHANDLED

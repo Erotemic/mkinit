@@ -399,7 +399,7 @@ def test_recursive_lazy_autogen():
 
     print(f'cache_dpath={cache_dpath}')
     with ub.util_import.PythonPathContext(os.fspath(cache_dpath)):
-        print('sys.path = {}'.format(ub.repr2(sys.path, nl=1)))
+        print('sys.path = {}'.format(ub.urepr(sys.path, nl=1)))
         import mkinit_rec_lazy_autogen
 
         print("mkinit_rec_lazy_autogen = {!r}".format(mkinit_rec_lazy_autogen))

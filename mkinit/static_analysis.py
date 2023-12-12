@@ -13,25 +13,20 @@ IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
 IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
 
 if IS_PY_GE_312:
-    from xdoctest import _tokenize as tokenize
+    from mkinit import _tokenize as tokenize
 else:
     import tokenize
 
 
 def _parse_static_node_value(node):
     """
-    Extract a constant value from an ast node if possible
-
-    Args:
-        node (ast.Node)
-
-    Returns:
-        object: static value of the node
+    Extract a constant value from a node if possible
     """
-    if isinstance(node, ast.Num):
-        value = node.n
-    elif isinstance(node, ast.Str):
-        value = node.s
+    # TODO: ast.Constant for 3.8
+    if (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
+        value = node.value if IS_PY_GE_308 else node.s
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Str)):
+        value = node.value if IS_PY_GE_308 else node.s
     elif isinstance(node, ast.List):
         value = list(map(_parse_static_node_value, node.elts))
     elif isinstance(node, ast.Tuple):
@@ -41,15 +36,12 @@ def _parse_static_node_value(node):
         values = map(_parse_static_node_value, node.values)
         value = OrderedDict(zip(keys, values))
         # value = dict(zip(keys, values))
-    elif hasattr(ast, 'Constant') and isinstance(node, (ast.Constant)):
-        # Constant added in 3.6?
-        # https://bugs.python.org/issue26146
+    elif isinstance(node, (ast.NameConstant)):
         value = node.value
     else:
-        raise TypeError(
-            "Cannot parse a static value from non-static node "
-            "of type: {!r}".format(type(node))
-        )
+        print(node.__dict__)
+        raise TypeError('Cannot parse a static value from non-static node '
+                        'of type: {!r}'.format(type(node)))
     return value
 
 
