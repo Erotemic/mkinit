@@ -186,6 +186,13 @@ def main():
     if not ns["with_all"] and ns["lazy_loader_typed"]:
         raise ValueError("--noall cannot be combined with --lazy_loader_typed")
 
+    if ns["lazy_loader_typed"] and not ns["relative"]:
+        print(
+            "WARNING: specifying --lazy-loader-typed implicitly enables --relative, as "
+            "`lazy-loader` stub support requires relative imports. (Explicitly specify "
+            "--relative to remove this warning.)"
+        )
+
     # Formatting options
     options = {
         "with_attrs": ns["with_attrs"],
