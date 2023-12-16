@@ -183,7 +183,7 @@ def main():
             "--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead."
         )
 
-    if ns["noall"] and ns["lazy_loader_typed"]:
+    if not ns["with_all"] and ns["lazy_loader_typed"]:
         raise ValueError("--noall cannot be combined with --lazy_loader_typed")
 
     # Formatting options
