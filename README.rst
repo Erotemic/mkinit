@@ -201,6 +201,14 @@ Although if you are willing to depend on the
 package and the ``--lazy_loader`` option (new as of 1.0.0), then this
 boilerplate is no longer needed.
 
+By default, lazy imports are not compatibly with statically typed projects (e.g
+using mypy or pyright), however, if the
+`lazy_loader <https://pypi.org/project/lazy_loader/>`_
+package is used, the ``--lazy_loader_typed`` option can be specified to generate
+``__init.pyi__`` files in addition to lazily evaulated ``__init.py__`` files.
+These interface files are understood by static type checkers and allow the
+combination of lazy loading with static type checking.
+
 
 Command Line Usage
 ------------------
@@ -267,6 +275,8 @@ Running ``mkint --help`` displays:
       --relative            Use relative . imports instead of <modname>
       --lazy                Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)
       --lazy_loader         Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)
+      --lazy_loader_typed   Use lazy imports with the lazy_loader module, additionally generating 
+                            ``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)
       --black               Use black formatting
       --lazy_boilerplate LAZY_BOILERPLATE
                             Code that defines a custom lazy_import callable

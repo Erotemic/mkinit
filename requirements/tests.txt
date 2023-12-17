@@ -21,6 +21,8 @@ pytest-cov>=2.9.0           ; python_version < '3.6.0'  and python_version >= '3
 pytest-cov>=2.8.1           ; python_version < '3.5.0'  and python_version >= '3.4.0'   # Python 3.4
 pytest-cov>=2.8.1           ; python_version < '2.8.0'  and python_version >= '2.7.0'   # Python 2.7
 
+lazy-loader>=0.3            ;                               python_version >= '3.7.0'
+
 # xdev availpkg xdoctest
 # xdev availpkg coverage
 coverage>=6.1.1     ;                            python_version >= '3.10'    # Python 3.10+

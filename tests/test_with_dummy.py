@@ -6,6 +6,7 @@ import sys
 import os
 from os.path import join
 from os.path import dirname
+import pytest
 try:
     from packaging.version import parse as LooseVersion
 except ImportError:
@@ -342,7 +343,12 @@ def test_dynamic_init():
         assert want in text, "missing {}".format(want)
 
 
-def test_lazy_import():
+@pytest.mark.parametrize(["option", "typed"], [
+    ("lazy_import", False),
+    ("lazy_loader", False),
+    ("lazy_loader", True),
+])
+def test_lazy_import(option, typed):
     """
     python ~/code/mkinit/tests/test_with_dummy.py test_lazy_import
     """
@@ -356,7 +362,12 @@ def test_lazy_import():
     paths = make_dummy_package(cache_dpath)
 
     pkg_path = paths["root"]
-    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
+    mkinit.autogen_init(
+        pkg_path,
+        options={option: 1, "lazy_loader_typed": typed, "relative": typed},
+        dry=False,
+        recursive=True
+    )
 
     if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
@@ -375,11 +386,15 @@ def test_lazy_import():
         mkinit_dummy_module.a_very_nested_function()
 
 
-def test_recursive_lazy_autogen():
+@pytest.mark.parametrize(["option", "typed"], [
+    ("lazy_import", False),
+    ("lazy_loader", False),
+    ("lazy_loader", True),
+])
+def test_recursive_lazy_autogen(option, typed):
     """
     xdoctest ~/code/mkinit/tests/test_with_dummy.py test_recursive_lazy_autogen
     """
-    import pytest
     import mkinit
     import os
 
@@ -392,7 +407,12 @@ def test_recursive_lazy_autogen():
     )
     pkg_path = paths["root"]
 
-    mkinit.autogen_init(pkg_path, options={"lazy_import": 1}, dry=False, recursive=True)
+    mkinit.autogen_init(
+        pkg_path,
+        options={option: 1, "lazy_loader_typed": typed, "relative": typed},
+        dry=False,
+        recursive=True
+    )
 
     if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
         pytest.skip()
@@ -424,6 +444,38 @@ def test_recursive_lazy_autogen():
             )
         )
         mkinit_rec_lazy_autogen.a_very_nested_function()
+
+def test_typed_pyi_file():
+    """
+    xdoctest ~/code/mkinit/tests/test_with_dummy.py test_recursive_lazy_autogen
+    """
+    import mkinit
+    import os
+
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip('Only 3.7+ has lazy imports')
+
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    paths = make_dummy_package(cache_dpath)
+    pkg_path = paths["root"]
+
+    mkinit.autogen_init(
+        pkg_path,
+        options={"lazy_loader": 1, "lazy_loader_typed": True, "relative": True},
+        dry=False,
+        recursive=True
+    )
+    if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
+        pytest.skip()
+
+    dpath = dirname(paths["root"])
+    with ub.util_import.PythonPathContext(os.fspath(dpath)):
+        import mkinit_dummy_module
+        text = ub.Path(*mkinit_dummy_module.__path__, "__init__.pyi").read_text()
+        assert "from . import avery" in text
+        assert "from . import subdir1" in text
+        assert "from .submod1 import (attr1, attr2" in text
+        assert "__all__ = ['a_very_nested_function'" in text
 
 
 def test_recursive_eager_autogen():

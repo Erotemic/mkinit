@@ -111,6 +111,16 @@ def main():
         help="Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)",
     )
 
+    lazy_group.add_argument(
+        "--lazy_loader_typed",
+        action="store_true",
+        default=False,
+        help=(
+            "Use lazy imports with the lazy_loader module, additionally generating "
+            "``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)"
+        ),
+    )
+
     parser.add_argument(
         "--black",
         action="store_true",
@@ -147,7 +157,8 @@ def main():
     parser.add_argument("--version", action="store_true", help="print version and exit")
 
     import os
-    if os.environ.get('MKINIT_ARGPARSE_LOOSE', ''):
+
+    if os.environ.get("MKINIT_ARGPARSE_LOOSE", ""):
         args, unknown = parser.parse_known_args()
     else:
         args = parser.parse_args()
@@ -155,6 +166,7 @@ def main():
 
     if ns["version"]:
         import mkinit
+
         print(mkinit.__version__)
         return
 
@@ -166,17 +178,30 @@ def main():
     verbose = ns["verbose"]
     dry = ns["dry"]
 
-    if ns['lazy_boilerplate'] and ns['lazy_loader']:
-        raise ValueError('--lazy_boilerplate cannot be specified with --lazy_loader. Use --lazy instead.')
+    if ns["lazy_boilerplate"] and (ns["lazy_loader"] or ns["lazy_loader_typed"]):
+        raise ValueError(
+            "--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead."
+        )
+
+    if not ns["with_all"] and ns["lazy_loader_typed"]:
+        raise ValueError("--noall cannot be combined with --lazy_loader_typed")
+
+    if ns["lazy_loader_typed"] and not ns["relative"]:
+        print(
+            "WARNING: specifying --lazy-loader-typed implicitly enables --relative, as "
+            "`lazy-loader` stub support requires relative imports. (Explicitly specify "
+            "--relative to remove this warning.)"
+        )
 
     # Formatting options
     options = {
         "with_attrs": ns["with_attrs"],
         "with_mods": ns["with_mods"],
         "with_all": ns["with_all"],
-        "relative": ns["relative"],
+        "relative": ns["relative"] or ns["lazy_loader_typed"],
         "lazy_import": ns["lazy"],
-        "lazy_loader": ns["lazy_loader"],
+        "lazy_loader": ns["lazy_loader"] or ns["lazy_loader_typed"],
+        "lazy_loader_typed": ns["lazy_loader_typed"],
         "lazy_boilerplate": ns["lazy_boilerplate"],
         "use_black": ns["black"],
     }
@@ -202,8 +227,12 @@ def main():
 
     # print('ns = {!r}'.format(ns))
     static_mkinit.autogen_init(
-        modname_or_path, respect_all=respect_all, options=options, dry=dry,
-        diff=diff, recursive=ns['recursive'],
+        modname_or_path,
+        respect_all=respect_all,
+        options=options,
+        dry=dry,
+        diff=diff,
+        recursive=ns["recursive"],
     )
 
 

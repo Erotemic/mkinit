@@ -6,7 +6,7 @@ from mkinit import static_analysis as static
 from mkinit.util import util_import
 from mkinit.util.util_diff import difftext
 from mkinit.top_level_ast import TopLevelVisitor
-from mkinit.formatting import _initstr, _insert_autogen_text
+from mkinit.formatting import _initstr, _insert_autogen_text, _ensure_options
 from os.path import abspath
 from os.path import exists
 from os.path import join
@@ -83,6 +83,7 @@ def autogen_init(
     logger.info(
         "Autogenerating __init__ for modpath_or_name={}".format(modpath_or_name)
     )
+    options = _ensure_options(options)
     modpath = _rectify_to_modpath(modpath_or_name)
 
     if recursive:
@@ -106,33 +107,46 @@ def autogen_init(
                 diff=diff,
                 recursive=False,
             )
+        return
 
-    else:
-        initstr = static_init(
-            modpath, submodules=submodules, respect_all=respect_all, options=options
+    if options["lazy_loader_typed"] and options["lazy_loader"]:
+        autogen_init(
+            modpath,
+            submodules=None,
+            respect_all=respect_all,
+            options={**options, "lazy_loader": False},
+            dry=dry,
+            diff=diff,
+            recursive=False,
         )
-        init_fpath, new_text = _insert_autogen_text(modpath, initstr)
-        if dry:
-            logger.info("(DRY) would write updated file: %r" % init_fpath)
-            if diff:
-                # Display difference
-                try:
-                    with open(init_fpath, "r") as file:
-                        old_text = file.read()
-                except Exception:
-                    old_text = ""
-                display_text = difftext(
-                    old_text, new_text, colored=True, context_lines=3
-                )
-                print(display_text)
-            else:
-                print(new_text)
-            return init_fpath, new_text
+
+    initstr = static_init(
+        modpath, submodules=submodules, respect_all=respect_all, options=options
+    )
+    init_fpath, new_text = _insert_autogen_text(
+        modpath,
+        initstr,
+        interface=options["lazy_loader_typed"] and not options["lazy_loader"],
+    )
+    if dry:
+        logger.info("(DRY) would write updated file: %r" % init_fpath)
+        if diff:
+            # Display difference
+            try:
+                with open(init_fpath, "r") as file:
+                    old_text = file.read()
+            except Exception:
+                old_text = ""
+            display_text = difftext(old_text, new_text, colored=True, context_lines=3)
+            print(display_text)
         else:
-            logger.info("writing updated file: %r" % init_fpath)
-            # print(new_text)
-            with open(init_fpath, "w") as file_:
-                file_.write(new_text)
+            print(new_text)
+        return init_fpath, new_text
+    else:
+        logger.info("writing updated file: %r" % init_fpath)
+        # print(new_text)
+        with open(init_fpath, "w") as file_:
+            file_.write(new_text)
 
 
 def _rectify_to_modpath(modpath_or_name):
