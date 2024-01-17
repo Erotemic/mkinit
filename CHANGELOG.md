@@ -11,6 +11,12 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 * Added `--lazy_loader_typed` option, #40.
 
+* Initial support for Python 3.12
+
+### Removed
+
+* Removed support for Python 3.6
+
 ### Changed
 * Code cleanup
 
