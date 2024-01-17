@@ -53,15 +53,38 @@ Notes:
             https://readthedocs.org/dashboard/mkinit/integrations/create/
 
         Then add gitlab incoming webhook and copy the URL (make sure
-        you copy the real url and not the text so https is included).
+        you copy the real url and not the text so https is included),
+        specifically:
+
+            In the "Integration type:" dropdown menu, select
+            "Gitlab incoming webhook"
+
+            Click "Add integration"
+
+            Copy the text in the "Webhook URL" box to be used later.
+
+            Copy the text in the "Secret" box to be used later.
 
         Then go to
 
             https://github.com/Erotemic/mkinit/hooks
 
-        and add the URL
+            Click "Add new webhook".
 
-        select push, tag, and merge request
+            Copy the text previously saved from the "Webhook URL" box
+            in the readthedocs form into the "URL" box in the gitlab
+            form.
+
+            Copy the text previously saved from the "Secret" box
+            in the readthedocs form into the "Secret token" box in the
+            gitlab form.
+
+            For trigger permissions select the following checkboxes:
+                push events,
+                tag push events,
+                merge request events
+
+            Click the "Add webhook" button.
 
         See Docs for more details https://docs.readthedocs.io/en/stable/integrations.html
 
@@ -114,7 +137,7 @@ def parse_version(fpath):
     return visitor.version
 
 project = 'mkinit'
-copyright = '2023, Jon Crall'
+copyright = '2024, Jon Crall'
 author = 'Jon Crall'
 modname = 'mkinit'
 
