@@ -1,6 +1,9 @@
 import ast
 from _typeshed import Incomplete
 
+IS_PY_GE_308: Incomplete
+IS_PY_GE_312: Incomplete
+
 
 class TopLevelVisitor(ast.NodeVisitor):
     attrnames: Incomplete
@@ -31,7 +34,7 @@ class TopLevelVisitor(ast.NodeVisitor):
     def visit_Try(self, node) -> None:
         ...
 
-    visit_TryExcept: Incomplete
+    visit_TryExcept = visit_Try
 
     def visit_Delete(self, node) -> None:
         ...

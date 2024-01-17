@@ -219,7 +219,7 @@ def _locate_ps1_linenos(source_lines):
     """
     Determines which lines in the source begin a "logical block" of code.
 
-    Notes:
+    Note:
         implementation taken from xdoctest.parser
 
     Args:
@@ -299,7 +299,7 @@ def _workaround_16806(ps1_linenos, exec_source_lines):
     not the line they start on.  A patch for this issue exists
     `https://github.com/python/cpython/pull/1800`
 
-    Notes:
+    Note:
         Starting from the end look at consecutive pairs of indices to
         inspect the statment it corresponds to.  (the first statment goes
         from ps1_linenos[-1] to the end of the line list.

@@ -89,9 +89,13 @@ def _find_insert_points(lines):
 
     If the explicit tags are not specified, mkinit will only clobber text after
     one of these patterns:
+
         * A line beginning with a (#) comment
+
         * A multiline (triple-quote) comment
+
         * A line beginning with "from __future__"
+
         * A line beginning with "__version__"
 
     If neither explicit tags or implicit patterns exist, all text is clobbered.
@@ -100,7 +104,7 @@ def _find_insert_points(lines):
         lines (List[str]): lines of an `__init__.py` file.
 
     Returns:
-        tuple: (int, int, str):
+        Tuple[int, int, str]:
             insert points as starting line, ending line, and any required
             indentation.
 

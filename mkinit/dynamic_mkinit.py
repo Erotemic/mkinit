@@ -9,7 +9,7 @@ import textwrap
 
 def dynamic_init(modname, submodules=None, dump=False, verbose=False):
     """
-    MAIN ENTRY POINT
+    Main entry point for dynamic mkinit.
 
     Dynamically import listed util libraries and their attributes.
     Create reload_subs function.
@@ -17,6 +17,11 @@ def dynamic_init(modname, submodules=None, dump=False, verbose=False):
     Using __import__ like this is typically not considered good style However,
     it is better than import * and this will generate the good file text that
     can be used when the module is 'frozen"
+
+    Note:
+        Dynamic mkinit is for initial development and prototyping, and even
+        then it is not recommended. For production it is strongly recommended
+        to use static mkinit instead of dynamic mkinit.
 
     Example:
         >>> # The easiest way to use this in your code is to add these lines

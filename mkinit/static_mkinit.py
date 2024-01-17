@@ -62,16 +62,19 @@ def autogen_init(
         recursive (bool, default=False):
             if True, we will autogenerate init files for all subpackages.
 
-    Notes:
+    Note:
         This will partially override the __init__ file. By default everything
         up to the last comment / __future__ import is preserved, and everything
         after is overriden.  For more fine grained control, you can specify
-        XML-like `# <AUTOGEN_INIT>` and `# </AUTOGEN_INIT>` comments around the
-        volitle area. If specified only the area between these tags will be
+        XML-like ``# <AUTOGEN_INIT>`` and ``# </AUTOGEN_INIT>`` comments around
+        the volitle area. If specified only the area between these tags will be
         overwritten.
 
         To autogenerate a module on demand, its useful to keep a doctr comment
-        in the __init__ file like this:
+        in the __init__ file like this
+
+        .. code:: bash
+
             python -m mkinit <your_module>
 
     Example:

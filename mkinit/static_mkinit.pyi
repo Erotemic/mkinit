@@ -1,4 +1,3 @@
-from typing import Union
 from os import PathLike
 from typing import List
 from _typeshed import Incomplete
@@ -6,10 +5,10 @@ from _typeshed import Incomplete
 logger: Incomplete
 
 
-def autogen_init(modpath_or_name: Union[PathLike, str],
-                 submodules: Union[List[str], None] = None,
+def autogen_init(modpath_or_name: PathLike | str,
+                 submodules: List[str] | None = None,
                  respect_all: bool = True,
-                 options: Union[dict, None] = None,
+                 options: dict | None = None,
                  dry: bool = False,
                  diff: bool = ...,
                  recursive: bool = False):
