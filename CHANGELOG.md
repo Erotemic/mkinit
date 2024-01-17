@@ -7,6 +7,10 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version: 1.1.0 - 
 
+### Added
+
+* Added `--lazy_loader_typed` option, #40.
+
 ### Changed
 * Code cleanup
 
