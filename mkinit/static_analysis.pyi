@@ -1,10 +1,13 @@
-from typing import Union
+from _typeshed import Incomplete
 from collections.abc import Generator
+
+IS_PY_GE_308: Incomplete
+IS_PY_GE_312: Incomplete
 
 
 def parse_static_value(key: str,
-                       source: Union[str, None] = None,
-                       fpath: Union[str, None] = None):
+                       source: str | None = None,
+                       fpath: str | None = None):
     ...
 
 

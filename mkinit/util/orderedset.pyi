@@ -31,7 +31,7 @@ class OrderedSet(MutableSet, Sequence):
     def add(self, key):
         ...
 
-    append: Incomplete
+    append = add
 
     def update(self, sequence):
         ...
@@ -39,8 +39,8 @@ class OrderedSet(MutableSet, Sequence):
     def index(self, key):
         ...
 
-    get_loc: Incomplete
-    get_indexer: Incomplete
+    get_loc = index
+    get_indexer = index
 
     def pop(self):
         ...
