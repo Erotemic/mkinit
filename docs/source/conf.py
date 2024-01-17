@@ -17,7 +17,7 @@ Notes:
     # need to edit the conf.py
 
     cd ~/code/mkinit/docs
-    sphinx-apidoc --private -f -o ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit --separate
+    sphinx-apidoc --private --separate -f -o ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit "_tokenize.py"
 
     # Note: the module should importable before running this
     # (e.g. install it in developer mode or munge the PYTHONPATH)
@@ -111,7 +111,6 @@ Notes:
 
 # -- Project information -----------------------------------------------------
 import sphinx_rtd_theme
-import sys
 from os.path import exists
 from os.path import dirname
 from os.path import join
@@ -291,9 +290,11 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
+
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,
+    'navigation_depth': -1,
     # 'logo_only': True,
 }
 # html_logo = '.static/mkinit.svg'
