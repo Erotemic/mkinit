@@ -462,7 +462,7 @@ def _initstr(
         # the keys in submodule_attrs aren't added by default.
         default_lazy_boilerplate = textwrap.dedent(
             r"""
-            def lazy_import(module_name, submodules, submod_attrs):
+            def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
                 import importlib
                 import os
                 name_to_submod = {
@@ -490,7 +490,22 @@ def _initstr(
                     globals()[name] = attr
                     return attr
 
-                if os.environ.get('EAGER_IMPORT', ''):
+                eager_import_flag = False
+                if eager == 'auto':
+                    eager_import_text = os.environ.get('EAGER_IMPORT', '')
+                    if eager_import_text:
+                        eager_import_text_ = eager_import_text.lower()
+                        if eager_import_text_ in {'true', '1', 'on', 'yes'}:
+                            eager_import_flag = True
+
+                    eager_import_module_text = os.environ.get('EAGER_IMPORT_MODULES', '')
+                    if eager_import_module_text:
+                        if eager_import_module_text.lower() in __name__.lower():
+                            eager_import_flag = True
+                else:
+                    eager_import_flag = eager
+
+                if eager_import_flag:
                     for name in submodules:
                         __getattr__(name)
 
