@@ -75,6 +75,6 @@ def autogen_mkint_utils():
 if __name__ == '__main__':
     """
     CommandLine:
-        python ~/code/mkinit/dev/port_ubelt_code.py
+        python ~/code/mkinit/dev/maintain/port_ubelt_code.py
     """
     autogen_mkint_utils()
