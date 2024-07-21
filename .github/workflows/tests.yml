@@ -354,8 +354,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && ! startsWith(github.event.ref, 'refs/tags') && ! startsWith(github.event.ref, 'refs/heads/release')
     needs:
-    - build_and_test_sdist
     - build_purepy_wheels
+    - build_and_test_sdist
     steps:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
@@ -428,8 +428,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
     needs:
-    - build_and_test_sdist
     - build_purepy_wheels
+    - build_and_test_sdist
     steps:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
