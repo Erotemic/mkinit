@@ -7,17 +7,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version: 1.1.0 - 
 
+### Added
+
+* Experimental support for lazy module level properties
+
 ### Changed
 * Code cleanup
 
 * Workaround Python 3.12 tokenize changes - new format strings may not be supported yet.
 
+* CLI options can now be specified with hyphens or underscores.
+
+* Dropped support for Python 3.6 and 3.7
+
 ### Fixed
 * Extra newlines in generated files
-
-### Changed 
-* CLI options can now be specified with hyphens or underscores.
-* Dropped support for Python 3.6 and 3.7
 
 
 ## Version: 1.0.0 - Released 2022-12-03

@@ -57,6 +57,9 @@ def parse_static_value(key, source=None, fpath=None):
         source (str | None): python text
         fpath (str | None): filepath to read if source is not specified
 
+    Returns:
+        Any: a parsed value with a basic python builtin type
+
     Example:
         >>> key = 'foo'
         >>> source = 'foo = 123'
@@ -125,7 +128,7 @@ def package_modpaths(
         str: module names belonging to the package
 
     References:
-        http://stackoverflow.com/questions/1707709/list-modules-in-py-package
+        .. [SO1707709] https://stackoverflow.com/questions/1707709/list-modules-in-py-package
 
     Example:
         >>> from mkinit.static_analysis import *
@@ -179,7 +182,7 @@ def is_balanced_statement(lines):
     Checks if the lines have balanced parens, brakets, curlies and strings
 
     Args:
-        lines (list): list of strings
+        lines (List[str]): list of text lines
 
     Returns:
         bool: False if the statement is not balanced
@@ -223,13 +226,14 @@ def _locate_ps1_linenos(source_lines):
         implementation taken from xdoctest.parser
 
     Args:
-        source_lines (list): lines belonging only to the doctest src
+        source_lines (List[str]): lines belonging only to the doctest src
             these will be unindented, prefixed, and without any want.
 
     Returns:
-        (list, bool): a list of indices indicating which lines
-           are considered "PS1" and a flag indicating if the final line
-           should be considered for a got/want assertion.
+        Tuple[List, bool]:
+            a list of indices indicating which lines are considered "PS1" and a
+            flag indicating if the final line should be considered for a
+            got/want assertion.
 
     Example:
         >>> source_lines = ['>>> def foo():', '>>>     return 0', '>>> 3']
