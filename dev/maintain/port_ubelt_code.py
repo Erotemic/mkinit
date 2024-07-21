@@ -1,5 +1,10 @@
 """
 Statically ports utilities from ubelt needed by mkinit.
+
+Similar Scripts:
+    ~/code/xdoctest/dev/maintain/port_ubelt_utils.py
+    ~/code/mkinit/dev/maintain/port_ubelt_code.py
+    ~/code/line_profiler/dev/maintain/port_utilities.py
 """
 import ubelt as ub
 
@@ -61,7 +66,7 @@ def autogen_mkint_utils():
     lib.expand(["ubelt"])
     text = lib.current_sourcecode()
     text = postprocess_ported_code(text)
-    target_fpath = ub.Path(ub.expandpath("~/code/mkinit/mkinit/util/orderedset.py"))
+    target_fpath = ub.Path("~/code/mkinit/mkinit/util/orderedset.py").expand()
     target_fpath.write_text(text)
 
 
