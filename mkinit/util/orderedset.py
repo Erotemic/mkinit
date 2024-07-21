@@ -19,6 +19,9 @@ def is_iterable(obj):
 
     We don't need to check for the Python 2 `unicode` type, because it doesn't
     have an `__iter__` attribute anyway.
+
+    Returns:
+        bool
     """
     return (
         hasattr(obj, "__iter__")
@@ -35,12 +38,20 @@ class OrderedSet(MutableSet, Sequence):
     An OrderedSet is a custom MutableSet that remembers its order, so that
     every entry has an index that can be looked up.
 
+    Attributes:
+        items (List[Any]): internal ordered representation.
+        map (Dict[Any, int]): internal mapping from items to indices.
+
     Example:
         >>> OrderedSet([1, 1, 2, 3, 2])
         OrderedSet([1, 2, 3])
     """
 
     def __init__(self, iterable=None):
+        """
+        Args:
+            iterable (None | Iterable): input data
+        """
         self.items = []
         self.map = {}
         if iterable is not None:
@@ -55,6 +66,9 @@ class OrderedSet(MutableSet, Sequence):
             0
             >>> len(OrderedSet([1, 2]))
             2
+
+        Returns:
+            int
         """
         return len(self.items)
 
@@ -62,14 +76,21 @@ class OrderedSet(MutableSet, Sequence):
         """
         Get the item at a given index.
 
-        If `index` is a slice, you will get back that slice of items, as a
+        If ``index`` is a slice, you will get back that slice of items, as a
         new OrderedSet.
 
-        If `index` is a list or a similar iterable, you'll get a list of
+        If ``index`` is a list or a similar iterable, you'll get a list of
         items corresponding to those indices. This is similar to NumPy's
         "fancy indexing". The result is not an OrderedSet because you may ask
         for duplicate indices, and the number of elements returned should be
         the number of elements asked for.
+
+        Args:
+            index (int | slice | Any):
+                a simple or fancy index
+
+        Returns:
+            List | OrderedSet | Any : item or items
 
         Example:
             >>> oset = OrderedSet([1, 2, 3])
@@ -92,6 +113,9 @@ class OrderedSet(MutableSet, Sequence):
     def copy(self):
         """
         Return a shallow copy of this object.
+
+        Returns:
+            OrderedSet
 
         Example:
             >>> this = OrderedSet([1, 2, 3])
@@ -125,6 +149,12 @@ class OrderedSet(MutableSet, Sequence):
         """
         Test if the item is in this ordered set
 
+        Args:
+            key (Any): check if this item exists in the set
+
+        Returns:
+            bool
+
         Example:
             >>> 1 in OrderedSet([1, 3, 2])
             True
@@ -133,12 +163,19 @@ class OrderedSet(MutableSet, Sequence):
         """
         return key in self.map
 
-    def add(self, key):
+    def add(self, key):  # type: ignore
         """
-        Add `key` as an item to this OrderedSet, then return its index.
+        Add ``key`` as an item to this OrderedSet, then return its index.
 
-        If `key` is already in the OrderedSet, return the index it already
+        If ``key`` is already in the OrderedSet, return the index it already
         had.
+
+        Args:
+            key (Any): the item to add
+
+        Returns:
+            int: the index of the items. Note, violates the Liskov Substitution
+            Principle and might be changed.
 
         Example:
             >>> oset = OrderedSet()
@@ -159,6 +196,9 @@ class OrderedSet(MutableSet, Sequence):
         Update the set with the given iterable sequence, then return the index
         of the last element inserted.
 
+        Args:
+            sequence (Iterable): items to add to this set
+
         Example:
             >>> oset = OrderedSet([1, 2, 3])
             >>> oset.update([3, 1, 5, 1, 4])
@@ -176,19 +216,34 @@ class OrderedSet(MutableSet, Sequence):
             )
         return item_index
 
-    def index(self, key):
+    def index(self, key, start=0, stop=None):  # type: ignore
         """
         Get the index of a given entry, raising an IndexError if it's not
         present.
 
-        `key` can be an iterable of entries that is not a string, in which case
-        this returns a list of indices.
+        `key` can be a non-string iterable of entries, in which case this
+        returns a list of indices.
+
+        Args:
+            key (Any): item to find the position of
+
+            start (int): not supported yet
+
+            stop (int | None): not supported yet
+
+        Returns:
+            int
 
         Example:
             >>> oset = OrderedSet([1, 2, 3])
             >>> oset.index(2)
             1
         """
+        # Note: adding in this typing information breaks mypy
+        # Args:
+        #     key (Any | List[Any]): item(s) in the set to find the index of
+        # Returns:
+        #     int | List[int]:
         if is_iterable(key):
             return [self.index(subkey) for subkey in key]
         return self.map[key]
@@ -202,6 +257,9 @@ class OrderedSet(MutableSet, Sequence):
         Remove and return the last element from the set.
 
         Raises KeyError if the set is empty.
+
+        Returns:
+            Any
 
         Example:
             >>> oset = OrderedSet([1, 2, 3])
@@ -222,6 +280,9 @@ class OrderedSet(MutableSet, Sequence):
 
         The MutableSet mixin uses this to implement the .remove() method, which
         *does* raise an error when asked to remove a non-existent item.
+
+        Args:
+            key (Any): item to remove.
 
         Example:
             >>> oset = OrderedSet([1, 2, 3])
@@ -249,6 +310,9 @@ class OrderedSet(MutableSet, Sequence):
 
     def __iter__(self):
         """
+        Returns:
+            Iterator
+
         Example:
             >>> list(iter(OrderedSet([1, 2, 3])))
             [1, 2, 3]
@@ -257,6 +321,9 @@ class OrderedSet(MutableSet, Sequence):
 
     def __reversed__(self):
         """
+        Returns:
+            Iterator
+
         Example:
             >>> list(reversed(OrderedSet([1, 2, 3])))
             [3, 2, 1]
@@ -264,6 +331,10 @@ class OrderedSet(MutableSet, Sequence):
         return reversed(self.items)
 
     def __repr__(self):
+        """
+        Returns:
+            str
+        """
         if not self:
             return "%s()" % (self.__class__.__name__,)
         return "%s(%r)" % (self.__class__.__name__, list(self))
@@ -272,6 +343,12 @@ class OrderedSet(MutableSet, Sequence):
         """
         Returns true if the containers have the same items. If `other` is a
         Sequence, then order is checked, otherwise it is ignored.
+
+        Args:
+            other (Any): item to compare against
+
+        Returns:
+            bool
 
         Example:
             >>> oset = OrderedSet([1, 3, 2])
@@ -303,6 +380,12 @@ class OrderedSet(MutableSet, Sequence):
         Combines all unique items.
         Each items order is defined by its first appearance.
 
+        Args:
+            *sets : zero or more other iterables to operate on
+
+        Returns:
+            OrderedSet
+
         Example:
             >>> oset = OrderedSet.union(OrderedSet([3, 1, 4, 1, 5]), [1, 3], [2, 0])
             >>> print(oset)
@@ -326,6 +409,12 @@ class OrderedSet(MutableSet, Sequence):
         Returns elements in common between all sets. Order is defined only
         by the first set.
 
+        Args:
+            *sets : zero or more other iterables to operate on
+
+        Returns:
+            OrderedSet
+
         Example:
             >>> oset = OrderedSet.intersection(OrderedSet([0, 1, 2, 3]), [1, 2, 3])
             >>> print(oset)
@@ -346,6 +435,12 @@ class OrderedSet(MutableSet, Sequence):
     def difference(self, *sets):
         """
         Returns all elements that are in this set but not the others.
+
+        Args:
+            *sets : zero or more other iterables to operate on
+
+        Returns:
+            OrderedSet
 
         Example:
             >>> OrderedSet([1, 2, 3]).difference(OrderedSet([2]))
@@ -369,6 +464,12 @@ class OrderedSet(MutableSet, Sequence):
         """
         Report whether another set contains this set.
 
+        Args:
+            other (Iterable): check if items in other are all contained in self.
+
+        Returns:
+            bool
+
         Example:
             >>> OrderedSet([1, 2, 3]).issubset({1, 2})
             False
@@ -386,6 +487,12 @@ class OrderedSet(MutableSet, Sequence):
     def issuperset(self, other):
         """
         Report whether this set contains another set.
+
+        Args:
+            other (Iterable): check all items in self are contained in other.
+
+        Returns:
+            bool
 
         Example:
             >>> OrderedSet([1, 2]).issuperset([1, 2, 3])
@@ -407,6 +514,12 @@ class OrderedSet(MutableSet, Sequence):
 
         Their order will be preserved, with elements from `self` preceding
         elements from `other`.
+
+        Args:
+            other (Iterable): items to operate on
+
+        Returns:
+            OrderedSet
 
         Example:
             >>> this = OrderedSet([1, 4, 3, 5, 7])
@@ -452,6 +565,9 @@ class OrderedSet(MutableSet, Sequence):
         Update this OrderedSet to keep only items in another set, preserving
         their order in this set.
 
+        Args:
+            other (Iterable): items to operate on
+
         Example:
             >>> this = OrderedSet([1, 4, 3, 5, 7])
             >>> other = OrderedSet([9, 7, 1, 3, 2])
@@ -466,6 +582,9 @@ class OrderedSet(MutableSet, Sequence):
         """
         Update this OrderedSet to remove items from another set, then
         add items from the other set that were not present in this set.
+
+        Args:
+            other (Iterable): items to operate on
 
         Example:
             >>> this = OrderedSet([1, 4, 3, 5, 7])
