@@ -17,7 +17,7 @@ Notes:
     # need to edit the conf.py
 
     cd ~/code/mkinit/docs
-    sphinx-apidoc --private --separate -f -o ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit "_tokenize.py"
+    sphinx-apidoc --private --separate --force --output-dir ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit '_tokenize.py'
 
     # Note: the module should importable before running this
     # (e.g. install it in developer mode or munge the PYTHONPATH)
@@ -37,16 +37,16 @@ Notes:
 
         ### For gitlab
 
+        To enable the read-the-docs go to https://readthedocs.org/dashboard/ and login
+
         The user will need to enable the repo on their readthedocs account:
         https://readthedocs.org/dashboard/import/manual/?
 
-        To enable the read-the-docs go to https://readthedocs.org/dashboard/ and login
-
-        Make sure you have a .readthedocs.yml file
-
-        Click import project: (for github you can select, but gitlab you need to import manually)
+        Enter the following information:
             Set the Repository NAME: mkinit
             Set the Repository URL: https://github.com/Erotemic/mkinit
+
+        Make sure you have a .readthedocs.yml file
 
         For gitlab you also need to setup an integrations. Navigate to:
 
@@ -167,8 +167,8 @@ extensions = [
     'sphinx.ext.napoleon',
     'sphinx.ext.todo',
     'sphinx.ext.viewcode',
-    # 'myst_parser',  # TODO
-
+    'myst_parser',  # For markdown docs
+    'sphinx.ext.imgconverter',  # For building latexpdf
     'sphinx.ext.githubpages',
     # 'sphinxcontrib.redirects',
     'sphinx_reredirects',
@@ -183,6 +183,16 @@ napoleon_use_ivar = True
 #autoapi_dirs = [mod_dpath]
 
 autodoc_inherit_docstrings = False
+
+# Hack for geowatch, todo configure
+autosummary_mock_imports = [
+    'geowatch.utils.lightning_ext._jsonargparse_ext_ge_4_24_and_lt_4_xx',
+    'geowatch.utils.lightning_ext._jsonargparse_ext_ge_4_22_and_lt_4_24',
+    'geowatch.utils.lightning_ext._jsonargparse_ext_ge_4_21_and_lt_4_22',
+    'geowatch.tasks.fusion.datamodules.temporal_sampling.affinity_sampling',
+    'geowatch.tasks.depth_pcd.model',
+    'geowatch.tasks.cold.export_change_map',
+]
 
 autodoc_member_order = 'bysource'
 autoclass_content = 'both'
@@ -324,6 +334,21 @@ htmlhelp_basename = project + 'doc'
 
 # -- Options for LaTeX output ------------------------------------------------
 
+# References:
+# https://tex.stackexchange.com/questions/546246/centos-8-the-font-freeserif-cannot-be-found
+
+"""
+# https://www.sphinx-doc.org/en/master/usage/builders/index.html#sphinx.builders.latex.LaTeXBuilder
+# https://tex.stackexchange.com/a/570691/83399
+sudo apt install fonts-freefont-otf texlive-luatex texlive-latex-extra texlive-fonts-recommended texlive-latex-recommended tex-gyre latexmk
+make latexpdf LATEXMKOPTS="-shell-escape --synctex=-1 -src-specials -interaction=nonstopmode"
+make latexpdf LATEXMKOPTS="-lualatex -interaction=nonstopmode"
+make LATEXMKOPTS="-lualatex -interaction=nonstopmode"
+
+"""
+# latex_engine = 'lualatex'
+# latex_engine = 'xelatex'
+
 latex_elements = {
     # The paper size ('letterpaper' or 'a4paper').
     #
@@ -379,8 +404,10 @@ from sphinx.domains.python import PythonDomain  # NOQA
 from typing import Any, List  # NOQA
 
 
-USE_TIMER = 0
-if USE_TIMER:
+# HACK TO PREVENT EXCESSIVE TIME.
+# TODO: FIXME FOR REAL
+MAX_TIME_MINUTES = None
+if MAX_TIME_MINUTES:
     import ubelt  # NOQA
     TIMER = ubelt.Timer()
     TIMER.tic()
@@ -411,6 +438,7 @@ class GoogleStyleDocstringProcessor:
     """
 
     def __init__(self, autobuild=1):
+        self.debug = 0
         self.registry = {}
         if autobuild:
             self._register_builtins()
@@ -478,6 +506,17 @@ class GoogleStyleDocstringProcessor:
             new_lines.append('')
             new_lines.extend(lines[1:])
             return new_lines
+
+        # @self.register_section(tag='TODO', alias=['.. todo::'])
+        # def todo_section(lines):
+        #     """
+        #     Fixup todo sections
+        #     """
+        #     import xdev
+        #     xdev.embed()
+        #     import ubelt as ub
+        #     print('lines = {}'.format(ub.urepr(lines, nl=1)))
+        #     return new_lines
 
         @self.register_section(tag='Ignore')
         def ignore(lines):
@@ -589,7 +628,9 @@ class GoogleStyleDocstringProcessor:
             https://www.sphinx-doc.org/en/1.5.1/_modules/sphinx/ext/autodoc.html
             https://www.sphinx-doc.org/en/master/usage/extensions/autodoc.html
         """
-        # print(f'name={name}')
+        if self.debug:
+            print(f'ProcessDocstring: name={name}, what_={what_}, num_lines={len(lines)}')
+
         # print('BEFORE:')
         # import ubelt as ub
         # print('lines = {}'.format(ub.urepr(lines, nl=1)))
@@ -607,10 +648,8 @@ class GoogleStyleDocstringProcessor:
 
         render_doc_images = 0
 
-        # HACK TO PREVENT EXCESSIVE TIME.
-        # TODO: FIXME FOR REAL
-        if USE_TIMER and TIMER.toc() > 60 * 5:
-            render_doc_images = 0  # FIXME too slow on RTD
+        if MAX_TIME_MINUTES and TIMER.toc() > (60 * MAX_TIME_MINUTES):
+            render_doc_images = False  # FIXME too slow on RTD
 
         if render_doc_images:
             # DEVELOPING
@@ -950,6 +989,13 @@ def postprocess_hyperlinks(app, doctree, docname):
                     raise AssertionError
 
 
+def fix_rst_todo_section(lines):
+    new_lines = []
+    for line in lines:
+        ...
+    ...
+
+
 def setup(app):
     import sphinx
     app : sphinx.application.Sphinx = app
@@ -961,14 +1007,28 @@ def setup(app):
     # https://stackoverflow.com/questions/26534184/can-sphinx-ignore-certain-tags-in-python-docstrings
     app.connect('autodoc-process-docstring', docstring_processor.process_docstring_callback)
 
+    def copy(src, dst):
+        import shutil
+        print(f'Copy {src} -> {dst}')
+        assert src.exists()
+        if not dst.parent.exists():
+            dst.parent.mkdir()
+        shutil.copy(src, dst)
+
     ### Hack for kwcoco: TODO: figure out a way for the user to configure this.
     HACK_FOR_KWCOCO = 0
     if HACK_FOR_KWCOCO:
         import pathlib
-        import shutil
-        doc_outdir = pathlib.Path(app.outdir)
-        doc_srcdir = pathlib.Path(app.srcdir)
-        schema_src = (doc_srcdir / '../../kwcoco/coco_schema.json')
-        shutil.copy(schema_src, doc_outdir / 'coco_schema.json')
-        shutil.copy(schema_src, doc_srcdir / 'coco_schema.json')
+        doc_outdir = pathlib.Path(app.outdir) / 'auto'
+        doc_srcdir = pathlib.Path(app.srcdir) / 'auto'
+
+        mod_dpath = doc_srcdir / '../../../kwcoco'
+
+        src_fpath = (mod_dpath / 'coco_schema.json')
+        copy(src_fpath, doc_outdir / src_fpath.name)
+        copy(src_fpath, doc_srcdir / src_fpath.name)
+
+        src_fpath = (mod_dpath / 'coco_schema_informal.rst')
+        copy(src_fpath, doc_outdir / src_fpath.name)
+        copy(src_fpath, doc_srcdir / src_fpath.name)
     return app

@@ -27,6 +27,7 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed 
 * CLI options can now be specified with hyphens or underscores.
+* Dropped support for Python 3.6 and 3.7
 
 
 ## Version: 1.0.0 - Released 2022-12-03
