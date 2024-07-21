@@ -33,6 +33,9 @@ def main():
             `__private__` - Private modules and their attributes are not exposed.
 
             `__ignore__` - Tells mkinit to ignore particular attributes
+
+            `__module_properties__` - can be a class with properties that will
+                be exposed on a module level if using mkinits lazy boilerplate.
         """
     ).strip("\n")
 
