@@ -572,6 +572,7 @@ def _make_our_lazy_boilerplate(module_property_names=None):
     # still be parsed in older versions of python.
     # NOTE: We differentiate between submodule and submodule_attrs, as
     # the keys in submodule_attrs aren't added by default.
+    import ubelt as ub
     lines = {}
     lines['def'] = codeblock(
         '''
@@ -588,11 +589,11 @@ def _make_our_lazy_boilerplate(module_property_names=None):
             ''', ' ' * 4)
 
     if module_property_names is not None:
-        module_property_names
-        print(f'module_property_names={module_property_names}')
+        name_text = ub.urepr(set(module_property_names), nl=0)
         lines['body2'] = codeblock(
             f'''
-            module_property_names = {set(module_property_names)}
+            module_property_names = {name_text}
+            modprops = __module_properties__()
             ''', ' ' * 4)
     lines['closure_def'] = codeblock(
             '''
