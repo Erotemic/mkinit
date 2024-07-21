@@ -101,14 +101,14 @@ def main():
         "--lazy",
         action="store_true",
         default=False,
-        help="Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)",
+        help="Use lazy imports with more boilerplate but no dependencies",
     )
 
     lazy_group.add_argument(
-        "--lazy_loader",
+        "--lazy_loader", "--lazy-loader",
         action="store_true",
         default=False,
-        help="Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)",
+        help="Use lazy imports with less boilerplate but requires the lazy_loader module",
     )
 
     parser.add_argument(
@@ -119,7 +119,7 @@ def main():
     )
 
     parser.add_argument(
-        "--lazy_boilerplate",
+        "--lazy_boilerplate", "--lazy-boilerplate",
         default=None,
         help="Code that defines a custom lazy_import callable",
     )
@@ -133,7 +133,7 @@ def main():
     )
 
     parser.add_argument(
-        "--norespect_all",
+        "--norespect_all", "--norespect-all",
         dest="respect_all",
         action="store_false",
         default=True,
