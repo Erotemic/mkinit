@@ -17,17 +17,20 @@ from os.path import realpath
 import sys
 
 
+IS_PY_GE_308 = ((sys.version_info[0] >= 3) and (sys.version_info[1] >= 8))
+
+
 def _parse_static_node_value(node):
     """
     Extract a constant value from a node if possible
     """
     import ast
     from collections import OrderedDict
-    # TODO: ast.Constant for 3.8
-    if isinstance(node, ast.Num):
-        value = node.n
-    elif isinstance(node, ast.Str):
-        value = node.s
+    import numbers
+    if (isinstance(node, ast.Constant) and isinstance(node.value, numbers.Number) if IS_PY_GE_308 else isinstance(node, ast.Num)):
+        value = node.value if IS_PY_GE_308 else node.n
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Str)):
+        value = node.value if IS_PY_GE_308 else node.s
     elif isinstance(node, ast.List):
         value = list(map(_parse_static_node_value, node.elts))
     elif isinstance(node, ast.Tuple):
@@ -40,7 +43,6 @@ def _parse_static_node_value(node):
     elif isinstance(node, (ast.NameConstant)):
         value = node.value
     else:
-        print(node.__dict__)
         raise TypeError('Cannot parse a static value from non-static node '
                         'of type: {!r}'.format(type(node)))
     return value
@@ -67,6 +69,13 @@ def _static_parse(varname, fpath):
     """
     Statically parse the a constant variable from a python file
 
+    Args:
+        varname (str): variable name to extract
+        fpath (str | PathLike): path to python file to parse
+
+    Returns:
+        Any: the static value
+
     Example:
         >>> # xdoctest: +SKIP("ubelt dependency")
         >>> dpath = ub.Path.appdir('tests/import/staticparse').ensuredir()
@@ -90,6 +99,10 @@ def _static_parse(varname, fpath):
         >>> with pytest.raises(AttributeError):
         >>>     fpath.write_text('a = list(range(10))')
         >>>     assert _static_parse('c', fpath) is None
+        >>> if sys.version_info[0:2] >= (3, 6):
+        >>>     # Test with type annotations
+        >>>     fpath.write_text('b: int = 10')
+        >>>     assert _static_parse('b', fpath) == 10
     """
     import ast
 
@@ -102,8 +115,15 @@ def _static_parse(varname, fpath):
     class StaticVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                if getattr(target, 'id', None) == varname:
+                target_id = getattr(target, 'id', None)
+                if target_id == varname:
                     self.static_value = _parse_static_node_value(node.value)
+
+        def visit_AnnAssign(self, node):
+            target = node.target
+            target_id = getattr(target, 'id', None)
+            if target_id == varname:
+                self.static_value = _parse_static_node_value(node.value)
 
     visitor = StaticVisitor()
     visitor.visit(pt)
@@ -260,7 +280,13 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
     # but it would be nice to ensure we are not matching suffixes.
     # however, we should probably match and handle different versions.
     _editable_fname_pth_pat = '__editable__.' + _pkg_name + '-*.pth'
-    _editable_fname_finder_py_pat = '__editable___' + _pkg_name + '_*finder.py'
+
+    # NOTE: the __editable__ finders are named after the package, but the
+    # module could have a different name, so we cannot use the package name
+    # (which in this case is really the module name) in the pattern, and we
+    # have to check all of the finders.
+    # _editable_fname_finder_py_pat = '__editable___' + _pkg_name + '_*finder.py'
+    _editable_fname_finder_py_pat = '__editable___*_*finder.py'
 
     found_modpath = None
     for dpath in candidate_dpaths:
@@ -285,17 +311,21 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             # break with pytest anymore? Nope, pytest still doesn't work right
             # with it.
             for finder_fpath in new_editable_finder_paths:
-                mapping = _static_parse('MAPPING', finder_fpath)
                 try:
-                    target = dirname(mapping[_pkg_name])
-                except KeyError:
+                    mapping = _static_parse('MAPPING', finder_fpath)
+                except AttributeError:
                     ...
                 else:
-                    if not exclude or normalize(target) not in real_exclude:  # pragma: nobranch
-                        modpath = check_dpath(target)
-                        if modpath:  # pragma: nobranch
-                            found_modpath = modpath
-                            break
+                    try:
+                        target = dirname(mapping[_pkg_name])
+                    except KeyError:
+                        ...
+                    else:
+                        if not exclude or normalize(target) not in real_exclude:  # pragma: nobranch
+                            modpath = check_dpath(target)
+                            if modpath:  # pragma: nobranch
+                                found_modpath = modpath
+                                break
             if found_modpath is not None:
                 break
 
@@ -368,7 +398,7 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
 
         hide_main (bool):
             if False, and ``hide_init`` is True, __main__.py will be returned
-            for packages, if it exists. Defautls to False.
+            for packages, if it exists. Defaults to False.
 
         sys_path (None | List[str | PathLike]):
             The paths to search for the module.
@@ -389,7 +419,18 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
         >>> modpath = basename(modname_to_modpath('_ctypes'))
         >>> assert 'ctypes' in modpath
     """
-    modpath = _syspath_modname_to_modpath(modname, sys_path)
+    if hide_main or sys_path:
+        modpath = _syspath_modname_to_modpath(modname, sys_path)
+    else:
+        # import xdev
+        # with xdev.embed_on_exception_context:
+        # try:
+        #     modpath = _importlib_modname_to_modpath(modname)
+        # except Exception:
+        #     modpath = _syspath_modname_to_modpath(modname, sys_path)
+        # modpath = _pkgutil_modname_to_modpath(modname, sys_path)
+        modpath = _syspath_modname_to_modpath(modname, sys_path)
+
     if modpath is None:
         return None
 
@@ -466,13 +507,22 @@ def modpath_to_modname(modpath, hide_init=True, hide_main=False, check=True,
     encountered.
 
     Args:
-        modpath (str): module filepath
-        hide_init (bool, default=True): removes the __init__ suffix
-        hide_main (bool, default=False): removes the __main__ suffix
-        check (bool, default=True): if False, does not raise an error if
-            modpath is a dir and does not contain an __init__ file.
-        relativeto (str | None, default=None): if specified, all checks are ignored
-            and this is considered the path to the root module.
+        modpath (str):
+            Module filepath
+
+        hide_init (bool):
+            Removes the __init__ suffix. Defaults to True.
+
+        hide_main (bool):
+            Removes the __main__ suffix. Defaults to False.
+
+        check (bool):
+            If False, does not raise an error if modpath is a dir and does not
+            contain an __init__ file. Defaults to True.
+
+        relativeto (str | None):
+            If specified, all checks are ignored and this is considered the
+            path to the root module. Defaults to None.
 
     TODO:
         - [ ] Does this need modification to support PEP 420?
