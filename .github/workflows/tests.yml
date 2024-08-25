@@ -23,7 +23,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
     - name: Set up Python 3.12 for linting
-      uses: actions/setup-python@v5.0.0
+      uses: actions/setup-python@v5.1.1
       with:
         python-version: '3.12'
     - name: Install dependencies
@@ -51,7 +51,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
     - name: Set up Python 3.12
-      uses: actions/setup-python@v5.0.0
+      uses: actions/setup-python@v5.1.1
       with:
         python-version: '3.12'
     - name: Upgrade pip
@@ -62,9 +62,9 @@ jobs:
     - name: Build sdist
       shell: bash
       run: |-
-        python -m pip install pip -U
-        python -m pip install setuptools>=0.8 wheel build
+        python -m pip install setuptools>=0.8 wheel build twine
         python -m build --sdist --outdir wheelhouse
+        python -m twine check ./wheelhouse/mkinit*.tar.gz
     - name: Install sdist
       run: |-
         ls -al wheelhouse
@@ -102,7 +102,7 @@ jobs:
       name: Upload sdist artifact
       with:
         name: sdist_wheels
-        path: wheelhouse/*.tar.gz
+        path: ./wheelhouse/mkinit*.tar.gz
   build_purepy_wheels:
     ##
     # Download and test the pure-python wheels that were build in the
@@ -128,7 +128,7 @@ jobs:
       with:
         platforms: all
     - name: Setup Python
-      uses: actions/setup-python@v5.0.0
+      uses: actions/setup-python@v5.1.1
       with:
         python-version: ${{ matrix.python-version }}
     - name: Build pure wheel
@@ -273,7 +273,7 @@ jobs:
       with:
         platforms: all
     - name: Setup Python
-      uses: actions/setup-python@v5.0.0
+      uses: actions/setup-python@v5.1.1
       with:
         python-version: ${{ matrix.python-version }}
     - uses: actions/download-artifact@v2.1.1
@@ -291,11 +291,23 @@ jobs:
         echo "Installing helpers"
         pip install setuptools>=0.8 setuptools_scm wheel build -U
         pip install tomli pkginfo
-        export WHEEL_FPATH=$(python -c "import pathlib; print(str(sorted(pathlib.Path('wheelhouse').glob('mkinit*.whl'))[-1]).replace(chr(92), chr(47)))")
-        export MOD_VERSION=$(python -c "from pkginfo import Wheel; print(Wheel('$WHEEL_FPATH').version)")
-        echo "$WHEEL_FPATH=WHEEL_FPATH"
-        echo "$INSTALL_EXTRAS=INSTALL_EXTRAS"
-        echo "$MOD_VERSION=MOD_VERSION"
+        export WHEEL_FPATH=$(python -c "if 1:
+            import pathlib
+            dist_dpath = pathlib.Path('wheelhouse')
+            candidates = list(dist_dpath.glob('mkinit*.whl'))
+            candidates += list(dist_dpath.glob('mkinit*.tar.gz'))
+            fpath = sorted(candidates)[-1]
+            print(str(fpath).replace(chr(92), chr(47)))
+        ")
+        export MOD_VERSION=$(python -c "if 1:
+            from pkginfo import Wheel, SDist
+            fpath = '$WHEEL_FPATH'
+            cls = Wheel if fpath.endswith('.whl') else SDist
+            print(cls(fpath).version)
+        ")
+        echo "WHEEL_FPATH=$WHEEL_FPATH"
+        echo "INSTALL_EXTRAS=$INSTALL_EXTRAS"
+        echo "MOD_VERSION=$MOD_VERSION"
         pip install --prefer-binary "mkinit[$INSTALL_EXTRAS]==$MOD_VERSION" -f wheelhouse
         echo "Install finished."
     - name: Test wheel ${{ matrix.install-extras }}
@@ -354,8 +366,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && ! startsWith(github.event.ref, 'refs/tags') && ! startsWith(github.event.ref, 'refs/heads/release')
     needs:
-    - build_purepy_wheels
     - build_and_test_sdist
+    - build_purepy_wheels
     steps:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
@@ -428,8 +440,8 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'push' && (startsWith(github.event.ref, 'refs/tags') || startsWith(github.event.ref, 'refs/heads/release'))
     needs:
-    - build_purepy_wheels
     - build_and_test_sdist
+    - build_purepy_wheels
     steps:
     - name: Checkout source
       uses: actions/checkout@v4.1.1
