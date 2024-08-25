@@ -625,14 +625,11 @@ def _make_our_lazy_boilerplate(module_property_names=None):
                 elif name in name_to_submod:
                     submodname = name_to_submod[name]
                     module = importlib.import_module(
-                        '{module_name}.{submodname}'.format(
-                            module_name=module_name, submodname=submodname)
-                    )
+                        f'{module_name}.{submodname}')
                     attr = getattr(module, name)
                 else:
                     raise AttributeError(
-                        'No {module_name} attribute {name}'.format(
-                            module_name=module_name, name=name))
+                        f'Module {module_name!r} has no attribute {name!r}')
                 globals()[name] = attr
                 return attr
             ''', ' ' * 8)
