@@ -136,7 +136,7 @@ def parse_version(fpath):
     return visitor.version
 
 project = 'mkinit'
-copyright = '2024, Jon Crall'
+copyright = '2025, Jon Crall'
 author = 'Jon Crall'
 modname = 'mkinit'
 
@@ -300,7 +300,6 @@ html_theme_path = [sphinx_rtd_theme.get_html_theme_path()]
 # further.  For a list of options available for each theme, see the
 # documentation.
 #
-
 html_theme_options = {
     'collapse_navigation': False,
     'display_version': True,
