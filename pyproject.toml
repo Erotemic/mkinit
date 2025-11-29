@@ -6,17 +6,17 @@ build-backend = "setuptools.build_meta"
 ignore_missing_imports = true
 
 [tool.xcookie]
-tags = [ "purepy", "github", "erotemic",]
+tags = [ "purepy", "github", "grue",]
 mod_name = "mkinit"
-repo_name = "mkinit"
+repo_name = "grue-mkinit"
 rel_mod_parent_dpath = "."
 os = [ "all", "win", "linux", "osx",]
 min_python = 3.7
 version = "{mod_dpath}/__init__.py::__version__"
-author = "Jon Crall"
-author_email = "erotemic@gmail.com"
-description = "Autogenerate __init__.py files"
-url="https://github.com/Erotemic/mkinit"
+author = "Morgan Stair"
+author_email = "morgan@tadmuck.com"
+description = "Fork of mkinit with enhanced __private__ support for excluding test modules"
+url="https://github.com/MorganStair/grue-mkinit"
 license = "Apache 2"
 dev_status = "stable"
 typing = true

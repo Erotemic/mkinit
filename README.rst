@@ -1,15 +1,21 @@
-mkinit
-======
+grue-mkinit
+===========
+
+**Fork of** `mkinit <https://github.com/Erotemic/mkinit>`_ **by Jon Crall**
+
+This fork enhances the original mkinit with improved ``__private__`` support for excluding test modules from auto-generated imports.
 
 |CircleCI| |Appveyor| |Codecov| |Pypi| |Downloads| |ReadTheDocs|
 
 
 +------------------+--------------------------------------------+
+| Original Project | https://github.com/Erotemic/mkinit         |
++------------------+--------------------------------------------+
+| This Fork        | https://github.com/MorganStair/grue-mkinit |
++------------------+--------------------------------------------+
 | Read the docs    | https://mkinit.readthedocs.io              |
 +------------------+--------------------------------------------+
-| Github           | https://github.com/Erotemic/mkinit         |
-+------------------+--------------------------------------------+
-| Pypi             | https://pypi.org/project/mkinit            |
+| Pypi (original)  | https://pypi.org/project/mkinit            |
 +------------------+--------------------------------------------+
 
 The ``mkinit`` module helps you write ``__init__`` files that expose all submodule
@@ -37,7 +43,35 @@ Installation
 
 .. code:: bash
 
-    pip install mkinit
+    pip install grue-mkinit
+
+
+Changes from Original mkinit
+=============================
+
+This fork adds enhanced ``__private__`` functionality:
+
+**Original behavior:** The ``__private__`` declaration only filters attributes from
+``from module import attribute`` statements and from ``__all__``, but still includes
+the module imports themselves (``from package import module``).
+
+**Enhanced behavior:** The ``__private__`` declaration now also filters module imports,
+allowing you to completely exclude test modules and other private submodules from
+auto-generated ``__init__.py`` files.
+
+**Example:**
+
+.. code:: python
+
+    # In your __init__.py
+    __private__ = ['test_*', 'conftest']
+
+    # Now mkinit will exclude:
+    # - test_foo.py
+    # - test_bar.py
+    # - conftest.py
+    #
+    # These modules won't appear in imports or __all__
 
 
 The Pitch

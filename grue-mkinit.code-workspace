@@ -1,0 +1,21 @@
+{
+	"folders": [
+		{
+			"path": "."
+		}
+	],
+	"settings": {
+		"workbench.colorCustomizations": {
+			"editor.background": "#102040",
+			"titleBar.activeBackground": "#114466",
+			"titleBar.inactiveBackground": "#102030",
+			"panel.background": "#104060", // panel menu background (problems, output, terminal, etc.)
+			"terminal.background": "#102040",
+			"tab.activeBackground": "#224466",
+			"tab.inactiveBackground": "#223355",
+			"sideBar.background": "#113355",
+			"statusBar.background": "#223355",
+			"activityBar.background": "#223355",
+		}
+	}
+}
