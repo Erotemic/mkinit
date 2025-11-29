@@ -280,7 +280,7 @@ def parse_user_declarations(modpath):
             pass
 
         try:
-            # Protected items are exposed, but their attributes are not
+            # Protected modules are exposed, but their attributes are not
             user_decl["__protected__"] = static.parse_static_value(
                 "__protected__", source
             )
@@ -288,7 +288,7 @@ def parse_user_declarations(modpath):
             pass
 
         try:
-            # Private items and their attributes are not exposed
+            # Private modules and their attributes are not exposed
             user_decl["__private__"] = static.parse_static_value("__private__", source)
         except NameError:
             pass
