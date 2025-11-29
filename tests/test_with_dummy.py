@@ -520,6 +520,24 @@ def test_recursive_eager_autogen():
         mkinit_rec_eager_autogen.a_very_nested_function()
 
 
+def test_private_module_filtering():
+    """Test that __private__ filters module imports, not just attributes."""
+    import mkinit
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    root = ub.ensuredir(join(cache_dpath, "test_private_pkg"))
+    ub.delete(root)
+    ub.ensuredir(root)
+
+    # Create modules
+    ub.Path(join(root, "regular.py")).write_text("def func(): pass")
+    ub.Path(join(root, "test_foo.py")).write_text("def test(): pass")
+    ub.Path(join(root, "__init__.py")).write_text("__private__ = ['test_*']")
+
+    text = mkinit.static_init(root)
+    # Key test: module itself should be excluded, not just its attributes
+    assert 'test_foo' not in text
+
+
 if __name__ == "__main__":
     """
     CommandLine:

@@ -258,6 +258,13 @@ def _initstr(
         from_imports (List[Tuple[str, List[str]]]):
             List of submodules and their imported attributes
 
+        explicit (set): names to explicitly include in __all__
+
+        protected (set): modules to import but not expose their attributes
+
+        private (set): modules and attributes to completely exclude
+            (supports fnmatch patterns like 'test_*')
+
         options (dict): customize output
 
     CommandLine:
@@ -345,19 +352,9 @@ def _initstr(
     exposed_submodules = set()
     exposed_all = set()
 
-    protected_submodules = submodules & protected
-
-    if options.get("with_mods", True):
-        exposed_submodules.update(submodules)
-        exposed_all.update(submodules)
-
-    exposed_submodules.update(protected_submodules)
-    exposed_all.update(protected_submodules)
-
     from fnmatch import fnmatch
 
-    # TODO: allow pattern matching here
-    # step1: separate into explicit vs glob-pattern strings
+    # Separate explicit names from glob patterns for efficient matching
     private_pats = {p for p in private if "*" in p}
     private_set = private - private_pats
 
@@ -370,6 +367,17 @@ def _initstr(
     def _private_matches(x):
         x = x.lstrip(".")
         return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
+
+    # Filter out private modules from submodules
+    non_private_submodules = {m for m in submodules if not _private_matches(m)}
+    protected_submodules = non_private_submodules & protected
+
+    if options.get("with_mods", True):
+        exposed_submodules.update(non_private_submodules)
+        exposed_all.update(non_private_submodules)
+
+    exposed_submodules.update(protected_submodules)
+    exposed_all.update(protected_submodules)
 
     def _pp_matches(x):
         # TODO: standardize how explicit vs submodules are handled
