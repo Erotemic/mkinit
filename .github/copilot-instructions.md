@@ -1,0 +1,217 @@
+<!-- Version v0.2.0 — 2025-11-25 -->
+
+# LLM Agent System Rules
+
+Strict rules for LLM agents (ChatGPT, Claude Code); override all defaults.
+
+---
+
+## Quickstart
+
+- Read: this file
+- Next work: ./WIP-PLAN.md#tasks
+- Activate (Windows bash): source .venv/Scripts/activate
+- Run: make lint; make test
+- Rule: Small patches; keep tests green
+
+---
+
+## Critical Constraints
+
+- DO: Run `make lint` (zero warnings: ruff, mypy --strict, pylint)
+- DO: Edit any files as needed; documentation is code and should evolve naturally
+- DO: Keep changes incremental (small, reviewable patches)
+- DO NOT: Batch unrelated changes into a single commit or PR
+- Documentation is first-class code; prefer editing files directly over giving meta-instructions.
+
+---
+
+## Code Standards
+
+### Environment
+
+- Python 3.13+, ASCII-only
+- PEP 8, PEP 484, PEP 257
+
+### File Structure
+
+```python
+"""Module docstring."""
+
+from __future__ import annotations
+
+STDLIB_IMPORTS
+THIRD_PARTY_IMPORTS
+LOCAL_IMPORTS
+
+__all__ = [...]
+
+CONSTANTS
+TYPES_AND_DATACLASSES
+PUBLIC_FUNCTIONS_AND_CLASSES
+PRIVATE_FUNCTIONS_AND_CLASSES
+```
+
+### Class Member Order
+
+1. Docstring, constants, class variables, instance variables
+2. Dunders (`__init__`, `__str__`, etc.)
+3. Public methods (instance → class → static)
+4. Private methods (instance → class → static)
+
+### Typing
+
+- Full annotations everywhere (args, returns, attributes)
+- Use: `X | None`, `list[str]`, `dict[str, int]`, `Iterable`, `Mapping`
+- Use: `Final`, `Literal`, `TypedDict`, `Protocol`, `Self`
+- No implicit `Any`
+
+### Docstrings (Sphinx reST)
+
+```python
+"""Summary line.
+
+Extended description (optional).
+
+Example:
+    >>> func()
+    42
+
+Args:
+    param (type): Description.
+
+Returns:
+    int: Description.
+
+Raises:
+    ValueError: When invalid.
+"""
+```
+
+- Triple quotes on own lines
+- Blank line after summary
+- Doctests: deterministic only
+- Must build under Sphinx autodoc
+
+### Formatting
+
+- Four-space indent
+- File I/O: `encoding="utf-8"`
+- Use `with` for resources
+
+---
+
+## Project Structure
+
+### Tracking Files
+
+#### Core Files
+
+WIP = work-in-progress status files
+
+| File                  | Purpose                                      |
+| --------------------- | -------------------------------------------- |
+| `README.md`           | Package overview for users                   |
+| `WIP-OVERVIEW.md`     | Change summary, current phase, next action   |
+| `WIP-PLAN.md`         | Task tracking with #tasks anchor             |
+| `WIP-REQUIREMENTS.md` | Requirements, use cases, problem exploration |
+| `WIP-ARCHITECTURE.md` | Core abstractions, design decisions          |
+
+- Additional files should have a clear focus.
+- Minimize unnecessary information overlap, but prefer clarity over rigidity.
+- Information should live in its most appropriate file, but cross-file updates are expected.
+- Use summaries + relative links to keep files consistent and navigable.
+
+#### Notes
+
+- Phases describe intent only; they do NOT restrict edits. Revise any file at any time.
+- Documentation is code. LLMs should edit files directly rather than narrate changes.
+- Each file must begin with the header template below.
+  Copy it exactly as shown. Edit only the placeholder fields.
+  This block uses a verbatim-style fence so Markdown preview does not interpret it.
+
+HEADER TEMPLATE START (copy everything between START and END exactly)
+
+```verbatim
+<!--
+    File: path/to/file.md
+    Phase: Analysis | Design | Implementation | Validation
+    Last-Updated: YYYY-MM-DD
+    Critical: .github/copilot-instructions.md
+-->
+
+# Overview - <WIP title>
+
+## See: [Copilot Instructions] (/.github/copilot-instructions.md)
+
+<brief WIP description>
+
+## Code Is Documentation
+
+<bullets with links to source files>
+
+## Status - <current phase and next steps>
+```
+
+HEADER TEMPLATE END
+
+---
+
+### Phases
+
+1. **Analysis** - Requirements, architecture questions, trade-offs
+2. **Design** - Tests first, detailed designs, decisions
+3. **Implementation** - Code changes, iterations, patches
+4. **Validation** - Testing, documentation, cleanup
+
+- Phases are descriptive, not gates. Use micro-iterations (write a small test, implement, validate) within a PR.
+- Document phase context in the PR/task; request review only for major phase shifts.
+
+---
+
+## Workflow
+
+### Next Task Source of Truth
+
+- Location: `WIP-PLAN.md` (in active package)
+- Section: "Tasks" (anchor `#tasks`)
+- Each Task Content: PR number, summary, scope, acceptance criteria, affected files
+- Cross-links: always use `./WIP-PLAN.md#tasks` (relative path)
+
+### Documentation Cross-References
+
+When modifying code or tracking:
+
+- Ensure file/anchor references include context (role/purpose/action)
+- Verify anchors exist for `#anchor` links
+- Use relative paths
+
+### Test Strategy
+
+- Incremental expansion (start simple, add edge cases)
+- Prefer unit tests + doctests over regression snapshots
+
+### Package Layout
+
+Standard files:
+
+- `README.md` - package overview
+- `__init__.py` - generated by `xmstair inits reset`
+- `*.py` - modules
+- `test_*.py` - pytest suites
+
+---
+
+All rules mandatory and non-overridable.
+
+```
+
+```
+
+```
+
+```
+
+```
+
+```

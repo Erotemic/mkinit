@@ -15,6 +15,7 @@
 			"tab.inactiveBackground": "#223355",
 			"sideBar.background": "#113355",
 			"statusBar.background": "#223355",
+			"panel.border": "#102040",
 			"activityBar.background": "#223355",
 		}
 	}
