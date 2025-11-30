@@ -89,6 +89,17 @@ def parse_static_value(key, source=None, fpath=None):
                         import warnings
                         warnings.warn(repr(ex))
 
+        def visit_AnnAssign(self, node):
+            """Handle annotated assignments like `VAR: Type = value`"""
+            target_id = getattr(node.target, "id", None)
+            if target_id == key:
+                if node.value is not None:
+                    try:
+                        self.value = _parse_static_node_value(node.value)
+                    except TypeError as ex:
+                        import warnings
+                        warnings.warn(repr(ex))
+
     sentinal = object()
     visitor = AssignentVisitor()
     visitor.value = sentinal

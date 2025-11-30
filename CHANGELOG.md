@@ -5,6 +5,12 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Fixed
+* Fixed issue #44: Module-level variables with type annotations are now properly detected and imported (e.g., `VAR: int = 42`, `CONSTANT: Final = "value"`)
+
+
 ## Version: 1.1.0 Released 2024-01-17
 
 ### Added
