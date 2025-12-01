@@ -174,7 +174,7 @@ def _find_insert_points(lines):
         "__submodules__",
         "__external__",
         "__explicit__",
-        "__extra_all__",
+        "__extra_all__",  # TODO: deprecate
         "__private__",
         "__protected__",
         "__ignore__",
