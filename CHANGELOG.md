@@ -5,6 +5,13 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [Unreleased]
+
+### Documentation
+* Documented glob pattern support for `__private__`, `__protected__`, and `__ignore__` variables (addresses issue #1)
+* Updated CLI help text to clarify glob pattern usage with examples
+
+
 ## Version: 1.1.0 Released 2024-01-17
 
 ### Added
