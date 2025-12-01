@@ -32,7 +32,10 @@ def static_parse(varname, fpath):
         def visit_Assign(self, node):
             for target in node.targets:
                 if getattr(target, "id", None) == varname:
-                    self.static_value = node.value.s
+                    try:
+                        self.static_value = node.value.value
+                    except AttributeError:
+                        self.static_value = node.value.s
 
     visitor = StaticVisitor()
     visitor.visit(pt)
@@ -244,6 +247,7 @@ if __name__ == "__main__":
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ]
     setupkw["entry_points"] = {
         "console_scripts": [
