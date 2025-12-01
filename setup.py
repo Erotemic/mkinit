@@ -32,7 +32,10 @@ def static_parse(varname, fpath):
         def visit_Assign(self, node):
             for target in node.targets:
                 if getattr(target, "id", None) == varname:
-                    self.static_value = node.value.s
+                    try:
+                        self.static_value = node.value.value
+                    except AttributeError:
+                        self.static_value = node.value.s
 
     visitor = StaticVisitor()
     visitor.visit(pt)
@@ -70,7 +73,7 @@ def parse_requirements(fname="requirements.txt", versions=False):
 
     Args:
         fname (str): path to requirements file
-        versions (bool | str, default=False):
+        versions (bool | str):
             If true include version specs.
             If strict, then pin to the minimum version.
 
@@ -106,7 +109,7 @@ def parse_requirements(fname="requirements.txt", versions=False):
                 info["package"] = line.split("#egg=")[1]
             else:
                 if "--find-links" in line:
-                    # setuptools doesnt seem to handle find links
+                    # setuptools does not seem to handle find links
                     line = line.split("--find-links")[0]
                 if ";" in line:
                     pkgpart, platpart = line.split(";")
@@ -159,7 +162,8 @@ def parse_requirements(fname="requirements.txt", versions=False):
                     if plat_deps is not None:
                         parts.append(";" + plat_deps)
                 item = "".join(parts)
-                yield item
+                if item:
+                    yield item
 
     packages = list(gen_packages_items())
     return packages
@@ -198,7 +202,6 @@ def parse_requirements(fname="requirements.txt", versions=False):
 NAME = "mkinit"
 INIT_PATH = "mkinit/__init__.py"
 VERSION = parse_version(INIT_PATH)
-
 if __name__ == "__main__":
     setupkw = {}
 
@@ -231,19 +234,20 @@ if __name__ == "__main__":
     setupkw["long_description_content_type"] = "text/x-rst"
     setupkw["license"] = "Apache 2"
     setupkw["packages"] = find_packages(".")
-    setupkw["python_requires"] = ">=3.7"
+    setupkw["python_requires"] = ">=3.8"
     setupkw["classifiers"] = [
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
         "Topic :: Utilities",
         "License :: OSI Approved :: Apache Software License",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
     ]
     setupkw["entry_points"] = {
         "console_scripts": [
