@@ -33,6 +33,9 @@ def main():
             `__private__` - Private modules and their attributes are not exposed.
 
             `__ignore__` - Tells mkinit to ignore particular attributes
+
+            `__module_properties__` - can be a class with properties that will
+                be exposed on a module level if using mkinits lazy boilerplate.
         """
     ).strip("\n")
 
@@ -101,14 +104,14 @@ def main():
         "--lazy",
         action="store_true",
         default=False,
-        help="Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)",
+        help="Use lazy imports with more boilerplate but no dependencies",
     )
 
     lazy_group.add_argument(
-        "--lazy_loader",
+        "--lazy_loader", "--lazy-loader",
         action="store_true",
         default=False,
-        help="Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)",
+        help="Use lazy imports with less boilerplate but requires the lazy_loader module",
     )
 
     lazy_group.add_argument(
@@ -129,7 +132,7 @@ def main():
     )
 
     parser.add_argument(
-        "--lazy_boilerplate",
+        "--lazy_boilerplate", "--lazy-boilerplate",
         default=None,
         help="Code that defines a custom lazy_import callable",
     )
@@ -143,7 +146,7 @@ def main():
     )
 
     parser.add_argument(
-        "--norespect_all",
+        "--norespect_all", "--norespect-all",
         dest="respect_all",
         action="store_false",
         default=True,
