@@ -98,6 +98,10 @@ def _find_insert_points(lines):
 
         * A line beginning with "__version__"
 
+        * A line beginning with any special variable:
+            "__submodules__", "__external__", "__protected__", "__private__",
+            "__ignore__", "__explicit__", or "__extra_all__"
+
     If neither explicit tags or implicit patterns exist, all text is clobbered.
 
     Args:
@@ -169,8 +173,11 @@ def _find_insert_points(lines):
         "__version__",
         "__submodules__",
         "__external__",
+        "__explicit__",
+        "__extra_all__",
         "__private__",
         "__protected__",
+        "__ignore__",
         "#",
         '"""',
         "'''",

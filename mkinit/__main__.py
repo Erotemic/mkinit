@@ -25,8 +25,8 @@ def main():
 
             `__external__` - Specify external modules to expose the attributes of.
 
-            `__explicit__` - Add custom explicitly defined names to this, and
-                they will be automatically added to the __all__ variable.
+            `__explicit__` (or `__extra_all__`) - Add custom explicitly defined names
+                to this, and they will be automatically added to the __all__ variable.
 
             `__protected__` -  Protected modules are exposed, but their attributes are not.
 
