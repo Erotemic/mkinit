@@ -332,7 +332,7 @@ def parse_user_declarations(modpath):
                 user_decl["__private__"] = static.parse_static_value("__private__", source)
             except NameError:
                 pass
-              
+
             try:
                 # Ignored modules and their attributes are not exposedmodules
                 user_decl["__ignore__"] = static.parse_static_value("__ignore__", source)
@@ -340,7 +340,7 @@ def parse_user_declarations(modpath):
                 pass
 
     return user_decl
-  
+
 
 def _parse_user_declarations2(init_fpath):
     """
