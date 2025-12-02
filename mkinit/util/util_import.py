@@ -121,10 +121,10 @@ def _static_parse(varname, fpath):
                     self.static_value = _parse_static_node_value(node.value)
 
         def visit_AnnAssign(self, node):
-            target = node.target
-            target_id = getattr(target, 'id', None)
-            if target_id == varname:
-                self.static_value = _parse_static_node_value(node.value)
+            """Handle annotated assignments like `VAR: Type = value`"""
+            if getattr(node.target, 'id', None) == varname:
+                if node.value is not None:
+                    self.static_value = _parse_static_node_value(node.value)
 
     visitor = StaticVisitor()
     visitor.visit(pt)
