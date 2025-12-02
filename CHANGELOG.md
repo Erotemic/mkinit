@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Fixed
 * Fixed issue #44: Module-level variables with type annotations are now properly detected and imported (e.g., `VAR: int = 42`, `CONSTANT: Final = "value"`)
+* Fixed issue #45: `__ignore__` variable is now properly preserved when regenerating `__init__.py` files, regardless of its position relative to other special variables like `__protected__` or `__private__`
+* Fixed related issue: `__explicit__` and `__extra_all__` variables are now properly preserved when regenerating `__init__.py` files (same root cause as issue #45)
+* Updated `_find_insert_points` docstring to document all preserved special variables
 
 
 ## Version: 1.1.0 Released 2024-01-17
