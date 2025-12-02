@@ -5,7 +5,7 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## Version: 1.2.0 - Released 2025-12-02
 
 ### Documentation
 * Documented glob pattern support for `__private__`, `__protected__`, and `__ignore__` variables (addresses issue #1)
@@ -17,8 +17,16 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 * Fixed related issue: `__explicit__` and `__extra_all__` variables are now properly preserved when regenerating `__init__.py` files (same root cause as issue #45)
 * Updated `_find_insert_points` docstring to document all preserved special variables
 
+### Added
+* Experimental support for module level properties
 
-## Version: 1.1.0 Released 2024-01-17
+### Changed
+* CLI arguments should now work with hyphens or underscores (e.g. `--lazy_loader` or `--lazy-loader`).
+
+* Dropped support for 3.7
+
+
+## Version: 1.1.0 - Released 2024-01-17
 
 ### Added
 
@@ -30,20 +38,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 * Removed support for Python 3.6
 
-### Added
-
-* Experimental support for lazy module level properties
-
 ### Changed
+
 * Code cleanup
 
 * Workaround Python 3.12 tokenize changes - new format strings may not be supported yet.
 
-* CLI options can now be specified with hyphens or underscores.
+### Fixed 
 
-* Dropped support for Python 3.6 and 3.7
-
-### Fixed
 * Extra newlines in generated files
 
 
