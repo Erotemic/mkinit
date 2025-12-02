@@ -210,6 +210,11 @@ These interface files are understood by static type checkers and allow the
 combination of lazy loading with static type checking.
 
 
+Note that special variables like ``__private__``, ``__protected__``, and ``__ignore__``
+support glob patterns (e.g., ``test_*``, ``*Base``) for flexible filtering of
+modules and attributes. See ``mkinit --help`` for details.
+
+
 Command Line Usage
 ------------------
 

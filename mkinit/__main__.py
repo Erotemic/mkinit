@@ -14,7 +14,8 @@ def main():
         Behavior is modified depending on the existing content of the
         `__init__.py` file (subsequent runs of mkinit are idempotent).
 
-        The following `__init__.py` variables modify autogeneration behavior:
+        The following `__init__.py` variables modify autogeneration behavior.
+        All filtering variables support glob patterns (e.g., 'test_*', '*Base'):
 
             `__submodules__` (List[str] | Dict[str, List[str])) -
                 Indicates the list of submodules to be introspected, if
@@ -28,11 +29,14 @@ def main():
             `__explicit__` - Add custom explicitly defined names to this, and
                 they will be automatically added to the __all__ variable.
 
-            `__protected__` -  Protected modules are exposed, but their attributes are not.
+            `__protected__` - Protected modules are exposed, but their attributes are not.
+                Supports glob patterns: e.g., ['Abstract*', '*Base']
 
             `__private__` - Private modules and their attributes are not exposed.
+                Supports glob patterns: e.g., ['test_*', '_internal*', 'conftest']
 
-            `__ignore__` - Tells mkinit to ignore particular attributes
+            `__ignore__` - Tells mkinit to ignore particular attributes.
+                Supports glob patterns: e.g., ['DEPRECATED_*', '_*']
 
             `__module_properties__` - can be a class with properties that will
                 be exposed on a module level if using mkinits lazy boilerplate.
