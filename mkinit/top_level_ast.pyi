@@ -28,6 +28,9 @@ class TopLevelVisitor(ast.NodeVisitor):
     def visit_Assign(self, node) -> None:
         ...
 
+    def visit_AnnAssign(self, node) -> None:
+        ...
+
     def visit_If(self, node) -> None:
         ...
 

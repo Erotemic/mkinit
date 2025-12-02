@@ -98,6 +98,10 @@ def _find_insert_points(lines):
 
         * A line beginning with "__version__"
 
+        * A line beginning with any special variable:
+            "__submodules__", "__external__", "__protected__", "__private__",
+            "__ignore__", "__explicit__", or "__extra_all__"
+
     If neither explicit tags or implicit patterns exist, all text is clobbered.
 
     Args:
@@ -169,8 +173,11 @@ def _find_insert_points(lines):
         "__version__",
         "__submodules__",
         "__external__",
+        "__explicit__",
+        "__extra_all__",  # TODO: deprecate
         "__private__",
         "__protected__",
+        "__ignore__",
         "#",
         '"""',
         "'''",
@@ -243,6 +250,7 @@ def _initstr(
     protected=set(),
     private=set(),
     options=None,
+    module_property_names=None,
 ):
     r"""
     Calls the other string makers
@@ -398,6 +406,9 @@ def _initstr(
     )
     exposed_all.update(explicit)
 
+    if module_property_names:
+        exposed_all.update(module_property_names)
+
     exposed_all = sorted(exposed_all)
     exposed_submodules = sorted(exposed_submodules)
 
@@ -463,95 +474,22 @@ def _initstr(
             append_part(options["lazy_boilerplate"])
 
         append_part(initstr.rstrip())
+
+        if module_property_names:
+            import warnings
+            warnings.warn('Only the custom lazy option supports __module_properties__')
+
     elif options["lazy_import"]:
-        # NOTE: We are not using f-strings so the code can still be parsed
-        # in older versions of python.
-        # NOTE: We differentiate between submodule and submodule_attrs, as
-        # the keys in submodule_attrs aren't added by default.
-        default_lazy_boilerplate = textwrap.dedent(
-            r"""
-            def lazy_import(module_name, submodules, submod_attrs):
-                import importlib
-                import os
-                name_to_submod = {
-                    func: mod for mod, funcs in submod_attrs.items()
-                    for func in funcs
-                }
-
-                def __getattr__(name):
-                    if name in submodules:
-                        attr = importlib.import_module(
-                            '{module_name}.{name}'.format(
-                                module_name=module_name, name=name)
-                        )
-                    elif name in name_to_submod:
-                        submodname = name_to_submod[name]
-                        module = importlib.import_module(
-                            '{module_name}.{submodname}'.format(
-                                module_name=module_name, submodname=submodname)
-                        )
-                        attr = getattr(module, name)
-                    else:
-                        raise AttributeError(
-                            'No {module_name} attribute {name}'.format(
-                                module_name=module_name, name=name))
-                    globals()[name] = attr
-                    return attr
-
-                if os.environ.get('EAGER_IMPORT', ''):
-                    for name in submodules:
-                        __getattr__(name)
-
-                    for attrs in submod_attrs.values():
-                        for attr in attrs:
-                            __getattr__(attr)
-                return __getattr__
-            """
-        ).rstrip("\n")
-        template = textwrap.dedent(
-            """
-            __getattr__ = lazy_import(
-                __name__,
-                submodules={submodules},
-                submod_attrs={submod_attrs},
-            )
-            """
-        ).rstrip("\n")
-        submod_attrs = {}
-        if exposed_from_imports:
-            for submod, attrs in exposed_from_imports:
-                submod = submod.lstrip(".")
-                submod_attrs[submod] = attrs
-
-        if explicit_exports:
-            submodules = submodules
-            print("submodules = {!r}".format(submodules))
-        else:
-            submodules = set()
-
-        # Currently this is the only use of ubelt, but urepr
-        # is easier to use in testing than pprint, so perhaps
-        # we can remove complexity and just use ubelt elsewhere
-        import ubelt as ub
-
-        # exposed_submodules = set(exposed_submodules)
-        submodules_repr = ub.urepr(exposed_submodules).replace("\n", "\n    ")
-        # hack for python <3.7 tests
-        submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
-
-        initstr = template.format(
-            submodules=submodules_repr,
-            submod_attrs=ub.urepr(submod_attrs).replace("\n", "\n    "),
-        )
-
-        if options["lazy_boilerplate"] is None:
-            append_part(default_lazy_boilerplate)
-        else:
-            # Customize lazy boilerplate
-            append_part(options["lazy_boilerplate"])
-
-        append_part(initstr.rstrip())
+        lazy_boilerplate, lazy_init_text = _make_lazy_boilerplate(
+            exposed_submodules, exposed_from_imports, options,
+            module_property_names)
+        append_part(lazy_boilerplate)
+        append_part(lazy_init_text)
     else:
+        if module_property_names:
+            import warnings
+            warnings.warn('Only the custom lazy option supports __module_properties__')
+
         if exposed_submodules:
             exposed_imports = [submod_to_import[k] for k in exposed_submodules]
             append_part(_make_imports_str(exposed_imports, modname))
@@ -587,6 +525,166 @@ def _initstr(
         except ImportError:
             pass
     return initstr
+
+
+def _make_lazy_boilerplate(exposed_submodules, exposed_from_imports,
+                           options, module_property_names):
+
+    template = textwrap.dedent(
+        """
+        __getattr__ = lazy_import(
+            __name__,
+            submodules={submodules_text},
+            submod_attrs={submod_attr_text},
+        )
+        """
+    ).rstrip("\n")
+    submod_attrs = {}
+    if exposed_from_imports:
+        for submod, attrs in exposed_from_imports:
+            submod = submod.lstrip(".")
+            submod_attrs[submod] = attrs
+
+    # Currently this is the only use of ubelt, but urepr
+    # is easier to use in testing than pprint, so perhaps
+    # we can remove complexity and just use ubelt elsewhere
+    import ubelt as ub
+
+    # exposed_submodules = set(exposed_submodules)
+    submodules_text = ub.urepr(exposed_submodules).replace("\n", "\n    ")
+    # hack for python <3.7 tests
+    submodules_text = submodules_text.replace('[', '{').replace(']', '}')
+
+    submod_attr_text = ub.urepr(submod_attrs).replace("\n", "\n    ")
+
+    lazy_init_text = template.format(
+        submodules_text=submodules_text,
+        submod_attr_text=submod_attr_text,
+    ).strip()
+
+    if options["lazy_boilerplate"] is None:
+        lazy_boilerplate = _make_our_lazy_boilerplate(module_property_names)
+    else:
+        # User specified custom lazy boilerplate
+        lazy_boilerplate = options["lazy_boilerplate"]
+
+    return lazy_boilerplate, lazy_init_text
+
+
+def codeblock(text, prefix=''):
+    import textwrap  # this is a slow import, do it
+    text = textwrap.dedent(text).strip('\n')
+    if prefix:
+        text = prefix + text.replace('\n', '\n' + prefix)
+    return text
+
+
+def _make_our_lazy_boilerplate(module_property_names=None):
+    """
+    Originally this was a non-dyanmic function, but for module properties we
+    had to add in some extra tools.
+
+    Example:
+        >>> from mkinit.formatting import _make_our_lazy_boilerplate  # NOQA
+        >>> module_property_names = ['foo', 'bar']
+        >>> text = _make_our_lazy_boilerplate(module_property_names)
+        >>> import ubelt as ub
+        >>> print(ub.highlight_code(text, backend='rich'))
+    """
+    # NOTE: We are not using f-strings in the **generated** code so it can
+    # still be parsed in older versions of python.
+    # NOTE: We differentiate between submodule and submodule_attrs, as
+    # the keys in submodule_attrs aren't added by default.
+    import ubelt as ub
+    lines = {}
+    lines['def'] = codeblock(
+        '''
+        def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
+        ''')
+    lines['body1'] = codeblock(
+            '''
+            import importlib
+            import os
+            name_to_submod = {
+                func: mod for mod, funcs in submod_attrs.items()
+                for func in funcs
+            }
+            ''', ' ' * 4)
+
+    if module_property_names is not None:
+        name_text = ub.urepr(set(module_property_names), nl=0)
+        lines['body2'] = codeblock(
+            f'''
+            module_property_names = {name_text}
+            modprops = __module_properties__()
+            ''', ' ' * 4)
+    lines['closure_def'] = codeblock(
+            '''
+            def __getattr__(name):
+            ''', ' ' * 4)
+
+    if module_property_names is not None:
+        lines['closure_body1'] = codeblock(
+            '''
+                if name in module_property_names:
+                    return getattr(modprops, name)
+            ''', ' ' * 8)
+
+    lines['closure_body2'] = codeblock(
+            '''
+                if name in submodules:
+                    attr = importlib.import_module(
+                        '{module_name}.{name}'.format(
+                            module_name=module_name, name=name)
+                    )
+                elif name in name_to_submod:
+                    submodname = name_to_submod[name]
+                    module = importlib.import_module(
+                        f'{module_name}.{submodname}')
+                    attr = getattr(module, name)
+                else:
+                    raise AttributeError(
+                        f'Module {module_name!r} has no attribute {name!r}')
+                globals()[name] = attr
+                return attr
+            ''', ' ' * 8)
+
+    lines['resolve_eager'] = codeblock(
+            '''
+            eager_import_flag = False
+            if eager == 'auto':
+                eager_import_text = os.environ.get('EAGER_IMPORT', '')
+                if eager_import_text:
+                    eager_import_text_ = eager_import_text.lower()
+                    if eager_import_text_ in {'true', '1', 'on', 'yes'}:
+                        eager_import_flag = True
+
+                eager_import_module_text = os.environ.get('EAGER_IMPORT_MODULES', '')
+                if eager_import_module_text:
+                    if eager_import_module_text.lower() in __name__.lower():
+                        eager_import_flag = True
+            else:
+                eager_import_flag = eager
+            ''', ' ' * 4)
+
+    lines['execute_eager'] = codeblock(
+            '''
+            if eager_import_flag:
+                for name in submodules:
+                    __getattr__(name)
+
+                for attrs in submod_attrs.values():
+                    for attr in attrs:
+                        __getattr__(attr)
+            ''', ' ' * 4)
+
+    lines['return'] = codeblock(
+            '''
+            return __getattr__
+            ''', ' ' * 4)
+
+    text = '\n'.join(lines.values())
+    return text
 
 
 def _make_imports_str(imports, rootmodname="."):

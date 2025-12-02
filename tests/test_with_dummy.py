@@ -445,6 +445,7 @@ def test_recursive_lazy_autogen(option, typed):
         )
         mkinit_rec_lazy_autogen.a_very_nested_function()
 
+        
 def test_typed_pyi_file():
     """
     xdoctest ~/code/mkinit/tests/test_with_dummy.py test_recursive_lazy_autogen
@@ -536,6 +537,99 @@ def test_private_module_filtering():
     text = mkinit.static_init(root)
     # Key test: module itself should be excluded, not just its attributes
     assert 'test_foo' not in text
+
+
+def test_special_variable_preservation():
+    """Test that special variables are preserved when regenerating __init__.py.
+
+    This test addresses issue #45 where __ignore__, __explicit__, and __extra_all__
+    were being removed depending on their position relative to other special variables.
+
+    Tests preservation of: __ignore__, __explicit__, __extra_all__ in various positions.
+    """
+    import mkinit
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    root = ub.ensuredir(join(cache_dpath, "test_special_vars_pkg"))
+    ub.delete(root)
+    ub.ensuredir(root)
+
+    # Create a simple module for testing
+    ub.Path(join(root, "mymodule.py")).write_text("def func(): pass\n")
+
+    # Test Case 1: __ignore__ alone (originally worked)
+    init_content = "__ignore__ = ['something']\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__ignore__' in text, "__ignore__ should be preserved when alone"
+
+    # Test Case 2: __ignore__ after __protected__ (the problematic case from issue #45)
+    init_content = "__protected__ = []\n__ignore__ = ['something']\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__ignore__' in text, "__ignore__ should be preserved after __protected__"
+    assert '__protected__' in text, "__protected__ should also be preserved"
+
+    # Test Case 3: __ignore__ before __protected__
+    init_content = "__ignore__ = ['something']\n__protected__ = []\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__ignore__' in text, "__ignore__ should be preserved before __protected__"
+
+    # Test Case 4: __explicit__ preservation (same root cause as issue #45)
+    init_content = "custom_var = 42\n__explicit__ = ['custom_var']\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__explicit__' in text, "__explicit__ should be preserved"
+    assert 'custom_var' in text, "Variables referenced by __explicit__ should be preserved"
+
+    # Test Case 5: __extra_all__ preservation (alias for __explicit__)
+    init_content = "my_val = 99\n__extra_all__ = ['my_val']\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__extra_all__' in text, "__extra_all__ should be preserved"
+
+    # Test Case 6: Multiple special variables together
+    init_content = (
+        "__protected__ = []\n"
+        "__ignore__ = ['something']\n"
+        "custom = 1\n"
+        "__explicit__ = ['custom']\n"
+    )
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+    assert '__protected__' in text, "All special variables should be preserved"
+    assert '__ignore__' in text, "All special variables should be preserved"
+    assert '__explicit__' in text, "All special variables should be preserved"
+
+
+def test_ignore_filtering():
+    """Test that __ignore__ actually filters attributes from imports."""
+    import mkinit
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    root = ub.ensuredir(join(cache_dpath, "test_ignore_filter_pkg"))
+    ub.delete(root)
+    ub.ensuredir(root)
+
+    # Create module with attributes to filter
+    ub.Path(join(root, "mymodule.py")).write_text(
+        "def public_func(): pass\n"
+        "def ignored_func(): pass\n"
+        "PUBLIC_VAR = 1\n"
+        "IGNORED_VAR = 2\n"
+    )
+
+    init_content = "__ignore__ = ['ignored_func', 'IGNORED_VAR']\n"
+    ub.Path(join(root, "__init__.py")).write_text(init_content)
+    _, text = mkinit.formatting._insert_autogen_text(root, mkinit.static_init(root))
+
+    # Check that ignored items are filtered from imports
+    lines = text.split('\n')
+    import_line = [l for l in lines if 'from test_ignore_filter_pkg.mymodule import' in l]
+    if import_line:
+        assert 'ignored_func' not in import_line[0], "ignored_func should be filtered"
+        assert 'IGNORED_VAR' not in import_line[0], "IGNORED_VAR should be filtered"
+        assert 'public_func' in import_line[0], "public_func should be included"
+        assert 'PUBLIC_VAR' in import_line[0], "PUBLIC_VAR should be included"
 
 
 if __name__ == "__main__":
