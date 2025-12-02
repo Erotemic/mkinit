@@ -100,6 +100,19 @@ class TopLevelVisitor(ast.NodeVisitor):
         >>> self = TopLevelVisitor.parse(source)
         >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
         attrnames = ['d', 'f']
+
+    Example:
+        >>> # Test annotated variables (issue #44)
+        >>> from xdoctest import utils
+        >>> source = utils.codeblock(
+        ...    '''
+        ...    FOO = 42
+        ...    BAR: int = 99
+        ...    BAZ: str
+        ...    ''')
+        >>> self = TopLevelVisitor.parse(source)
+        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        attrnames = ['BAR', 'BAZ', 'FOO']
     """
 
     def __init__(self):
@@ -148,6 +161,12 @@ class TopLevelVisitor(ast.NodeVisitor):
             if hasattr(target, "id"):
                 self._register(target.id)
         # TODO: assign constants to self.const_lookup?
+        self.generic_visit(node)
+
+    def visit_AnnAssign(self, node):
+        """Handle annotated assignments like `VAR: Type = value`"""
+        if hasattr(node.target, "id"):
+            self._register(node.target.id)
         self.generic_visit(node)
 
     def visit_If(self, node):
