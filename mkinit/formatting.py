@@ -491,16 +491,15 @@ def _initstr(
             import warnings
             warnings.warn('Only the custom lazy option supports __module_properties__')
 
+        reexport = options["reexport"]
+
         if exposed_submodules:
             exposed_imports = [submod_to_import[k] for k in exposed_submodules]
-            
-            if options["reexport"]:
-                append_part(_make_reexports_str(exposed_imports, modname))
-            else:
-                append_part(_make_imports_str(exposed_imports, modname))
+
+            append_part(_make_imports_str(exposed_imports, modname, reexport))
 
         if exposed_from_imports:
-            attr_part = _make_fromimport_str(exposed_from_imports, modname, reexport=options["reexport"])
+            attr_part = _make_fromimport_str(exposed_from_imports, modname, reexport=reexport)
             append_part(attr_part)
 
     if options.get("with_all", True):
@@ -692,10 +691,42 @@ def _make_our_lazy_boilerplate(module_property_names=None):
     return text
 
 
-def _make_imports_str(imports, rootmodname="."):
-    if False:
-        imports_fmtstr = "from {rootmodname} import %s".format(rootmodname=rootmodname)
-        return "\n".join([imports_fmtstr % (name,) for name in imports])
+def _make_imports_str(imports, rootmodname=".", reexport=False):
+    """
+    Args:
+        imports (List[str]):
+            Module names to import.
+        rootmodname (str):
+            The package name used as the base for relative imports.
+        reexport (bool):
+            If True, emit “reexport-style” imports using ``as <same_name>``.
+            This is useful for explicit reexports (e.g., PEP 484 conventions).
+
+    Returns:
+        str: Newline-separated import statements.
+
+    Examples:
+        >>> imports = ['.bar', '.baz', 'numpy']
+        >>> print(_make_imports_str(imports, rootmodname='foo'))
+        from foo import bar
+        from foo import baz
+        import numpy
+
+        >>> print(_make_imports_str(imports, rootmodname='foo', reexport=True))
+        from foo import bar as bar
+        from foo import baz as baz
+        import numpy as numpy
+    """
+    if reexport:
+        reexport_fmtstr = "from {rootmodname} import %s as %s".format(rootmodname=rootmodname)
+        return "\n".join(
+            [
+                reexport_fmtstr % (name.lstrip("."), name.lstrip("."))
+                if name.startswith(".")
+                else "import %s as %s" % (name, name)
+                for name in imports
+            ]
+        )
     else:
         imports_fmtstr = "from {rootmodname} import %s".format(rootmodname=rootmodname)
         return "\n".join(
@@ -706,17 +737,6 @@ def _make_imports_str(imports, rootmodname="."):
                 for name in imports
             ]
         )
-        
-def _make_reexports_str(imports, rootmodname="."):
-    reexport_fmtstr = "from {rootmodname} import %s as %s".format(rootmodname=rootmodname)
-    return "\n".join(
-        [
-            reexport_fmtstr % (name.lstrip("."), name.lstrip("."))
-            if name.startswith(".")
-            else "import %s as %s" % (name, name)
-            for name in imports
-        ]
-    )
 
 
 def _packed_rhs_text(lhs_text, rhs_text):
@@ -811,6 +831,10 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent="", reexport=Fals
             imported with_attrs.
         rootmodname (str): name of root module
         indent (str): initial indentation
+        reexport (bool): if true use [PEP484]_ reexport style
+
+    References:
+        .. [PEP484] https://peps.python.org/pep-0484/#stub-files
 
     Example:
         >>> from_imports = [
@@ -836,7 +860,7 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent="", reexport=Fals
             normname = rootmodname + name
         else:
             normname = name
-        
+
         if reexport:
             from_module_reexport_str = "from {normname} import %s as %s".format(
                 normname=normname
@@ -849,16 +873,16 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent="", reexport=Fals
                 raw_str = from_module_reexport_str % (name, name)
                 if len(raw_str) > 79:
                     raw_str = from_module_reexport_long_str % (name, name)
-                
+
                 packstr += raw_str + "\n"
-            return packstr.strip("\n")
-        
-        if len(fromlist) > 0:
-            lhs_text = indent + "from {normname} import (".format(normname=normname)
-            rhs_text = ", ".join(fromlist) + ",)"
-            packstr = _packed_rhs_text(lhs_text, rhs_text)
+            packstr = packstr.strip("\n")
         else:
-            packstr = ""
+            if len(fromlist) > 0:
+                lhs_text = indent + "from {normname} import (".format(normname=normname)
+                rhs_text = ", ".join(fromlist) + ",)"
+                packstr = _packed_rhs_text(lhs_text, rhs_text)
+            else:
+                packstr = ""
         return packstr
 
     parts = [_pack_fromimport(t, reexport) for t in from_imports]

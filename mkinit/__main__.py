@@ -98,7 +98,10 @@ def main():
         "--reexport",
         action="store_true",
         default=False,
-        help="Generate imports in the format 'from <modname> import <object> as <object>'",
+        help=(
+            "Generate PEP-484 style imports in format "
+            "'from <modname> import <object> as <object>' "
+            "to signal explicit exports"),
     )
 
     parser.add_argument(
