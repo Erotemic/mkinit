@@ -38,6 +38,7 @@ def _ensure_options(given_options=None):
         "lazy_loader_typed": False,
         "lazy_boilerplate": None,
         "use_black": False,
+        "reexport": False,
     }
     options = default_options.copy()
     for k in given_options.keys():
@@ -492,10 +493,14 @@ def _initstr(
 
         if exposed_submodules:
             exposed_imports = [submod_to_import[k] for k in exposed_submodules]
-            append_part(_make_imports_str(exposed_imports, modname))
+            
+            if options["reexport"]:
+                append_part(_make_reexports_str(exposed_imports, modname))
+            else:
+                append_part(_make_imports_str(exposed_imports, modname))
 
         if exposed_from_imports:
-            attr_part = _make_fromimport_str(exposed_from_imports, modname)
+            attr_part = _make_fromimport_str(exposed_from_imports, modname, reexport=options["reexport"])
             append_part(attr_part)
 
     if options.get("with_all", True):
@@ -701,6 +706,17 @@ def _make_imports_str(imports, rootmodname="."):
                 for name in imports
             ]
         )
+        
+def _make_reexports_str(imports, rootmodname="."):
+    reexport_fmtstr = "from {rootmodname} import %s as %s".format(rootmodname=rootmodname)
+    return "\n".join(
+        [
+            reexport_fmtstr % (name.lstrip("."), name.lstrip("."))
+            if name.startswith(".")
+            else "import %s as %s" % (name, name)
+            for name in imports
+        ]
+    )
 
 
 def _packed_rhs_text(lhs_text, rhs_text):
@@ -788,7 +804,7 @@ def _packed_rhs_text(lhs_text, rhs_text):
     return packstr
 
 
-def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
+def _make_fromimport_str(from_imports, rootmodname=".", indent="", reexport=False):
     """
     Args:
         from_imports (list): each item is a tuple with module and a list of
@@ -813,14 +829,30 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
         # dot is already taken care of in fmtstr
         rootmodname = ""
 
-    def _pack_fromimport(tup):
+    def _pack_fromimport(tup, reexport=False):
         name, fromlist = tup[0], tup[1]
 
         if name.startswith("."):
             normname = rootmodname + name
         else:
             normname = name
-
+        
+        if reexport:
+            from_module_reexport_str = "from {normname} import %s as %s".format(
+                normname=normname
+            )
+            from_module_reexport_long_str = "from {normname} import (\n    %s as %s\n)".format(
+                normname=normname
+            )
+            packstr = ""
+            for name in fromlist:
+                raw_str = from_module_reexport_str % (name, name)
+                if len(raw_str) > 79:
+                    raw_str = from_module_reexport_long_str % (name, name)
+                
+                packstr += raw_str + "\n"
+            return packstr.strip("\n")
+        
         if len(fromlist) > 0:
             lhs_text = indent + "from {normname} import (".format(normname=normname)
             rhs_text = ", ".join(fromlist) + ",)"
@@ -829,7 +861,7 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
             packstr = ""
         return packstr
 
-    parts = [_pack_fromimport(t) for t in from_imports]
+    parts = [_pack_fromimport(t, reexport) for t in from_imports]
     from_str = "\n".join([p for p in parts if p])
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)

@@ -94,6 +94,12 @@ def main():
         default=True,
         help="Do not generate an __all__ variable",
     )
+    parser.add_argument(
+        "--reexport",
+        action="store_true",
+        default=False,
+        help="Generate imports in the format 'from <modname> import <object> as <object>'",
+    )
 
     parser.add_argument(
         "--relative",
@@ -211,6 +217,7 @@ def main():
         "lazy_loader_typed": ns["lazy_loader_typed"],
         "lazy_boilerplate": ns["lazy_boilerplate"],
         "use_black": ns["black"],
+        "reexport": ns["reexport"],
     }
 
     diff = ns["diff"]

@@ -631,6 +631,77 @@ def test_ignore_filtering():
         assert 'public_func' in import_line[0], "public_func should be included"
         assert 'PUBLIC_VAR' in import_line[0], "PUBLIC_VAR should be included"
 
+def test_reexport_feature():
+    """
+    Test that the reexport feature generates imports in the format
+    'from <modname> import <object> as <object>'
+    """
+    import mkinit
+
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    paths = make_dummy_package(cache_dpath)
+    modpath = paths["root"]
+
+    # Test with reexport=true
+    text = mkinit.static_init(modpath, options={"reexport": True})
+    assert "from mkinit_dummy_module import subdir1 as subdir1" in text
+    assert "from mkinit_dummy_module import subdir2 as subdir2" in text
+    assert "from mkinit_dummy_module.subdir1 import simple_subattr1 as simple_subattr1" in text
+    assert "from mkinit_dummy_module.subdir1 import simple_subattr2 as simple_subattr2" in text
+    assert "from mkinit_dummy_module.subdir2 import public_attr as public_attr" in text
+
+    # Test with reexport=false (should not differ from the previous behavio.)
+    text = mkinit.static_init(modpath, options={"reexport": False})
+    assert "from mkinit_dummy_module import subdir1\n" in text
+    assert "from mkinit_dummy_module import subdir2\n" in text
+    assert "from mkinit_dummy_module.subdir1 import (simple_subattr1, simple_subattr2,)" in text
+    assert "from mkinit_dummy_module.subdir2 import (public_attr,)" in text
+
+def test_reexport_feature_with_relative_imports():
+    """
+    Test that the reexport feature works correctly with relative imports
+    """
+    import mkinit
+
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    paths = make_dummy_package(cache_dpath)
+    modpath = paths["root"]
+
+    # Test with reexpor=true & relative=true
+    text = mkinit.static_init(modpath, options={"reexport": True, "relative": True})
+    assert "from . import subdir1 as subdir1" in text
+    assert "from . import subdir2 as subdir2" in text
+    assert "from .subdir1 import simple_subattr1 as simple_subattr1" in text
+    assert "from .subdir1 import simple_subattr2 as simple_subattr2" in text
+    assert "from .subdir2 import public_attr as public_attr" in text
+
+    # Test with reexport=false & relative=true (should not differ from the previous behavior)
+    text = mkinit.static_init(modpath, options={"reexport": False, "relative": True})
+    assert "from . import subdir1" in text
+    assert "from . import subdir2" in text
+    assert "from .subdir1 import (simple_subattr1, simple_subattr2,)" in text
+    assert "from .subdir2 import (public_attr,)" in text
+
+
+def test_reexport_feature_with_lazy_imports():
+    """
+    Test that the reexport feature does not affect lazy imports
+    """
+    import sys
+
+    import mkinit
+
+    if sys.version_info[0:2] < (3, 7):
+        pytest.skip("Only 3.7+ has lazy imports")
+
+    cache_dpath = ub.Path.appdir("mkinit/tests").ensuredir()
+    paths = make_dummy_package(cache_dpath)
+    modpath = paths["root"]
+
+    text = mkinit.static_init(modpath, options={"reexport": True, "lazy_import": True})
+    text_reexport = mkinit.static_init(modpath, options={"reexport": False, "lazy_import": True})
+    assert text == text_reexport
+    
 
 if __name__ == "__main__":
     """
