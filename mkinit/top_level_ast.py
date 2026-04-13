@@ -320,23 +320,23 @@ def static_truthiness(node):
         bool or None: True or False if a node can be statically bound to a
         truthy value, otherwise returns None.
     """
-    if (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Str)):
+    if (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
         return bool(node.value if IS_PY_GE_308 else node.s)
-    # if isinstance(node, ast.Str):
+    # if isinstance(node, ast.Constant):
     #     return bool(node.s)
     elif isinstance(node, ast.Tuple):
         return bool(node.elts)
-    # elif isinstance(node, ast.Num):
+    # elif isinstance(node, ast.Constant):
     #     return bool(node.n)
-    elif (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Num)):
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
         return bool(node.value if IS_PY_GE_308 else node.n)
-    # elif isinstance(node, ast.Bytes):  # nocover
+    # elif isinstance(node, ast.Constant):  # nocover
     #     return bool(node.s)
-    elif (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Bytes)):
+    elif (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
         return bool(node.value if IS_PY_GE_308 else node.s)
-    # elif isinstance(node, ast.NameConstant):
+    # elif isinstance(node, ast.Constant):
     #     return bool(node.value)
-    elif (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.NameConstant)):
+    elif (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
         return bool(node.value)
     else:
         return _UNHANDLED
