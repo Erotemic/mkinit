@@ -2,7 +2,7 @@ import ast
 import sys
 
 __all__ = [
-    "TopLevelVisitor",
+    'TopLevelVisitor',
 ]
 
 
@@ -32,7 +32,9 @@ class oset(dict):
             return cls()
         first, *rest = sets_
         other_items = [set(s) for s in rest]
-        return cls(item for item in first if all(item in s for s in other_items))
+        return cls(
+            item for item in first if all(item in s for s in other_items)
+        )
 
 
 class TopLevelVisitor(ast.NodeVisitor):
@@ -160,7 +162,7 @@ class TopLevelVisitor(ast.NodeVisitor):
     def parse(TopLevelVisitor, source):
         self = TopLevelVisitor()
 
-        source_utf8 = source.encode("utf8")
+        source_utf8 = source.encode('utf8')
         pt = ast.parse(source_utf8)
 
         self.visit(pt)
@@ -180,14 +182,14 @@ class TopLevelVisitor(ast.NodeVisitor):
 
     def visit_Assign(self, node):
         for target in node.targets:
-            if hasattr(target, "id"):
+            if hasattr(target, 'id'):
                 self._register(target.id)
         # TODO: assign constants to self.const_lookup?
         self.generic_visit(node)
 
     def visit_AnnAssign(self, node):
         """Handle annotated assignments like `VAR: Type = value`"""
-        if hasattr(node.target, "id"):
+        if hasattr(node.target, 'id'):
             self._register(node.target.id)
         self.generic_visit(node)
 
@@ -201,19 +203,23 @@ class TopLevelVisitor(ast.NodeVisitor):
         if isinstance(node.test, ast.Compare):  # pragma: nobranch
             try:
                 if IS_PY_GE_312:
-                    if all([
-                        isinstance(node.test.ops[0], ast.Eq),
-                        node.test.left.id == '__name__',
-                        node.test.comparators[0].value == '__main__',
-                    ]):
+                    if all(
+                        [
+                            isinstance(node.test.ops[0], ast.Eq),
+                            node.test.left.id == '__name__',
+                            node.test.comparators[0].value == '__main__',
+                        ]
+                    ):
                         # Ignore main block
                         return
                 else:
-                    if all([
-                        isinstance(node.test.ops[0], ast.Eq),
-                        node.test.left.id == '__name__',
-                        node.test.comparators[0].s == '__main__',
-                    ]):
+                    if all(
+                        [
+                            isinstance(node.test.ops[0], ast.Eq),
+                            node.test.left.id == '__name__',
+                            node.test.comparators[0].s == '__main__',
+                        ]
+                    ):
                         # Ignore main block
                         return
             except Exception:  # nocover
@@ -248,7 +254,7 @@ class TopLevelVisitor(ast.NodeVisitor):
                 # Ignore branches that are unconditionally false
                 continue
             else:
-                raise AssertionError("cannot happen")
+                raise AssertionError('cannot happen')
 
         if not has_unconditional and else_body:
             # If we havent found an unconditional branch we need an else
@@ -342,7 +348,11 @@ def static_truthiness(node):
         bool or None: True or False if a node can be statically bound to a
         truthy value, otherwise returns None.
     """
-    if (isinstance(node, ast.Constant) and isinstance(node.value, str) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
+    if (
+        isinstance(node, ast.Constant) and isinstance(node.value, str)
+        if IS_PY_GE_308
+        else isinstance(node, ast.Constant)
+    ):
         return bool(node.value if IS_PY_GE_308 else node.s)
     # if isinstance(node, ast.Constant):
     #     return bool(node.s)
@@ -350,15 +360,27 @@ def static_truthiness(node):
         return bool(node.elts)
     # elif isinstance(node, ast.Constant):
     #     return bool(node.n)
-    elif (isinstance(node, ast.Constant) and isinstance(node.value, (int, float)) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
+    elif (
+        isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
+        if IS_PY_GE_308
+        else isinstance(node, ast.Constant)
+    ):
         return bool(node.value if IS_PY_GE_308 else node.n)
     # elif isinstance(node, ast.Constant):  # nocover
     #     return bool(node.s)
-    elif (isinstance(node, ast.Constant) and isinstance(node.value, bytes) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
+    elif (
+        isinstance(node, ast.Constant) and isinstance(node.value, bytes)
+        if IS_PY_GE_308
+        else isinstance(node, ast.Constant)
+    ):
         return bool(node.value if IS_PY_GE_308 else node.s)
     # elif isinstance(node, ast.Constant):
     #     return bool(node.value)
-    elif (isinstance(node, ast.Constant) if IS_PY_GE_308 else isinstance(node, ast.Constant)):
+    elif (
+        isinstance(node, ast.Constant)
+        if IS_PY_GE_308
+        else isinstance(node, ast.Constant)
+    ):
         return bool(node.value)
     else:
         return _UNHANDLED
@@ -375,7 +397,7 @@ def get_conditional_attrnames(body):
     return sub_visitor.attrnames
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     """
     CommandLine:
         python -m mkinit.top_level_ast all

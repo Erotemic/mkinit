@@ -1,7 +1,8 @@
-import ubelt as ub
-from os.path import join
-from os.path import dirname
 import sys
+from os.path import dirname, join
+
+import ubelt as ub
+
 try:
     from packaging.version import parse as LooseVersion
 except ImportError:
@@ -15,28 +16,28 @@ def make_simple_dummy_package():
     ANY EXISTING FILES ARE DELETED
     """
     # Fresh start
-    dpath = ub.Path.appdir("mkinit/test/test_async/").ensuredir()
+    dpath = ub.Path.appdir('mkinit/test/test_async/').ensuredir()
     ub.delete(dpath)
     ub.ensuredir(dpath)
     rel_paths = {
-        "root": "mkint_test_async_pkg",
-        "root_init": "mkint_test_async_pkg/__init__.py",
-        "submod": "mkint_test_async_pkg/submod.py",
-        "subpkg": "mkint_test_async_pkg/subpkg",
-        "subpkg_init": "mkint_test_async_pkg/subpkg/__init__.py",
-        "nested": "mkint_test_async_pkg/subpkg/nested.py",
+        'root': 'mkint_test_async_pkg',
+        'root_init': 'mkint_test_async_pkg/__init__.py',
+        'submod': 'mkint_test_async_pkg/submod.py',
+        'subpkg': 'mkint_test_async_pkg/subpkg',
+        'subpkg_init': 'mkint_test_async_pkg/subpkg/__init__.py',
+        'nested': 'mkint_test_async_pkg/subpkg/nested.py',
     }
     paths = {key: join(dpath, path) for key, path in rel_paths.items()}
 
     for key, path in paths.items():
-        if not path.endswith(".py"):
+        if not path.endswith('.py'):
             ub.ensuredir(path)
 
     for key, path in paths.items():
-        if path.endswith(".py"):
+        if path.endswith('.py'):
             ub.touch(path)
 
-    with open(paths["submod"], "w") as file:
+    with open(paths['submod'], 'w') as file:
         file.write(
             ub.codeblock(
                 """
@@ -52,7 +53,7 @@ def make_simple_dummy_package():
             )
         )
 
-    with open(paths["nested"], "w") as file:
+    with open(paths['nested'], 'w') as file:
         file.write(
             ub.codeblock(
                 """
@@ -71,33 +72,40 @@ def make_simple_dummy_package():
 
 
 def test_async():
-    """
-    """
-    import mkinit
+    """ """
     import pytest
+
+    import mkinit
 
     if sys.version_info[0] < 3:
         pytest.skip('Only 3.x+ has async')
 
     paths = make_simple_dummy_package()
-    pkg_path = paths["root"]
+    pkg_path = paths['root']
 
     mkinit.autogen_init(pkg_path, dry=False, recursive=True)
-    paths["root_init"]
-    paths["submod"]
+    paths['root_init']
+    paths['submod']
 
-    if LooseVersion("{}.{}".format(*sys.version_info[0:2])) < LooseVersion("3.7"):
+    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
+        '3.7'
+    ):
         pytest.skip()
 
-    dpath = dirname(paths["root"])
+    dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(dpath):
         import mkint_test_async_pkg
+
         mkint_test_async_pkg.__file__
 
         assert mkint_test_async_pkg.async_foo1 is not None
-        print('mkint_test_async_pkg.async_foo1 = {!r}'.format(mkint_test_async_pkg.async_foo1))
+        print(
+            'mkint_test_async_pkg.async_foo1 = {!r}'.format(
+                mkint_test_async_pkg.async_foo1
+            )
+        )
 
-        print("mkint_test_async_pkg = {!r}".format(mkint_test_async_pkg))
+        print('mkint_test_async_pkg = {!r}'.format(mkint_test_async_pkg))
 
         mkint_test_async_pkg.nested_func()
         mkint_test_async_pkg.nested_func()

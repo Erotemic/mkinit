@@ -1,32 +1,29 @@
-from _typeshed import Incomplete
 from typing import NamedTuple
+
+from _typeshed import Incomplete
 
 __credits__: str
 cookie_re: Incomplete
 blank_re: Incomplete
 
-
 class TokenInfo(
-        NamedTuple('TokenInfo', [('type', Incomplete), ('string', Incomplete),
-                                 ('start', Incomplete), ('end', Incomplete),
-                                 ('line', Incomplete)])):
-
+    NamedTuple(
+        'TokenInfo',
+        [
+            ('type', Incomplete),
+            ('string', Incomplete),
+            ('start', Incomplete),
+            ('end', Incomplete),
+            ('line', Incomplete),
+        ],
+    )
+):
     @property
-    def exact_type(self):
-        ...
+    def exact_type(self): ...
 
-
-def group(*choices):
-    ...
-
-
-def any(*choices):
-    ...
-
-
-def maybe(*choices):
-    ...
-
+def group(*choices): ...
+def any(*choices): ...
+def maybe(*choices): ...
 
 Whitespace: str
 Comment: str
@@ -62,14 +59,8 @@ single_quoted: Incomplete
 triple_quoted: Incomplete
 tabsize: int
 
-
-class TokenError(Exception):
-    ...
-
-
-class StopTokenizing(Exception):
-    ...
-
+class TokenError(Exception): ...
+class StopTokenizing(Exception): ...
 
 class Untokenizer:
     tokens: Incomplete
@@ -77,38 +68,14 @@ class Untokenizer:
     prev_col: int
     encoding: Incomplete
 
-    def __init__(self) -> None:
-        ...
+    def __init__(self) -> None: ...
+    def add_whitespace(self, start) -> None: ...
+    def untokenize(self, iterable): ...
+    def compat(self, token, iterable) -> None: ...
 
-    def add_whitespace(self, start) -> None:
-        ...
-
-    def untokenize(self, iterable):
-        ...
-
-    def compat(self, token, iterable) -> None:
-        ...
-
-
-def untokenize(iterable):
-    ...
-
-
-def detect_encoding(readline):
-    ...
-
-
-def open(filename):
-    ...
-
-
-def tokenize(readline):
-    ...
-
-
-def generate_tokens(readline):
-    ...
-
-
-def main() -> None:
-    ...
+def untokenize(iterable): ...
+def detect_encoding(readline): ...
+def open(filename): ...
+def tokenize(readline): ...
+def generate_tokens(readline): ...
+def main() -> None: ...
