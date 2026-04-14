@@ -18,6 +18,7 @@ author_email = "erotemic@gmail.com"
 description = "Autogenerate __init__.py files"
 ci_pypi_trusted_publishing = true
 ci_gpg_secret_transport = "direct_ci"
+ci_pypy_versions = []
 url="https://github.com/Erotemic/mkinit"
 license = "Apache 2"
 dev_status = "stable"

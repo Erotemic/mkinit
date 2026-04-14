@@ -211,10 +211,6 @@ jobs:
           install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
-        - python-version: pypy-3.9
-          install-extras: tests,optional
-          os: ubuntu-latest
-          arch: auto
         - python-version: '3.10'
           install-extras: tests,optional
           os: macOS-latest
@@ -235,10 +231,6 @@ jobs:
           install-extras: tests,optional
           os: macOS-latest
           arch: auto
-        - python-version: pypy-3.9
-          install-extras: tests,optional
-          os: macOS-latest
-          arch: auto
         - python-version: '3.10'
           install-extras: tests,optional
           os: windows-latest
@@ -256,10 +248,6 @@ jobs:
           os: windows-latest
           arch: auto
         - python-version: '3.14'
-          install-extras: tests,optional
-          os: windows-latest
-          arch: auto
-        - python-version: pypy-3.9
           install-extras: tests,optional
           os: windows-latest
           arch: auto
@@ -281,9 +269,6 @@ jobs:
         pattern: wheels-*
         merge-multiple: true
         path: wheelhouse
-    - name: Set macOS deployment target (arm64)
-      if: runner.os == 'macOS'
-      run: echo "MACOSX_DEPLOYMENT_TARGET=11.0" >> $GITHUB_ENV
     - name: Install wheel ${{ matrix.install-extras }}
       shell: bash
       env:
