@@ -58,7 +58,7 @@ ignore = [
     "UP047",  
     "INP001",
 ]
-exclude = ["*.pyi", "*.ipynb", "doc/*"]
+exclude = ["*.pyi", "*.ipynb", "doc/*", "demo/*", "tests/*"]
 logger-objects = ["logging_setup.logger", "loguru.logger"]
 [lint.per-file-ignores]
 "__init__.py" = ["F401", "E402", "I001", "I002", "F811", "D419", "F822"]
