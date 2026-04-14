@@ -2,11 +2,12 @@
 Contains logic for formatting statically / dynamically extracted information
 into the final product.
 """
-from os.path import join, exists
-import textwrap
-import logging
-from mkinit import static_analysis as static
 
+import logging
+import textwrap
+from os.path import exists, join
+
+from mkinit import static_analysis as static
 
 logger = logging.getLogger(__name__)
 
@@ -29,20 +30,20 @@ def _ensure_options(given_options=None):
     if given_options is None:
         given_options = {}
     default_options = {
-        "with_attrs": True,
-        "with_mods": True,
-        "with_all": True,
-        "relative": False,
-        "lazy_import": False,
-        "lazy_loader": False,
-        "lazy_loader_typed": False,
-        "lazy_boilerplate": None,
-        "use_black": False,
+        'with_attrs': True,
+        'with_mods': True,
+        'with_all': True,
+        'relative': False,
+        'lazy_import': False,
+        'lazy_loader': False,
+        'lazy_loader_typed': False,
+        'lazy_boilerplate': None,
+        'use_black': False,
     }
     options = default_options.copy()
     for k in given_options.keys():
         if k not in default_options:
-            raise KeyError("options got bad key={}".format(k))
+            raise KeyError('options got bad key={}'.format(k))
     options.update(given_options)
     return options
 
@@ -57,25 +58,25 @@ def _insert_autogen_text(modpath, initstr, interface=False):
     """
 
     # Get path to init file so we can overwrite it
-    init_fpath = join(modpath, "__init__.pyi" if interface else "__init__.py")
-    logger.debug("inserting initstr into: {!r}".format(init_fpath))
+    init_fpath = join(modpath, '__init__.pyi' if interface else '__init__.py')
+    logger.debug('inserting initstr into: {!r}'.format(init_fpath))
 
     if exists(init_fpath):
-        with open(init_fpath, "r") as file_:
+        with open(init_fpath, 'r') as file_:
             lines = file_.readlines()
     else:
         lines = []
 
     startline, endline, init_indent = _find_insert_points(lines)
-    initstr_ = _indent(initstr, init_indent) + "\n"
+    initstr_ = _indent(initstr, init_indent) + '\n'
 
     QUICKFIX_REMOVE_LEADING_NEWLINES = 1
     if QUICKFIX_REMOVE_LEADING_NEWLINES:
-        initstr_ = initstr_.lstrip("\n")
+        initstr_ = initstr_.lstrip('\n')
 
     new_lines = lines[:startline] + [initstr_] + lines[endline:]
 
-    new_text = "".join(new_lines).rstrip() + "\n"
+    new_text = ''.join(new_lines).rstrip() + '\n'
     return init_fpath, new_text
 
 
@@ -142,7 +143,7 @@ def _find_insert_points(lines):
     startline = 0
     endline = len(lines)
     explicit_flag = False
-    init_indent = ""
+    init_indent = ''
 
     print = lambda x: None  # NOQA
     # print = logging.debug
@@ -152,7 +153,7 @@ def _find_insert_points(lines):
     # This lets us correctly skip to the end of a multiline expression
     # A better solution might be to use the line-number aware parser
     # to search for AUTOGEN_INIT comments and other relevant structures.
-    source_lines = [">>> " + p.rstrip("\n") for p in lines]
+    source_lines = ['>>> ' + p.rstrip('\n') for p in lines]
     try:
         ps1_lines, _ = static._locate_ps1_linenos(source_lines)  # type: ignore
         print('ps1_lines = {!r}'.format(ps1_lines))
@@ -166,31 +167,32 @@ def _find_insert_points(lines):
     skipto = None
 
     def _tryskip(lineno):
-        """ returns the next line to skip to if possible """
+        """returns the next line to skip to if possible"""
 
     implicit_patterns = (
-        "from __future__",
-        "__version__",
-        "__submodules__",
-        "__external__",
-        "__explicit__",
-        "__extra_all__",  # TODO: deprecate
-        "__private__",
-        "__protected__",
-        "__ignore__",
-        "#",
+        'from __future__',
+        '__version__',
+        '__submodules__',
+        '__external__',
+        '__explicit__',
+        '__extra_all__',  # TODO: deprecate
+        '__private__',
+        '__protected__',
+        '__ignore__',
+        '#',
         '"""',
         "'''",
     )
     for lineno, line in enumerate(lines):
-
         # Check explicit modes regardless of skipping
-        if line.strip().startswith("# <AUTOGEN_INIT>"):  # allow tags too
-            print('[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line))
-            init_indent = line[: line.find("#")]
+        if line.strip().startswith('# <AUTOGEN_INIT>'):  # allow tags too
+            print(
+                '[mkinit] FOUND START TAG ON LINE {}: {}'.format(lineno, line)
+            )
+            init_indent = line[: line.find('#')]
             explicit_flag = True
             startline = lineno + 1
-        if explicit_flag and line.strip().startswith("# </AUTOGEN_INIT>"):
+        if explicit_flag and line.strip().startswith('# </AUTOGEN_INIT>'):
             print('[mkinit] FOUND END TAG ON LINE {}: {}'.format(lineno, line))
             endline = lineno
 
@@ -202,7 +204,11 @@ def _find_insert_points(lines):
                     print('SKIPPED TO = {!r}'.format(lineno))
                     skipto = None
             if line.strip().startswith(implicit_patterns):
-                print('[mkinit] RESPECTING LINE {}: {}'.format(lineno, line.rstrip('\n')))
+                print(
+                    '[mkinit] RESPECTING LINE {}: {}'.format(
+                        lineno, line.rstrip('\n')
+                    )
+                )
                 startline = lineno + 1
                 try:
                     # Try and skip to the end of the expression
@@ -235,10 +241,10 @@ def _find_insert_points(lines):
     return startline, endline, init_indent
 
 
-def _indent(text, indent="    "):
-    new_text = indent + text.replace("\n", "\n" + indent)
+def _indent(text, indent='    '):
+    new_text = indent + text.replace('\n', '\n' + indent)
     # remove whitespace on blank lines
-    new_text = "\n".join([line.rstrip() for line in new_text.split("\n")])
+    new_text = '\n'.join([line.rstrip() for line in new_text.split('\n')])
     return new_text
 
 
@@ -343,8 +349,8 @@ def _initstr(
     """
     options = _ensure_options(options)
 
-    if options["relative"]:
-        modname = "."
+    if options['relative']:
+        modname = '.'
 
     explicit_exports = list(explicit)
     exposed_from_imports = []
@@ -353,7 +359,7 @@ def _initstr(
     #     parts.append(_make_module_header())
 
     # map each submodule to its import statement
-    submod_to_import = {e.lstrip("."): e for e in imports}
+    submod_to_import = {e.lstrip('.'): e for e in imports}
     submodules = set(submod_to_import.keys())
     protected = set(protected)
     private = set(private)
@@ -363,24 +369,24 @@ def _initstr(
     from fnmatch import fnmatch
 
     # Separate explicit names from glob patterns for efficient matching
-    private_pats = {p for p in private if "*" in p}
+    private_pats = {p for p in private if '*' in p}
     private_set = private - private_pats
 
-    protected_pats = {p for p in protected if "*" in p}
+    protected_pats = {p for p in protected if '*' in p}
     protected_set = protected - protected_pats
 
     _pp_pats = protected_pats | private_pats
     _pp_set = private_set | protected_set
 
     def _private_matches(x):
-        x = x.lstrip(".")
+        x = x.lstrip('.')
         return x in private_set or any(fnmatch(x, pat) for pat in private_pats)
 
     # Filter out private modules from submodules
     non_private_submodules = {m for m in submodules if not _private_matches(m)}
     protected_submodules = non_private_submodules & protected
 
-    if options.get("with_mods", True):
+    if options.get('with_mods', True):
         exposed_submodules.update(non_private_submodules)
         exposed_all.update(non_private_submodules)
 
@@ -389,12 +395,14 @@ def _initstr(
 
     def _pp_matches(x):
         # TODO: standardize how explicit vs submodules are handled
-        x = x.lstrip(".")
+        x = x.lstrip('.')
         return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
 
-    raw_from_imports = [(m, sub) for m, sub in from_imports if not _pp_matches(m)]
+    raw_from_imports = [
+        (m, sub) for m, sub in from_imports if not _pp_matches(m)
+    ]
 
-    if options.get("with_attrs", True):
+    if options.get('with_attrs', True):
         exposed_from_imports = raw_from_imports
     elif protected:
         exposed_from_imports = [
@@ -402,7 +410,12 @@ def _initstr(
         ]
     exposed_from_imports = [(m, sub) for m, sub in exposed_from_imports if sub]
     exposed_all.update(
-        {n for m, sub in exposed_from_imports for n in sub if not _private_matches(n)}
+        {
+            n
+            for m, sub in exposed_from_imports
+            for n in sub
+            if not _private_matches(n)
+        }
     )
     exposed_all.update(explicit)
 
@@ -413,41 +426,41 @@ def _initstr(
     exposed_submodules = sorted(exposed_submodules)
 
     def append_part(new_part):
-        """ appends a new part if it is nonempty """
+        """appends a new part if it is nonempty"""
         if new_part:
             if parts:
                 # separate from previous parts with a newline
-                parts.append("")
+                parts.append('')
             parts.append(new_part)
 
-    if options["lazy_loader"]:
+    if options['lazy_loader']:
         default_lazy_boilerplate = textwrap.dedent(
             r"""
             import lazy_loader
             """
-        ).rstrip("\n")
+        ).rstrip('\n')
         template = textwrap.dedent(
             """
             __getattr__, __dir__, __all__ = lazy_loader.attach_stub(__name__, __file__)
             """
-            if options["lazy_loader_typed"] else
-            """
+            if options['lazy_loader_typed']
+            else """
             __getattr__, __dir__, __all__ = lazy_loader.attach(
                 __name__,
                 submodules={submodules},
                 submod_attrs={submod_attrs},
             )
             """
-        ).rstrip("\n")
+        ).rstrip('\n')
         submod_attrs = {}
         if exposed_from_imports:
             for submod, attrs in exposed_from_imports:
-                submod = submod.lstrip(".")
+                submod = submod.lstrip('.')
                 submod_attrs[submod] = attrs
 
         if explicit_exports:
             submodules = submodules
-            print("submodules = {!r}".format(submodules))
+            print('submodules = {!r}'.format(submodules))
         else:
             submodules = set()
 
@@ -457,38 +470,47 @@ def _initstr(
         import ubelt as ub
 
         # exposed_submodules = set(exposed_submodules)
-        submodules_repr = ub.urepr(exposed_submodules).replace("\n", "\n    ")
+        submodules_repr = ub.urepr(exposed_submodules).replace('\n', '\n    ')
         # hack for python <3.7 tests
         submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
 
         initstr = template.format(
             submodules=submodules_repr,
-            submod_attrs=ub.urepr(submod_attrs).replace("\n", "\n    "),
+            submod_attrs=ub.urepr(submod_attrs).replace('\n', '\n    '),
         )
 
         # print("options = {!r}".format(options))
-        if options["lazy_boilerplate"] is None:
+        if options['lazy_boilerplate'] is None:
             append_part(default_lazy_boilerplate)
         else:
             # Customize lazy boilerplate
-            append_part(options["lazy_boilerplate"])
+            append_part(options['lazy_boilerplate'])
 
         append_part(initstr.rstrip())
 
         if module_property_names:
             import warnings
-            warnings.warn('Only the custom lazy option supports __module_properties__')
 
-    elif options["lazy_import"]:
+            warnings.warn(
+                'Only the custom lazy option supports __module_properties__'
+            )
+
+    elif options['lazy_import']:
         lazy_boilerplate, lazy_init_text = _make_lazy_boilerplate(
-            exposed_submodules, exposed_from_imports, options,
-            module_property_names)
+            exposed_submodules,
+            exposed_from_imports,
+            options,
+            module_property_names,
+        )
         append_part(lazy_boilerplate)
         append_part(lazy_init_text)
     else:
         if module_property_names:
             import warnings
-            warnings.warn('Only the custom lazy option supports __module_properties__')
+
+            warnings.warn(
+                'Only the custom lazy option supports __module_properties__'
+            )
 
         if exposed_submodules:
             exposed_imports = [submod_to_import[k] for k in exposed_submodules]
@@ -498,8 +520,8 @@ def _initstr(
             attr_part = _make_fromimport_str(exposed_from_imports, modname)
             append_part(attr_part)
 
-    if options.get("with_all", True):
-        if options["lazy_import"]:
+    if options.get('with_all', True):
+        if options['lazy_import']:
             append_part(
                 textwrap.dedent(
                     """
@@ -509,13 +531,13 @@ def _initstr(
                 ).rstrip()
             )
         exports_repr = ["'{}'".format(e) for e in sorted(exposed_all)]
-        rhs_body = ", ".join(exports_repr)
-        packed = _packed_rhs_text("__all__ = [", rhs_body + "]")
+        rhs_body = ', '.join(exports_repr)
+        packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
         append_part(packed)
 
-    initstr = "\n".join([p for p in parts])
+    initstr = '\n'.join([p for p in parts])
 
-    if options["use_black"]:
+    if options['use_black']:
         try:
             import black
 
@@ -527,9 +549,9 @@ def _initstr(
     return initstr
 
 
-def _make_lazy_boilerplate(exposed_submodules, exposed_from_imports,
-                           options, module_property_names):
-
+def _make_lazy_boilerplate(
+    exposed_submodules, exposed_from_imports, options, module_property_names
+):
     template = textwrap.dedent(
         """
         __getattr__ = lazy_import(
@@ -538,11 +560,11 @@ def _make_lazy_boilerplate(exposed_submodules, exposed_from_imports,
             submod_attrs={submod_attr_text},
         )
         """
-    ).rstrip("\n")
+    ).rstrip('\n')
     submod_attrs = {}
     if exposed_from_imports:
         for submod, attrs in exposed_from_imports:
-            submod = submod.lstrip(".")
+            submod = submod.lstrip('.')
             submod_attrs[submod] = attrs
 
     # Currently this is the only use of ubelt, but urepr
@@ -551,28 +573,29 @@ def _make_lazy_boilerplate(exposed_submodules, exposed_from_imports,
     import ubelt as ub
 
     # exposed_submodules = set(exposed_submodules)
-    submodules_text = ub.urepr(exposed_submodules).replace("\n", "\n    ")
+    submodules_text = ub.urepr(exposed_submodules).replace('\n', '\n    ')
     # hack for python <3.7 tests
     submodules_text = submodules_text.replace('[', '{').replace(']', '}')
 
-    submod_attr_text = ub.urepr(submod_attrs).replace("\n", "\n    ")
+    submod_attr_text = ub.urepr(submod_attrs).replace('\n', '\n    ')
 
     lazy_init_text = template.format(
         submodules_text=submodules_text,
         submod_attr_text=submod_attr_text,
     ).strip()
 
-    if options["lazy_boilerplate"] is None:
+    if options['lazy_boilerplate'] is None:
         lazy_boilerplate = _make_our_lazy_boilerplate(module_property_names)
     else:
         # User specified custom lazy boilerplate
-        lazy_boilerplate = options["lazy_boilerplate"]
+        lazy_boilerplate = options['lazy_boilerplate']
 
     return lazy_boilerplate, lazy_init_text
 
 
 def codeblock(text, prefix=''):
     import textwrap  # this is a slow import, do it
+
     text = textwrap.dedent(text).strip('\n')
     if prefix:
         text = prefix + text.replace('\n', '\n' + prefix)
@@ -596,42 +619,52 @@ def _make_our_lazy_boilerplate(module_property_names=None):
     # NOTE: We differentiate between submodule and submodule_attrs, as
     # the keys in submodule_attrs aren't added by default.
     import ubelt as ub
+
     lines = {}
     lines['def'] = codeblock(
-        '''
+        """
         def lazy_import(module_name, submodules, submod_attrs, eager='auto'):
-        ''')
+        """
+    )
     lines['body1'] = codeblock(
-            '''
+        """
             import importlib
             import os
             name_to_submod = {
                 func: mod for mod, funcs in submod_attrs.items()
                 for func in funcs
             }
-            ''', ' ' * 4)
+            """,
+        ' ' * 4,
+    )
 
     if module_property_names is not None:
         name_text = ub.urepr(set(module_property_names), nl=0)
         lines['body2'] = codeblock(
-            f'''
+            f"""
             module_property_names = {name_text}
             modprops = __module_properties__()
-            ''', ' ' * 4)
+            """,
+            ' ' * 4,
+        )
     lines['closure_def'] = codeblock(
-            '''
+        """
             def __getattr__(name):
-            ''', ' ' * 4)
+            """,
+        ' ' * 4,
+    )
 
     if module_property_names is not None:
         lines['closure_body1'] = codeblock(
-            '''
+            """
                 if name in module_property_names:
                     return getattr(modprops, name)
-            ''', ' ' * 8)
+            """,
+            ' ' * 8,
+        )
 
     lines['closure_body2'] = codeblock(
-            '''
+        """
                 if name in submodules:
                     attr = importlib.import_module(
                         '{module_name}.{name}'.format(
@@ -647,10 +680,12 @@ def _make_our_lazy_boilerplate(module_property_names=None):
                         f'Module {module_name!r} has no attribute {name!r}')
                 globals()[name] = attr
                 return attr
-            ''', ' ' * 8)
+            """,
+        ' ' * 8,
+    )
 
     lines['resolve_eager'] = codeblock(
-            '''
+        """
             eager_import_flag = False
             if eager == 'auto':
                 eager_import_text = os.environ.get('EAGER_IMPORT', '')
@@ -665,10 +700,12 @@ def _make_our_lazy_boilerplate(module_property_names=None):
                         eager_import_flag = True
             else:
                 eager_import_flag = eager
-            ''', ' ' * 4)
+            """,
+        ' ' * 4,
+    )
 
     lines['execute_eager'] = codeblock(
-            '''
+        """
             if eager_import_flag:
                 for name in submodules:
                     __getattr__(name)
@@ -676,28 +713,36 @@ def _make_our_lazy_boilerplate(module_property_names=None):
                 for attrs in submod_attrs.values():
                     for attr in attrs:
                         __getattr__(attr)
-            ''', ' ' * 4)
+            """,
+        ' ' * 4,
+    )
 
     lines['return'] = codeblock(
-            '''
+        """
             return __getattr__
-            ''', ' ' * 4)
+            """,
+        ' ' * 4,
+    )
 
     text = '\n'.join(lines.values())
     return text
 
 
-def _make_imports_str(imports, rootmodname="."):
+def _make_imports_str(imports, rootmodname='.'):
     if False:
-        imports_fmtstr = "from {rootmodname} import %s".format(rootmodname=rootmodname)
-        return "\n".join([imports_fmtstr % (name,) for name in imports])
+        imports_fmtstr = 'from {rootmodname} import %s'.format(
+            rootmodname=rootmodname
+        )
+        return '\n'.join([imports_fmtstr % (name,) for name in imports])
     else:
-        imports_fmtstr = "from {rootmodname} import %s".format(rootmodname=rootmodname)
-        return "\n".join(
+        imports_fmtstr = 'from {rootmodname} import %s'.format(
+            rootmodname=rootmodname
+        )
+        return '\n'.join(
             [
-                imports_fmtstr % (name.lstrip("."))
-                if name.startswith(".")
-                else "import %s" % (name,)
+                imports_fmtstr % (name.lstrip('.'))
+                if name.startswith('.')
+                else 'import %s' % (name,)
                 for name in imports
             ]
         )
@@ -756,23 +801,23 @@ def _packed_rhs_text(lhs_text, rhs_text):
 
         # This is a hacky heuristic that could perhaps be more robust?
         if len(lhs_text) > max_width * 0.7:
-            newline_prefix = " " * 4
+            newline_prefix = ' ' * 4
         else:
-            newline_prefix = " " * len(lhs_text)
+            newline_prefix = ' ' * len(lhs_text)
 
         raw_text = lhs_text + rhs_text
         wrapped_lines = textwrap.wrap(
             raw_text,
             break_long_words=False,
             width=79,
-            initial_indent="",
+            initial_indent='',
             subsequent_indent=newline_prefix,
         )
-        packstr = "\n".join(wrapped_lines)
+        packstr = '\n'.join(wrapped_lines)
 
         FIX_FORMAT = 1
         if FIX_FORMAT:
-            regex = r"\s*".join(list(map(re.escape, lhs_text.split(" "))))
+            regex = r'\s*'.join(list(map(re.escape, lhs_text.split(' '))))
             assert re.match(regex, lhs_text)
             match = re.search(regex, packstr)
             assert match is not None
@@ -781,15 +826,15 @@ def _packed_rhs_text(lhs_text, rhs_text):
             wrapped_lhs = match.string[: span[1]]
 
             # If textwrap broke the LHS then do something slightly different
-            if "\n" in wrapped_lhs:
+            if '\n' in wrapped_lhs:
                 new_rhs = packstr[span[1] :]
-                new_packstr = lhs_text + "\n" + newline_prefix + new_rhs
+                new_packstr = lhs_text + '\n' + newline_prefix + new_rhs
                 packstr = new_packstr
 
     return packstr
 
 
-def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
+def _make_fromimport_str(from_imports, rootmodname='.', indent=''):
     """
     Args:
         from_imports (list): each item is a tuple with module and a list of
@@ -810,28 +855,30 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
         from .a_longer_package import (A, B, C, D, E, F, G, H, I, J, K, L, M,
                                        N, O, P, Q, R, S, T, U, V, W, X, Y, Z,)
     """
-    if rootmodname == ".":  # nocover
+    if rootmodname == '.':  # nocover
         # dot is already taken care of in fmtstr
-        rootmodname = ""
+        rootmodname = ''
 
     def _pack_fromimport(tup):
         name, fromlist = tup[0], tup[1]
 
-        if name.startswith("."):
+        if name.startswith('.'):
             normname = rootmodname + name
         else:
             normname = name
 
         if len(fromlist) > 0:
-            lhs_text = indent + "from {normname} import (".format(normname=normname)
-            rhs_text = ", ".join(fromlist) + ",)"
+            lhs_text = indent + 'from {normname} import ('.format(
+                normname=normname
+            )
+            rhs_text = ', '.join(fromlist) + ',)'
             packstr = _packed_rhs_text(lhs_text, rhs_text)
         else:
-            packstr = ""
+            packstr = ''
         return packstr
 
     parts = [_pack_fromimport(t) for t in from_imports]
-    from_str = "\n".join([p for p in parts if p])
+    from_str = '\n'.join([p for p in parts if p])
     # Return unindented version for now
     from_str = textwrap.dedent(from_str)
     return from_str
