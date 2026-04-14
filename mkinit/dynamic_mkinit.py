@@ -1,6 +1,7 @@
 """
 Dynamically generate the import exec
 """
+import os
 from os.path import dirname, join, exists
 import sys
 import multiprocessing
@@ -40,7 +41,9 @@ def dynamic_init(modname, submodules=None, dump=False, verbose=False):
         module = __import__(modname)
 
     if submodules is None:
-        pkgpath = dirname(module.__file__)
+        fpath = module.__file__
+        assert fpath is not None
+        pkgpath = dirname(os.fspath(fpath))
         submodules = _find_local_submodule_names(pkgpath)
 
     imports = submodules
@@ -259,7 +262,7 @@ def _find_local_submodule_names(pkgpath):
     # Automatically find the imports if they are not specified
     from mkinit import static_mkinit
 
-    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))
+    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))  # type: ignore
     imports = list(import_paths.keys())
     return imports
 

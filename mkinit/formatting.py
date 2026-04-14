@@ -154,7 +154,7 @@ def _find_insert_points(lines):
     # to search for AUTOGEN_INIT comments and other relevant structures.
     source_lines = [">>> " + p.rstrip("\n") for p in lines]
     try:
-        ps1_lines, _ = static._locate_ps1_linenos(source_lines)
+        ps1_lines, _ = static._locate_ps1_linenos(source_lines)  # type: ignore
         print('ps1_lines = {!r}'.format(ps1_lines))
     except IndexError:
         assert len(lines) == 0
@@ -775,6 +775,7 @@ def _packed_rhs_text(lhs_text, rhs_text):
             regex = r"\s*".join(list(map(re.escape, lhs_text.split(" "))))
             assert re.match(regex, lhs_text)
             match = re.search(regex, packstr)
+            assert match is not None
             span = match.span()
             assert span[0] == 0
             wrapped_lhs = match.string[: span[1]]
