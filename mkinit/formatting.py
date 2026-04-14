@@ -187,9 +187,7 @@ def _find_insert_points(lines):
     for lineno, line in enumerate(lines):
         # Check explicit modes regardless of skipping
         if line.strip().startswith("# <AUTOGEN_INIT>"):  # allow tags too
-            print(
-                f"[mkinit] FOUND START TAG ON LINE {lineno}: {line}"
-            )
+            print(f"[mkinit] FOUND START TAG ON LINE {lineno}: {line}")
             init_indent = line[: line.find("#")]
             explicit_flag = True
             startline = lineno + 1
@@ -205,9 +203,7 @@ def _find_insert_points(lines):
                 skipto = None
             if line.strip().startswith(implicit_patterns):
                 print(
-                    "[mkinit] RESPECTING LINE {}: {}".format(
-                        lineno, line.rstrip("\n")
-                    )
+                    "[mkinit] RESPECTING LINE {}: {}".format(lineno, line.rstrip("\n"))
                 )
                 startline = lineno + 1
                 try:
@@ -284,9 +280,9 @@ def _initstr(
         python -m mkinit.formatting _initstr
 
     Example:
-        >>> modname = 'foo'
-        >>> imports = ['.bar', '.baz']
-        >>> from_imports = [('.bar', ['func1', 'func2'])]
+        >>> modname = "foo"
+        >>> imports = [".bar", ".baz"]
+        >>> from_imports = [(".bar", ["func1", "func2"])]
         >>> initstr = _initstr(modname, imports, from_imports)
         >>> print(initstr)
         from foo import bar
@@ -297,9 +293,9 @@ def _initstr(
         __all__ = ['bar', 'baz', 'func1', 'func2']
 
     Example:
-        >>> modname = 'foo'
-        >>> imports = ['.bar', '.baz']
-        >>> from_imports = [('.bar', list(map(chr, range(97, 123))))]
+        >>> modname = "foo"
+        >>> imports = [".bar", ".baz"]
+        >>> from_imports = [(".bar", list(map(chr, range(97, 123))))]
         >>> initstr = _initstr(modname, imports, from_imports)
         >>> print(initstr)
         from foo import bar
@@ -317,17 +313,19 @@ def _initstr(
         >>> import sys
         >>> if sys.version_info < (3, 7):
         >>>     pytest.skip('lazy only works on 3.7+')
-        >>> modname = 'foo'
-        >>> imports = ['.bar', '.baz']
-        >>> from_imports = [('.bar', ['func1', 'func2'])]
-        >>> options = {'lazy_import': 1, 'lazy_boilerplate': None}
+        >>> modname = "foo"
+        >>> imports = [".bar", ".baz"]
+        >>> from_imports = [(".bar", ["func1", "func2"])]
+        >>> options = {"lazy_import": 1, "lazy_boilerplate": None}
         >>> initstr = _initstr(modname, imports, from_imports, options=options)
         >>> print(initstr)
-        ...
 
-        >>> options = {'lazy_import': 1, 'lazy_boilerplate': 'from importlib import lazy_import'}
+        >>> options = {
+        ...     "lazy_import": 1,
+        ...     "lazy_boilerplate": "from importlib import lazy_import",
+        ... }
         >>> initstr = _initstr(modname, imports, from_imports, options=options)
-        >>> print(initstr.replace('\n\n', '\n'))
+        >>> print(initstr.replace("\n\n", "\n"))
         from importlib import lazy_import
         __getattr__ = lazy_import(
             __name__,
@@ -397,9 +395,7 @@ def _initstr(
         x = x.lstrip(".")
         return x in _pp_set or any(fnmatch(x, pat) for pat in _pp_pats)
 
-    raw_from_imports = [
-        (m, sub) for m, sub in from_imports if not _pp_matches(m)
-    ]
+    raw_from_imports = [(m, sub) for m, sub in from_imports if not _pp_matches(m)]
 
     if options.get("with_attrs", True):
         exposed_from_imports = raw_from_imports
@@ -409,12 +405,7 @@ def _initstr(
         ]
     exposed_from_imports = [(m, sub) for m, sub in exposed_from_imports if sub]
     exposed_all.update(
-        {
-            n
-            for m, sub in exposed_from_imports
-            for n in sub
-            if not _private_matches(n)
-        }
+        {n for m, sub in exposed_from_imports for n in sub if not _private_matches(n)}
     )
     exposed_all.update(explicit)
 
@@ -490,9 +481,7 @@ def _initstr(
         if module_property_names:
             import warnings
 
-            warnings.warn(
-                "Only the custom lazy option supports __module_properties__"
-            )
+            warnings.warn("Only the custom lazy option supports __module_properties__")
 
     elif options["lazy_import"]:
         lazy_boilerplate, lazy_init_text = _make_lazy_boilerplate(
@@ -507,9 +496,7 @@ def _initstr(
         if module_property_names:
             import warnings
 
-            warnings.warn(
-                "Only the custom lazy option supports __module_properties__"
-            )
+            warnings.warn("Only the custom lazy option supports __module_properties__")
 
         if exposed_submodules:
             exposed_imports = [submod_to_import[k] for k in exposed_submodules]
@@ -608,10 +595,10 @@ def _make_our_lazy_boilerplate(module_property_names=None):
 
     Example:
         >>> from mkinit.formatting import _make_our_lazy_boilerplate  # NOQA
-        >>> module_property_names = ['foo', 'bar']
+        >>> module_property_names = ["foo", "bar"]
         >>> text = _make_our_lazy_boilerplate(module_property_names)
         >>> import ubelt as ub
-        >>> print(ub.highlight_code(text, backend='rich'))
+        >>> print(ub.highlight_code(text, backend="rich"))
     """
     # NOTE: We are not using f-strings in the **generated** code so it can
     # still be parsed in older versions of python.
@@ -746,30 +733,30 @@ def _packed_rhs_text(lhs_text, rhs_text):
     packs rhs text to have indentation that agrees with lhs text
 
     Example:
-        >>> normname = 'this.is.a.module'
-        >>> fromlist = ['func{}'.format(d) for d in range(10)]
-        >>> indent = ''
+        >>> normname = "this.is.a.module"
+        >>> fromlist = ["func{}".format(d) for d in range(10)]
+        >>> indent = ""
         >>> lhs_text = indent + 'from {normname} import ('.format(
         >>>     normname=normname)
-        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> rhs_text = ", ".join(fromlist) + ",)"
         >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
         >>> print(packstr)
 
-        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoing'
-        >>> fromlist = ['func{}'.format(d) for d in range(10)]
-        >>> indent = ''
+        >>> normname = "this.is.a.very.long.modnamethatwilkeepgoingandgoing"
+        >>> fromlist = ["func{}".format(d) for d in range(10)]
+        >>> indent = ""
         >>> lhs_text = indent + 'from {normname} import ('.format(
         >>>     normname=normname)
-        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> rhs_text = ", ".join(fromlist) + ",)"
         >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
         >>> print(packstr)
 
-        >>> normname = 'this.is.a.very.long.modnamethatwilkeepgoingandgoingandgoingandgoingandgoingandgoing'
-        >>> fromlist = ['func{}'.format(d) for d in range(10)]
-        >>> indent = ''
+        >>> normname = "this.is.a.very.long.modnamethatwilkeepgoingandgoingandgoingandgoingandgoingandgoing"
+        >>> fromlist = ["func{}".format(d) for d in range(10)]
+        >>> indent = ""
         >>> lhs_text = indent + 'from {normname} import ('.format(
         >>>     normname=normname)
-        >>> rhs_text = ', '.join(fromlist) + ',)'
+        >>> rhs_text = ", ".join(fromlist) + ",)"
         >>> packstr = _packed_rhs_text(lhs_text, rhs_text)
         >>> print(packstr)
     """
@@ -782,9 +769,7 @@ def _packed_rhs_text(lhs_text, rhs_text):
         import black
 
         raw_text = lhs_text + rhs_text
-        return black.format_str(
-            raw_text, mode=black.Mode(string_normalization=False)
-        )
+        return black.format_str(raw_text, mode=black.Mode(string_normalization=False))
     import re
 
     # not sure why this isn't 76? >= maybe?
@@ -832,11 +817,11 @@ def _make_fromimport_str(from_imports, rootmodname=".", indent=""):
 
     Example:
         >>> from_imports = [
-        ...     ('.foo', list(map(chr, range(97, 123)))),
-        ...     ('.bar', []),
-        ...     ('.a_longer_package', list(map(chr, range(65, 91)))),
+        ...     (".foo", list(map(chr, range(97, 123)))),
+        ...     (".bar", []),
+        ...     (".a_longer_package", list(map(chr, range(65, 91)))),
         ... ]
-        >>> from_str = _make_fromimport_str(from_imports, indent=' ' * 8)
+        >>> from_str = _make_fromimport_str(from_imports, indent=" " * 8)
         >>> print(from_str)
         from .foo import (a, b, c, d, e, f, g, h, i, j, k, l, m, n, o, p, q, r,
                           s, t, u, v, w, x, y, z,)

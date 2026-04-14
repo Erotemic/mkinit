@@ -8,13 +8,13 @@ blank_re: Incomplete
 
 class TokenInfo(
     NamedTuple(
-        'TokenInfo',
+        "TokenInfo",
         [
-            ('type', Incomplete),
-            ('string', Incomplete),
-            ('start', Incomplete),
-            ('end', Incomplete),
-            ('line', Incomplete),
+            ("type", Incomplete),
+            ("string", Incomplete),
+            ("start", Incomplete),
+            ("end", Incomplete),
+            ("line", Incomplete),
         ],
     )
 ):

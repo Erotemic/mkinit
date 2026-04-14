@@ -50,12 +50,9 @@ def _parse_static_node_value(node):
     else:
         print(node.__dict__)
         msg = (
-            "Cannot parse a static value from non-static node "
-            f"of type: {type(node)!r}"
+            f"Cannot parse a static value from non-static node of type: {type(node)!r}"
         )
-        raise TypeError(
-            msg
-        )
+        raise TypeError(msg)
     return value
 
 
@@ -75,19 +72,19 @@ def parse_static_value(key, source=None, fpath=None):
         Any: a parsed value with a basic python builtin type
 
     Example:
-        >>> key = 'foo'
-        >>> source = 'foo = 123'
+        >>> key = "foo"
+        >>> source = "foo = 123"
         >>> assert parse_static_value(key, source=source) == 123
         >>> source = 'foo = "123"'
-        >>> assert parse_static_value(key, source=source) == '123'
-        >>> source = 'foo = [1, 2, 3]'
+        >>> assert parse_static_value(key, source=source) == "123"
+        >>> source = "foo = [1, 2, 3]"
         >>> assert parse_static_value(key, source=source) == [1, 2, 3]
         >>> source = 'foo = (1, 2, "3")'
         >>> assert parse_static_value(key, source=source) == (1, 2, "3")
-        >>> source = 'foo = {1: 2, 3: 4}'
+        >>> source = "foo = {1: 2, 3: 4}"
         >>> assert parse_static_value(key, source=source) == {1: 2, 3: 4}
-        >>> #parse_static_value('bar', source=source)
-        >>> #parse_static_value('bar', source='foo=1; bar = [1, foo]')
+        >>> # parse_static_value('bar', source=source)
+        >>> # parse_static_value('bar', source='foo=1; bar = [1, foo]')
     """
     if source is None:  # pragma: no branch
         assert fpath is not None
@@ -161,14 +158,14 @@ def package_modpaths(
 
     Example:
         >>> from mkinit.static_analysis import *
-        >>> pkgpath = util_import.modname_to_modpath('mkinit')
+        >>> pkgpath = util_import.modname_to_modpath("mkinit")
         >>> paths = list(package_modpaths(pkgpath))
-        >>> print('\n'.join(paths))
+        >>> print("\n".join(paths))
         >>> names = list(map(util_import.modpath_to_modname, paths))
-        >>> assert 'mkinit.static_mkinit' in names
-        >>> assert 'mkinit.__main__' in names
-        >>> assert 'mkinit' not in names
-        >>> print('\n'.join(names))
+        >>> assert "mkinit.static_mkinit" in names
+        >>> assert "mkinit.__main__" in names
+        >>> assert "mkinit" not in names
+        >>> print("\n".join(names))
     """
     if isfile(pkgpath):
         # If input is a file, just return it
@@ -217,14 +214,13 @@ def is_balanced_statement(lines):
         bool: False if the statement is not balanced
 
     Doctest:
-        >>> assert is_balanced_statement(['print(foobar)'])
-        >>> assert is_balanced_statement(['foo = bar']) is True
-        >>> assert is_balanced_statement(['foo = (']) is False
-        >>> assert is_balanced_statement(['foo = (', "')(')"]) is True
-        >>> assert is_balanced_statement(
-        ...     ['foo = (', "'''", ")]'''", ')']) is True
-        >>> #assert is_balanced_statement(['foo = ']) is False
-        >>> #assert is_balanced_statement(['== ']) is False
+        >>> assert is_balanced_statement(["print(foobar)"])
+        >>> assert is_balanced_statement(["foo = bar"]) is True
+        >>> assert is_balanced_statement(["foo = ("]) is False
+        >>> assert is_balanced_statement(["foo = (", "')(')"]) is True
+        >>> assert is_balanced_statement(["foo = (", "'''", ")]'''", ")"]) is True
+        >>> # assert is_balanced_statement(['foo = ']) is False
+        >>> # assert is_balanced_statement(['== ']) is False
 
     """
     from io import StringIO
@@ -265,13 +261,13 @@ def _locate_ps1_linenos(source_lines):
             got/want assertion.
 
     Example:
-        >>> source_lines = ['>>> def foo():', '>>>     return 0', '>>> 3']
+        >>> source_lines = [">>> def foo():", ">>>     return 0", ">>> 3"]
         >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
         >>> assert linenos == [0, 2]
         >>> assert eval_final is True
 
     Example:
-        >>> source_lines = ['>>> x = [1, 2, ', '>>> 3, 4]', '>>> print(len(x))']
+        >>> source_lines = [">>> x = [1, 2, ", ">>> 3, 4]", ">>> print(len(x))"]
         >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
         >>> assert linenos == [0, 2]
         >>> assert eval_final is True

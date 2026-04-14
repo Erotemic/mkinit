@@ -2,7 +2,6 @@
 Port of ubelt utilities + difftext wrapper around difflib
 """
 
-
 import os
 import sys
 
@@ -12,9 +11,7 @@ import sys
 NO_COLOR = bool(os.environ.get("NO_COLOR"))
 
 
-def difftext(
-    text1, text2, context_lines=0, ignore_whitespace=False, colored=False
-):
+def difftext(text1, text2, context_lines=0, ignore_whitespace=False, colored=False):
     r"""
     Uses difflib to return a difference string between two similar texts
 
@@ -33,8 +30,8 @@ def difftext(
 
     Example:
         >>> # build test data
-        >>> text1 = 'one\ntwo\nthree'
-        >>> text2 = 'one\ntwo\nfive'
+        >>> text1 = "one\ntwo\nthree"
+        >>> text2 = "one\ntwo\nfive"
         >>> # execute function
         >>> result = difftext(text1, text2)
         >>> # verify results
@@ -44,8 +41,8 @@ def difftext(
 
     Example:
         >>> # build test data
-        >>> text1 = 'one\ntwo\nthree\n3.1\n3.14\n3.1415\npi\n3.4\n3.5\n4'
-        >>> text2 = 'one\ntwo\nfive\n3.1\n3.14\n3.1415\npi\n3.4\n4'
+        >>> text1 = "one\ntwo\nthree\n3.1\n3.14\n3.1415\npi\n3.4\n3.5\n4"
+        >>> text2 = "one\ntwo\nfive\n3.1\n3.14\n3.1415\npi\n3.4\n4"
         >>> # execute function
         >>> context_lines = 1
         >>> result = difftext(text1, text2, context_lines, colored=True)
@@ -60,7 +57,8 @@ def difftext(
         text1_lines = [t.rstrip() for t in text1_lines]
         text2_lines = [t.rstrip() for t in text2_lines]
         ndiff_kw = {
-            "linejunk": difflib.IS_LINE_JUNK, "charjunk": difflib.IS_CHARACTER_JUNK
+            "linejunk": difflib.IS_LINE_JUNK,
+            "charjunk": difflib.IS_CHARACTER_JUNK,
         }
     else:
         ndiff_kw = {}
@@ -70,18 +68,14 @@ def difftext(
         diff_lines = all_diff_lines
     else:
         # boolean for every line if it is marked or not
-        ismarked_list = [
-            len(line) > 0 and line[0] in "+-?" for line in all_diff_lines
-        ]
+        ismarked_list = [len(line) > 0 and line[0] in "+-?" for line in all_diff_lines]
         # flag lines that are within context_lines away from a diff line
         isvalid_list = ismarked_list[:]
         for i in range(1, context_lines + 1):
             isvalid_list[:-i] = list(
                 map(any, zip(isvalid_list[:-i], ismarked_list[i:]))
             )
-            isvalid_list[i:] = list(
-                map(any, zip(isvalid_list[i:], ismarked_list[:-i]))
-            )
+            isvalid_list[i:] = list(map(any, zip(isvalid_list[i:], ismarked_list[:-i])))
 
         USE_BREAK_LINE = True
         if USE_BREAK_LINE:
@@ -121,7 +115,7 @@ def highlight_code(text, lexer_name="python", **kwargs):
             If pygments is not installed, the plain text is returned.
 
     Example:
-        >>> text = 'import mkinit; print(mkinit)'
+        >>> text = "import mkinit; print(mkinit)"
         >>> new_text = highlight_code(text)
         >>> print(new_text)
     """

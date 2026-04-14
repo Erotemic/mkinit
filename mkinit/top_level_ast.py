@@ -32,9 +32,7 @@ class oset(dict):
             return cls()
         first, *rest = sets_
         other_items = [set(s) for s in rest]
-        return cls(
-            item for item in first if all(item in s for s in other_items)
-        )
+        return cls(item for item in first if all(item in s for s in other_items))
 
 
 class TopLevelVisitor(ast.NodeVisitor):
@@ -51,7 +49,7 @@ class TopLevelVisitor(ast.NodeVisitor):
     Example:
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
-        ...    '''
+        ...     '''
         ...    def foo():
         ...        def subfunc():
         ...            pass
@@ -63,9 +61,10 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...        @staticmethod
         ...        def hams():
         ...            pass
-        ...    ''')
+        ...    '''
+        ... )
         >>> self = TopLevelVisitor.parse(source)
-        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        >>> print("attrnames = {!r}".format(sorted(self.attrnames)))
         attrnames = ['Spam', 'bar', 'foo']
 
     Example:
@@ -73,7 +72,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         >>> from mkinit.top_level_ast import *  # NOQA
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
-        ...    '''
+        ...     '''
         ...    async def asyncfoo():
         ...        var = 1
         ...    def bar():
@@ -84,15 +83,16 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...        @staticmethod
         ...        def hams():
         ...            pass
-        ...    ''')
+        ...    '''
+        ... )
         >>> self = TopLevelVisitor.parse(source)
-        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        >>> print("attrnames = {!r}".format(sorted(self.attrnames)))
         attrnames = ['Spam', 'asyncfoo', 'bar']
 
     Example:
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
-        ...    '''
+        ...     '''
         ...    a = True
         ...    if a:
         ...        b = True
@@ -101,15 +101,16 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...        b = False
         ...    d = True
         ...    del d
-        ...    ''')
+        ...    '''
+        ... )
         >>> self = TopLevelVisitor.parse(source)
-        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        >>> print("attrnames = {!r}".format(sorted(self.attrnames)))
         attrnames = ['a', 'b']
 
     Example:
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
-        ...    '''
+        ...     '''
         ...    try:
         ...        d = True
         ...        e = True
@@ -120,22 +121,24 @@ class TopLevelVisitor(ast.NodeVisitor):
         ...        f = False
         ...    else:
         ...        f = True
-        ...    ''')
+        ...    '''
+        ... )
         >>> self = TopLevelVisitor.parse(source)
-        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        >>> print("attrnames = {!r}".format(sorted(self.attrnames)))
         attrnames = ['d', 'f']
 
     Example:
         >>> # Test annotated variables (issue #44)
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
-        ...    '''
+        ...     '''
         ...    FOO = 42
         ...    BAR: int = 99
         ...    BAZ: str
-        ...    ''')
+        ...    '''
+        ... )
         >>> self = TopLevelVisitor.parse(source)
-        >>> print('attrnames = {!r}'.format(sorted(self.attrnames)))
+        >>> print("attrnames = {!r}".format(sorted(self.attrnames)))
         attrnames = ['BAR', 'BAZ', 'FOO']
     """
 

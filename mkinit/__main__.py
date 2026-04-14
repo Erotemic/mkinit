@@ -56,9 +56,7 @@ def main():
         default=".",
     )
 
-    parser.add_argument(
-        "--dry", dest="_dry_old", action="store_true", default=True
-    )
+    parser.add_argument("--dry", dest="_dry_old", action="store_true", default=True)
 
     parser.add_argument(
         *("-i", "-w", "--write", "--inplace"),
@@ -167,9 +165,7 @@ def main():
         "--verbose", nargs="?", default=0, type=int, help="Verbosity level"
     )
 
-    parser.add_argument(
-        "--version", action="store_true", help="print version and exit"
-    )
+    parser.add_argument("--version", action="store_true", help="print version and exit")
 
     import os
 
@@ -193,13 +189,9 @@ def main():
     verbose = ns["verbose"]
     dry = ns["dry"]
 
-    if ns["lazy_boilerplate"] and (
-        ns["lazy_loader"] or ns["lazy_loader_typed"]
-    ):
+    if ns["lazy_boilerplate"] and (ns["lazy_loader"] or ns["lazy_loader_typed"]):
         msg = "--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead."
-        raise ValueError(
-            msg
-        )
+        raise ValueError(msg)
 
     if not ns["with_all"] and ns["lazy_loader_typed"]:
         msg = "--noall cannot be combined with --lazy_loader_typed"

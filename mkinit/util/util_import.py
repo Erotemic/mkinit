@@ -32,8 +32,7 @@ def _parse_static_node_value(node):
     import numbers
 
     if (
-        isinstance(node, ast.Constant)
-        and isinstance(node.value, numbers.Number)
+        isinstance(node, ast.Constant) and isinstance(node.value, numbers.Number)
         if IS_PY_GE_308
         else isinstance(node, ast.Constant)
     ):
@@ -57,12 +56,9 @@ def _parse_static_node_value(node):
         value = node.value
     else:
         msg = (
-            "Cannot parse a static value from non-static node "
-            f"of type: {type(node)!r}"
+            f"Cannot parse a static value from non-static node of type: {type(node)!r}"
         )
-        raise TypeError(
-            msg
-        )
+        raise TypeError(msg)
     return value
 
 
@@ -96,20 +92,20 @@ def _static_parse(varname, fpath):
 
     Example:
         >>> # xdoctest: +SKIP("ubelt dependency")
-        >>> dpath = ub.Path.appdir('tests/import/staticparse').ensuredir()
-        >>> fpath = (dpath / 'foo.py')
-        >>> fpath.write_text('a = {1: 2}')
-        >>> assert _static_parse('a', fpath) == {1: 2}
-        >>> fpath.write_text('a = 2')
-        >>> assert _static_parse('a', fpath) == 2
+        >>> dpath = ub.Path.appdir("tests/import/staticparse").ensuredir()
+        >>> fpath = dpath / "foo.py"
+        >>> fpath.write_text("a = {1: 2}")
+        >>> assert _static_parse("a", fpath) == {1: 2}
+        >>> fpath.write_text("a = 2")
+        >>> assert _static_parse("a", fpath) == 2
         >>> fpath.write_text('a = "3"')
-        >>> assert _static_parse('a', fpath) == "3"
+        >>> assert _static_parse("a", fpath) == "3"
         >>> fpath.write_text('a = ["3", 5, 6]')
-        >>> assert _static_parse('a', fpath) == ["3", 5, 6]
+        >>> assert _static_parse("a", fpath) == ["3", 5, 6]
         >>> fpath.write_text('a = ("3", 5, 6)')
-        >>> assert _static_parse('a', fpath) == ("3", 5, 6)
-        >>> fpath.write_text('b = 10' + chr(10) + 'a = None')
-        >>> assert _static_parse('a', fpath) is None
+        >>> assert _static_parse("a", fpath) == ("3", 5, 6)
+        >>> fpath.write_text("b = 10" + chr(10) + "a = None")
+        >>> assert _static_parse("a", fpath) is None
         >>> import pytest
         >>> with pytest.raises(TypeError):
         >>>     fpath.write_text('a = list(range(10))')
@@ -118,7 +114,7 @@ def _static_parse(varname, fpath):
         >>>     fpath.write_text('a = list(range(10))')
         >>>     assert _static_parse('c', fpath) is None
         >>> if sys.version_info[0:2] >= (3, 6):
-        >>>     # Test with type annotations
+        >>> # Test with type annotations
         >>>     fpath.write_text('b: int = 10')
         >>>     assert _static_parse('b', fpath) == 10
     """
@@ -205,27 +201,30 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         standalone install, and check that we always find the right path.
 
     Example:
-        >>> print(_syspath_modname_to_modpath('xdoctest.static_analysis'))
+        >>> print(_syspath_modname_to_modpath("xdoctest.static_analysis"))
         ...static_analysis.py
-        >>> print(_syspath_modname_to_modpath('xdoctest'))
+        >>> print(_syspath_modname_to_modpath("xdoctest"))
         ...xdoctest
         >>> # xdoctest: +REQUIRES(CPython)
-        >>> print(_syspath_modname_to_modpath('_ctypes'))
+        >>> print(_syspath_modname_to_modpath("_ctypes"))
         ..._ctypes...
-        >>> assert _syspath_modname_to_modpath('xdoctest', sys_path=[]) is None
-        >>> assert _syspath_modname_to_modpath('xdoctest.static_analysis', sys_path=[]) is None
-        >>> assert _syspath_modname_to_modpath('_ctypes', sys_path=[]) is None
-        >>> assert _syspath_modname_to_modpath('this', sys_path=[]) is None
+        >>> assert _syspath_modname_to_modpath("xdoctest", sys_path=[]) is None
+        >>> assert (
+        ...     _syspath_modname_to_modpath("xdoctest.static_analysis", sys_path=[])
+        ...     is None
+        ... )
+        >>> assert _syspath_modname_to_modpath("_ctypes", sys_path=[]) is None
+        >>> assert _syspath_modname_to_modpath("this", sys_path=[]) is None
 
     Example:
         >>> # test what happens when the module is not visible in the path
-        >>> modname = 'xdoctest.static_analysis'
+        >>> modname = "xdoctest.static_analysis"
         >>> modpath = _syspath_modname_to_modpath(modname)
         >>> exclude = [split_modpath(modpath)[0]]
         >>> found = _syspath_modname_to_modpath(modname, exclude=exclude)
         >>> if found is not None:
-        >>>     # Note: the basic form of this test may fail if there are
-        >>>     # multiple versions of the package installed. Try and fix that.
+        >>> # Note: the basic form of this test may fail if there are
+        >>> # multiple versions of the package installed. Try and fix that.
         >>>     other = split_modpath(found)[0]
         >>>     assert other not in exclude
         >>>     exclude.append(other)
@@ -357,9 +356,7 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
 
         # If a finder does not exist, then the __editable__ pth file might hold
         # the path itself. Check for that.
-        new_editable_pth_paths = sorted(
-            glob.glob(join(dpath, _editable_fname_pth_pat))
-        )
+        new_editable_pth_paths = sorted(glob.glob(join(dpath, _editable_fname_pth_pat)))
         if new_editable_pth_paths:  # nocover
             # Disable coverage because the test that covers this is too slow.
             # It can be made faster, re-enable when that lands.
@@ -438,15 +435,15 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
             modpath - path to the module, or None if it doesn't exist
 
     Example:
-        >>> modname = 'xdoctest.__main__'
+        >>> modname = "xdoctest.__main__"
         >>> modpath = modname_to_modpath(modname, hide_main=False)
-        >>> assert modpath.endswith('__main__.py')
-        >>> modname = 'xdoctest'
+        >>> assert modpath.endswith("__main__.py")
+        >>> modname = "xdoctest"
         >>> modpath = modname_to_modpath(modname, hide_init=False)
-        >>> assert modpath.endswith('__init__.py')
+        >>> assert modpath.endswith("__init__.py")
         >>> # xdoctest: +REQUIRES(CPython)
-        >>> modpath = basename(modname_to_modpath('_ctypes'))
-        >>> assert 'ctypes' in modpath
+        >>> modpath = basename(modname_to_modpath("_ctypes"))
+        >>> assert "ctypes" in modpath
     """
     if hide_main or sys_path:
         modpath = _syspath_modname_to_modpath(modname, sys_path)
@@ -463,9 +460,7 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
     if modpath is None:
         return None
 
-    return normalize_modpath(
-        modpath, hide_init=hide_init, hide_main=hide_main
-    )
+    return normalize_modpath(modpath, hide_init=hide_init, hide_main=hide_main)
 
 
 def normalize_modpath(modpath, hide_init=True, hide_main=False):
@@ -493,16 +488,16 @@ def normalize_modpath(modpath, hide_init=True, hide_main=False):
     Example:
         >>> from xdoctest import static_analysis as module
         >>> modpath = module.__file__
-        >>> assert normalize_modpath(modpath) == modpath.replace('.pyc', '.py')
+        >>> assert normalize_modpath(modpath) == modpath.replace(".pyc", ".py")
         >>> dpath = dirname(modpath)
         >>> res0 = normalize_modpath(dpath, hide_init=0, hide_main=0)
         >>> res1 = normalize_modpath(dpath, hide_init=0, hide_main=1)
         >>> res2 = normalize_modpath(dpath, hide_init=1, hide_main=0)
         >>> res3 = normalize_modpath(dpath, hide_init=1, hide_main=1)
-        >>> assert res0.endswith('__init__.py')
-        >>> assert res1.endswith('__init__.py')
-        >>> assert not res2.endswith('.py')
-        >>> assert not res3.endswith('.py')
+        >>> assert res0.endswith("__init__.py")
+        >>> assert res1.endswith("__init__.py")
+        >>> assert not res2.endswith(".py")
+        >>> assert not res3.endswith(".py")
     """
     if hide_init:
         if basename(modpath) == "__init__.py":
@@ -566,26 +561,32 @@ def modpath_to_modname(
 
     Example:
         >>> from xdoctest import static_analysis
-        >>> modpath = static_analysis.__file__.replace('.pyc', '.py')
-        >>> modpath = modpath.replace('.pyc', '.py')
+        >>> modpath = static_analysis.__file__.replace(".pyc", ".py")
+        >>> modpath = modpath.replace(".pyc", ".py")
         >>> modname = modpath_to_modname(modpath)
-        >>> assert modname == 'xdoctest.static_analysis'
+        >>> assert modname == "xdoctest.static_analysis"
 
     Example:
         >>> import xdoctest
-        >>> assert modpath_to_modname(xdoctest.__file__.replace('.pyc', '.py')) == 'xdoctest'
-        >>> assert modpath_to_modname(dirname(xdoctest.__file__.replace('.pyc', '.py'))) == 'xdoctest'
+        >>> assert (
+        ...     modpath_to_modname(xdoctest.__file__.replace(".pyc", ".py"))
+        ...     == "xdoctest"
+        ... )
+        >>> assert (
+        ...     modpath_to_modname(dirname(xdoctest.__file__.replace(".pyc", ".py")))
+        ...     == "xdoctest"
+        ... )
 
     Example:
         >>> # xdoctest: +REQUIRES(CPython)
-        >>> modpath = modname_to_modpath('_ctypes')
+        >>> modpath = modname_to_modpath("_ctypes")
         >>> modname = modpath_to_modname(modpath)
-        >>> assert modname == '_ctypes'
+        >>> assert modname == "_ctypes"
 
     Example:
-        >>> modpath = '/foo/libfoobar.linux-x86_64-3.6.so'
+        >>> modpath = "/foo/libfoobar.linux-x86_64-3.6.so"
         >>> modname = modpath_to_modname(modpath, check=False)
-        >>> assert modname == 'libfoobar'
+        >>> assert modname == "libfoobar"
     """
     if check and relativeto is None:
         if not exists(modpath):
@@ -593,9 +594,7 @@ def modpath_to_modname(
             raise ValueError(msg)
     modpath_ = abspath(expanduser(modpath))
 
-    modpath_ = normalize_modpath(
-        modpath_, hide_init=hide_init, hide_main=hide_main
-    )
+    modpath_ = normalize_modpath(modpath_, hide_init=hide_init, hide_main=hide_main)
     if relativeto:
         dpath = dirname(abspath(expanduser(relativeto)))
         rel_modpath = relpath(modpath_, dpath)
@@ -627,12 +626,12 @@ def split_modpath(modpath, check=True):
 
     Example:
         >>> from xdoctest import static_analysis
-        >>> modpath = static_analysis.__file__.replace('.pyc', '.py')
+        >>> modpath = static_analysis.__file__.replace(".pyc", ".py")
         >>> modpath = abspath(modpath)
         >>> dpath, rel_modpath = split_modpath(modpath)
         >>> recon = join(dpath, rel_modpath)
         >>> assert recon == modpath
-        >>> assert rel_modpath == join('xdoctest', 'static_analysis.py')
+        >>> assert rel_modpath == join("xdoctest", "static_analysis.py")
     """
     modpath_ = abspath(expanduser(modpath))
     if check:

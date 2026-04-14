@@ -54,9 +54,7 @@ __all__ = token.__all__ + [
 del token
 
 
-class TokenInfo(
-    collections.namedtuple("TokenInfo", "type string start end line")
-):
+class TokenInfo(collections.namedtuple("TokenInfo", "type string start end line")):
     def __repr__(self):
         annotated_type = "%d (%s)" % (self.type, tok_name[self.type])
         return (
@@ -207,9 +205,7 @@ class Untokenizer:
         row, col = start
         if row < self.prev_row or (row == self.prev_row and col < self.prev_col):
             msg = f"start ({row},{col}) precedes previous end ({self.prev_row},{self.prev_col})"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
         row_offset = row - self.prev_row
         if row_offset:
             self.tokens.append("\\\n" * row_offset)
@@ -557,16 +553,12 @@ def _tokenize(readline, encoding):
                     )
                     pos += len(comment_token)
 
-                yield TokenInfo(
-                    NL, line[pos:], (lnum, pos), (lnum, len(line)), line
-                )
+                yield TokenInfo(NL, line[pos:], (lnum, pos), (lnum, len(line)), line)
                 continue
 
             if column > indents[-1]:  # count indents or dedents
                 indents.append(column)
-                yield TokenInfo(
-                    INDENT, line[:pos], (lnum, 0), (lnum, pos), line
-                )
+                yield TokenInfo(INDENT, line[:pos], (lnum, 0), (lnum, pos), line)
             while column < indents[-1]:
                 if column not in indents:
                     msg = "unindent does not match any outer indentation level"
@@ -749,10 +741,7 @@ def main():
             if args.exact:
                 token_type = token.exact_type
             token_range = "%d,%d-%d,%d:" % (token.start + token.end)
-            print(
-                "%-20s%-15s%-15r"
-                % (token_range, tok_name[token_type], token.string)
-            )
+            print("%-20s%-15s%-15r" % (token_range, tok_name[token_type], token.string))
     except IndentationError as err:
         line, column = err.args[1][1:3]
         error(err.args[0], filename, (line, column))
@@ -776,9 +765,7 @@ def _generate_tokens_from_c_tokenizer(source):
 
     for info in c_tokenizer.TokenizerIter(source):
         tok, type, lineno, end_lineno, col_off, end_col_off, line = info
-        yield TokenInfo(
-            type, tok, (lineno, col_off), (end_lineno, end_col_off), line
-        )
+        yield TokenInfo(type, tok, (lineno, col_off), (end_lineno, end_col_off), line)
 
 
 if __name__ == "__main__":

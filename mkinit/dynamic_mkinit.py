@@ -29,7 +29,7 @@ def dynamic_init(modname, submodules=None, dump=False, verbose=False):
         >>> # The easiest way to use this in your code is to add these lines
         >>> # to the module __init__ file
         >>> from mkinit import dynamic_init
-        >>> execstr = dynamic_init('mkinit')
+        >>> execstr = dynamic_init("mkinit")
         >>> print(execstr)
         >>> exec(execstr)  # xdoc: +SKIP
     """
@@ -52,9 +52,7 @@ def dynamic_init(modname, submodules=None, dump=False, verbose=False):
     # Import the modules
     _excecute_imports(module, modname, imports, verbose=verbose)
     # If developing do explicit import stars
-    from_imports = _execute_fromimport_star(
-        module, modname, imports, verbose=verbose
-    )
+    from_imports = _execute_fromimport_star(module, modname, imports, verbose=verbose)
 
     # If requested: print what the __init__ module should look like
     dump_requested = (
@@ -95,9 +93,7 @@ def _excecute_imports(module, modname, imports, verbose=False):
     level = 0
     for name in imports:
         if level == -1:
-            tmp = __import__(
-                name, globals(), locals(), fromlist=[], level=level
-            )
+            tmp = __import__(name, globals(), locals(), fromlist=[], level=level)
         elif level == 0:
             # FIXME: should support unicode. Maybe just a python2 thing
             tmp = __import__(
@@ -162,9 +158,7 @@ def _execute_fromimport_star(
             is_forced = attrname in fromset
             is_private = attrname.startswith("_")
             is_conflit = attrname in varset
-            is_module = (
-                attrname in sys.modules
-            )  # Isn't fool proof (next step is)
+            is_module = attrname in sys.modules  # Isn't fool proof (next step is)
             is_ignore = attrname in ignoreset
             is_valid = not any((is_ignore, is_private, is_conflit, is_module))
             return is_forced or is_valid
@@ -174,9 +168,7 @@ def _execute_fromimport_star(
             continue
 
         allattrs = dir(child_module)
-        fromlist_ = [
-            attrname for attrname in allattrs if valid_attrname(attrname)
-        ]
+        fromlist_ = [attrname for attrname in allattrs if valid_attrname(attrname)]
         valid_fromlist_ = []
         for attrname in fromlist_:
             attrval = getattr(child_module, attrname)
@@ -223,8 +215,7 @@ def _make_initstr(modname, imports, from_imports, withheader=True):
 def _make_module_header():
     return "\n".join(
         [
-            "# flake8:"
-             " noqa",  # the plus prevents it from triggering on this file
+            "# flake8: noqa",  # the plus prevents it from triggering on this file
             "from __future__ import absolute_import, division, print_function, unicode_literals",
         ]
     )
