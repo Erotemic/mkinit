@@ -1,0 +1,76 @@
+target-version = "py310"
+
+[lint]
+select = ["ALL"]
+allowed-confusables = ["ρ"]
+extend-safe-fixes = [
+    "EM102",
+    "EM101",
+    "SIM108",
+    "RET504",
+    "C408",
+    "D200",
+    "RUF059",
+    "RUF052",
+]
+ignore = [
+    # Not needed
+    "D",
+    "ANN",
+    "FIX",
+    "TD",
+    "S",
+    "ERA",
+    "N",
+    "ARG",
+    "T20",
+    "PTH",
+    # Overly pedantic 
+    "NPY002",
+    "PLR0915",
+    "PLR0912",
+    "PLR0911",
+    "PLR0913",
+    "PLR2004",
+    "C901",
+    "BLE001",
+    "PLC0415",
+    "PLW1641",
+    "PLW0603",
+    "PLW1510",
+    "PLW0602",
+    "PLW0108",
+    "PGH004",
+    "PYI034",
+    "PLC0105",
+    "SLOT000",
+
+    "E501",   # line-too-long
+    "W291",
+    "TRY002",
+    "TRY301",
+    "SLF001",
+    "RUF015",
+    "PIE796",
+    "UP040",
+    "COM812", # conflicts with formatter
+    "UP046",   
+    "UP047",  
+    "INP001",
+]
+exclude = ["*.pyi", "*.ipynb", "doc/*"]
+logger-objects = ["logging_setup.logger", "loguru.logger"]
+[lint.per-file-ignores]
+"__init__.py" = ["F401", "E402", "I001", "I002", "F811", "D419", "F822"]
+"__init__.pyi" = ["F401", "E402", "I001", "I002", "D419", "F822"]
+
+[lint.isort]
+from-first = false
+force-sort-within-sections = true
+
+[lint.flake8-self]
+ignore-names = []
+
+[format]
+docstring-code-format = true
+line-ending = "lf"
