@@ -76,6 +76,7 @@ def parse_static_value(key, source=None, fpath=None):
         >>> #parse_static_value('bar', source='foo=1; bar = [1, foo]')
     """
     if source is None:  # pragma: no branch
+        assert fpath is not None
         with open(fpath, "rb") as file_:
             source = file_.read().decode("utf-8")
 
@@ -163,7 +164,7 @@ def package_modpaths(
 
         valid_exts = [".py"]
         if with_libs:
-            valid_exts += util_import._platform_pylib_exts()
+            valid_exts += util_import._platform_pylib_exts()  # type: ignore
 
         for dpath, dnames, fnames in os.walk(pkgpath, followlinks=followlinks):
             ispkg = exists(join(dpath, "__init__.py"))

@@ -436,7 +436,7 @@ def _parse_user_declarations2(init_fpath):
                         )
 
                     try:
-                        self.user_decl[main_id] = static._parse_static_node_value(node.value)
+                        self.user_decl[main_id] = static._parse_static_node_value(node.value)  # type: ignore
                     except TypeError as ex:
                         warnings.warn(repr(ex))
 
@@ -503,6 +503,7 @@ def _extract_attributes(modpath=None, source=None, respect_all=True):
     """
     if source is None:
         try:
+            assert modpath is not None
             with open(modpath, "r", encoding="utf8") as file:
                 source = file.read()
         except Exception as ex:  # nocover

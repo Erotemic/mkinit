@@ -1,5 +1,4 @@
 import ast
-from mkinit.util.orderedset import OrderedSet as oset
 import sys
 
 __all__ = [
@@ -11,6 +10,29 @@ _UNHANDLED = None
 
 IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
 IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
+
+
+class oset(dict):
+    """
+    Minimal orderedset
+    """
+
+    def __init__(self, iterable=()):
+        super().__init__((item, None) for item in iterable)
+
+    def add(self, item):
+        self[item] = None
+
+    def discard(self, item):
+        self.pop(item, None)
+
+    @classmethod
+    def intersection(cls, *sets_):
+        if not sets_:
+            return cls()
+        first, *rest = sets_
+        other_items = [set(s) for s in rest]
+        return cls(item for item in first if all(item in s for s in other_items))
 
 
 class TopLevelVisitor(ast.NodeVisitor):
@@ -257,8 +279,8 @@ class TopLevelVisitor(ast.NodeVisitor):
         body_attrs = get_conditional_attrnames(node.body)
 
         orelse_attrs = get_conditional_attrnames(node.orelse)
-        # body_attrs.extend(orelse_attrs)
-        body_attrs.update(orelse_attrs)
+        for attr in orelse_attrs:
+            body_attrs.add(attr)
 
         # Require that attributes are defined in all non-error branches
         required = []

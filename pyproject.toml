@@ -2,20 +2,20 @@
 requires = [ "setuptools>=41.0.1",]
 build-backend = "setuptools.build_meta"
 
-[tool.mypy]
-ignore_missing_imports = true
-
 [tool.xcookie]
 tags = [ "purepy", "github", "erotemic",]
 mod_name = "mkinit"
 repo_name = "mkinit"
 rel_mod_parent_dpath = "."
 os = [ "all", "win", "linux", "osx",]
-min_python = "3.8"
+min_python = "3.10"
 version = "{mod_dpath}/__init__.py::__version__"
 author = "Jon Crall"
 author_email = "erotemic@gmail.com"
 description = "Autogenerate __init__.py files"
+ci_pypi_trusted_publishing = true
+ci_gpg_secret_transport = "direct_ci"
+ci_pypy_versions = []
 url="https://github.com/Erotemic/mkinit"
 license = "Apache 2"
 dev_status = "stable"
@@ -37,3 +37,33 @@ branch = true
 [tool.coverage.report]
 exclude_lines = [ "pragma: no cover", ".*  # pragma: no cover", ".*  # nocover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if 0:", "if trace is not None", "verbose = .*", "^ *raise", "^ *pass *$", "if _debug:", "if __name__ == .__main__.:", ".*if six.PY2:",]
 omit = [ "mkinit/__main__.py", "*/setup.py",]
+
+
+[tool.mypy]
+ignore_missing_imports = true
+#ignore_errors = true
+
+[tool.ty.rules]
+unused-ignore-comment = "ignore"
+unused-type-ignore-comment = "ignore"
+unresolved-import = "ignore"
+
+[tool.ruff]
+line-length = 80
+target-version = "py38"
+
+[tool.ruff.lint]
+# Enable Flake8 (E, F) and isort (I) rules.
+select = ["E", "F", "I"]
+# Ignore specific rules, for example, E501 (line too long) as it's handled by the formatter.
+ignore = [
+    "E501",  # line too long
+    "E402",  # Module level import not at top of file
+]
+
+[tool.ruff.format]
+quote-style = "single"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+docstring-code-format = false

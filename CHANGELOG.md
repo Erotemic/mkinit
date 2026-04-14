@@ -5,6 +5,13 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## Version: 1.3.0 - Unreleased
+
+### Changed
+
+* Dropped support for Python 3.8 and 3.9.
+
+
 ## Version: 1.2.0 - Released 2025-12-02
 
 ### Documentation
