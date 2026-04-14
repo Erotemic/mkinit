@@ -42,11 +42,11 @@ Regenerate Input Command
 mkinit ~/code/mkinit/mkinit
 """
 
-__version__ = '1.3.0'
+__version__ = "1.3.0"
 
 __submodules__ = [
-    'dynamic_mkinit',
-    'static_mkinit',
+    "dynamic_mkinit",
+    "static_mkinit",
 ]
 
 from mkinit import dynamic_mkinit, static_mkinit
@@ -59,9 +59,9 @@ from mkinit.static_mkinit import (
 )
 
 __all__ = [
-    'autogen_init',
-    'dynamic_init',
-    'dynamic_mkinit',
-    'static_init',
-    'static_mkinit',
+    "autogen_init",
+    "dynamic_init",
+    "dynamic_mkinit",
+    "static_init",
+    "static_mkinit",
 ]

@@ -42,188 +42,182 @@ def main():
             `__module_properties__` - can be a class with properties that will
                 be exposed on a module level if using mkinits lazy boilerplate.
         """
-    ).strip('\n')
+    ).strip("\n")
 
     parser = argparse.ArgumentParser(
-        prog='python -m mkinit',
+        prog="python -m mkinit",
         description=description,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument(
-        'modname_or_path',
-        nargs='?',
-        help='module or path to generate __init__.py for',
-        default='.',
+        "modname_or_path",
+        nargs="?",
+        help="module or path to generate __init__.py for",
+        default=".",
     )
 
-    parser.add_argument(
-        '--dry', dest='_dry_old', action='store_true', default=True
-    )
+    parser.add_argument("--dry", dest="_dry_old", action="store_true", default=True)
 
     parser.add_argument(
-        *('-i', '-w', '--write', '--inplace'),
-        dest='dry',
-        action='store_false',
-        help='modify / write to the file inplace',
+        *("-i", "-w", "--write", "--inplace"),
+        dest="dry",
+        action="store_false",
+        help="modify / write to the file inplace",
         default=True,
     )
 
     parser.add_argument(
-        '--diff',
-        dest='diff',
-        action='store_true',
-        help='show the diff (forces dry mode)',
+        "--diff",
+        dest="diff",
+        action="store_true",
+        help="show the diff (forces dry mode)",
         default=False,
     )
 
     parser.add_argument(
-        '--noattrs',
-        dest='with_attrs',
-        action='store_false',
+        "--noattrs",
+        dest="with_attrs",
+        action="store_false",
         default=True,
-        help='Do not generate attribute from imports',
+        help="Do not generate attribute from imports",
     )
     parser.add_argument(
-        '--nomods',
-        dest='with_mods',
-        action='store_false',
+        "--nomods",
+        dest="with_mods",
+        action="store_false",
         default=True,
-        help='Do not generate modules imports',
+        help="Do not generate modules imports",
     )
     parser.add_argument(
-        '--noall',
-        dest='with_all',
-        action='store_false',
+        "--noall",
+        dest="with_all",
+        action="store_false",
         default=True,
-        help='Do not generate an __all__ variable',
+        help="Do not generate an __all__ variable",
     )
 
     parser.add_argument(
-        '--relative',
-        action='store_true',
+        "--relative",
+        action="store_true",
         default=False,
-        help='Use relative . imports instead of <modname>',
+        help="Use relative . imports instead of <modname>",
     )
 
     lazy_group = parser.add_mutually_exclusive_group()
 
     lazy_group.add_argument(
-        '--lazy',
-        action='store_true',
+        "--lazy",
+        action="store_true",
         default=False,
-        help='Use lazy imports with more boilerplate but no dependencies',
+        help="Use lazy imports with more boilerplate but no dependencies",
     )
 
     lazy_group.add_argument(
-        '--lazy_loader',
-        '--lazy-loader',
-        action='store_true',
+        "--lazy_loader",
+        "--lazy-loader",
+        action="store_true",
         default=False,
-        help='Use lazy imports with less boilerplate but requires the lazy_loader module',
+        help="Use lazy imports with less boilerplate but requires the lazy_loader module",
     )
 
     lazy_group.add_argument(
-        '--lazy_loader_typed',
-        action='store_true',
+        "--lazy_loader_typed",
+        action="store_true",
         default=False,
         help=(
-            'Use lazy imports with the lazy_loader module, additionally generating '
-            '``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)'
+            "Use lazy imports with the lazy_loader module, additionally generating "
+            "``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)"
         ),
     )
 
     parser.add_argument(
-        '--black',
-        action='store_true',
+        "--black",
+        action="store_true",
         default=False,
-        help='Use black formatting',
+        help="Use black formatting",
     )
 
     parser.add_argument(
-        '--lazy_boilerplate',
-        '--lazy-boilerplate',
+        "--lazy_boilerplate",
+        "--lazy-boilerplate",
         default=None,
-        help='Code that defines a custom lazy_import callable',
+        help="Code that defines a custom lazy_import callable",
     )
 
     parser.add_argument(
-        '--recursive',
-        dest='recursive',
-        action='store_true',
+        "--recursive",
+        dest="recursive",
+        action="store_true",
         default=False,
-        help='If specified, runs mkinit on all subpackages in a package',
+        help="If specified, runs mkinit on all subpackages in a package",
     )
 
     parser.add_argument(
-        '--norespect_all',
-        '--norespect-all',
-        dest='respect_all',
-        action='store_false',
+        "--norespect_all",
+        "--norespect-all",
+        dest="respect_all",
+        action="store_false",
         default=True,
-        help='if False does not respect __all__ attributes of submodules when parsing',
+        help="if False does not respect __all__ attributes of submodules when parsing",
     )
 
     parser.add_argument(
-        '--verbose', nargs='?', default=0, type=int, help='Verbosity level'
+        "--verbose", nargs="?", default=0, type=int, help="Verbosity level"
     )
 
-    parser.add_argument(
-        '--version', action='store_true', help='print version and exit'
-    )
+    parser.add_argument("--version", action="store_true", help="print version and exit")
 
     import os
 
-    if os.environ.get('MKINIT_ARGPARSE_LOOSE', ''):
-        args, unknown = parser.parse_known_args()
+    if os.environ.get("MKINIT_ARGPARSE_LOOSE", ""):
+        args, _unknown = parser.parse_known_args()
     else:
         args = parser.parse_args()
     ns = args.__dict__.copy()
 
-    if ns['version']:
+    if ns["version"]:
         import mkinit
 
         print(mkinit.__version__)
         return
 
-    modname_or_path = ns['modname_or_path']
-    if ns['verbose'] is None:
-        ns['verbose'] = 1
+    modname_or_path = ns["modname_or_path"]
+    if ns["verbose"] is None:
+        ns["verbose"] = 1
 
-    respect_all = ns['respect_all']
-    verbose = ns['verbose']
-    dry = ns['dry']
+    respect_all = ns["respect_all"]
+    verbose = ns["verbose"]
+    dry = ns["dry"]
 
-    if ns['lazy_boilerplate'] and (
-        ns['lazy_loader'] or ns['lazy_loader_typed']
-    ):
-        raise ValueError(
-            '--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead.'
-        )
+    if ns["lazy_boilerplate"] and (ns["lazy_loader"] or ns["lazy_loader_typed"]):
+        msg = "--lazy_boilerplate cannot be specified with --lazy_loader or --lazy_loader_typed. Use --lazy instead."
+        raise ValueError(msg)
 
-    if not ns['with_all'] and ns['lazy_loader_typed']:
-        raise ValueError('--noall cannot be combined with --lazy_loader_typed')
+    if not ns["with_all"] and ns["lazy_loader_typed"]:
+        msg = "--noall cannot be combined with --lazy_loader_typed"
+        raise ValueError(msg)
 
-    if ns['lazy_loader_typed'] and not ns['relative']:
+    if ns["lazy_loader_typed"] and not ns["relative"]:
         print(
-            'WARNING: specifying --lazy-loader-typed implicitly enables --relative, as '
-            '`lazy-loader` stub support requires relative imports. (Explicitly specify '
-            '--relative to remove this warning.)'
+            "WARNING: specifying --lazy-loader-typed implicitly enables --relative, as "
+            "`lazy-loader` stub support requires relative imports. (Explicitly specify "
+            "--relative to remove this warning.)"
         )
 
     # Formatting options
     options = {
-        'with_attrs': ns['with_attrs'],
-        'with_mods': ns['with_mods'],
-        'with_all': ns['with_all'],
-        'relative': ns['relative'] or ns['lazy_loader_typed'],
-        'lazy_import': ns['lazy'],
-        'lazy_loader': ns['lazy_loader'] or ns['lazy_loader_typed'],
-        'lazy_loader_typed': ns['lazy_loader_typed'],
-        'lazy_boilerplate': ns['lazy_boilerplate'],
-        'use_black': ns['black'],
+        "with_attrs": ns["with_attrs"],
+        "with_mods": ns["with_mods"],
+        "with_all": ns["with_all"],
+        "relative": ns["relative"] or ns["lazy_loader_typed"],
+        "lazy_import": ns["lazy"],
+        "lazy_loader": ns["lazy_loader"] or ns["lazy_loader_typed"],
+        "lazy_loader_typed": ns["lazy_loader_typed"],
+        "lazy_boilerplate": ns["lazy_boilerplate"],
+        "use_black": ns["black"],
     }
 
-    diff = ns['diff']
+    diff = ns["diff"]
     if diff:
         dry = True
 
@@ -235,10 +229,10 @@ def main():
         level = logging.DEBUG
 
     if verbose:
-        print('verbose = {!r}'.format(verbose))
+        print(f"verbose = {verbose!r}")
 
     logging.basicConfig(
-        format='%(levelname)s: %(message)s',
+        format="%(levelname)s: %(message)s",
         level=level,
     )
 
@@ -249,9 +243,9 @@ def main():
         options=options,
         dry=dry,
         diff=diff,
-        recursive=ns['recursive'],
+        recursive=ns["recursive"],
     )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

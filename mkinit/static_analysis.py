@@ -3,10 +3,10 @@ A paired down version of static_anslysis from xdoctest
 """
 
 import ast
-import os
-import sys
 from collections import OrderedDict
+import os
 from os.path import exists, isfile, join, splitext
+import sys
 
 from mkinit.util import util_import
 
@@ -49,10 +49,10 @@ def _parse_static_node_value(node):
         value = node.value
     else:
         print(node.__dict__)
-        raise TypeError(
-            'Cannot parse a static value from non-static node '
-            'of type: {!r}'.format(type(node))
+        msg = (
+            f"Cannot parse a static value from non-static node of type: {type(node)!r}"
         )
+        raise TypeError(msg)
     return value
 
 
@@ -72,31 +72,31 @@ def parse_static_value(key, source=None, fpath=None):
         Any: a parsed value with a basic python builtin type
 
     Example:
-        >>> key = 'foo'
-        >>> source = 'foo = 123'
+        >>> key = "foo"
+        >>> source = "foo = 123"
         >>> assert parse_static_value(key, source=source) == 123
         >>> source = 'foo = "123"'
-        >>> assert parse_static_value(key, source=source) == '123'
-        >>> source = 'foo = [1, 2, 3]'
+        >>> assert parse_static_value(key, source=source) == "123"
+        >>> source = "foo = [1, 2, 3]"
         >>> assert parse_static_value(key, source=source) == [1, 2, 3]
         >>> source = 'foo = (1, 2, "3")'
         >>> assert parse_static_value(key, source=source) == (1, 2, "3")
-        >>> source = 'foo = {1: 2, 3: 4}'
+        >>> source = "foo = {1: 2, 3: 4}"
         >>> assert parse_static_value(key, source=source) == {1: 2, 3: 4}
-        >>> #parse_static_value('bar', source=source)
-        >>> #parse_static_value('bar', source='foo=1; bar = [1, foo]')
+        >>> # parse_static_value('bar', source=source)
+        >>> # parse_static_value('bar', source='foo=1; bar = [1, foo]')
     """
     if source is None:  # pragma: no branch
         assert fpath is not None
-        with open(fpath, 'rb') as file_:
-            source = file_.read().decode('utf-8')
+        with open(fpath, "rb") as file_:
+            source = file_.read().decode("utf-8")
 
     pt = ast.parse(source)
 
     class AssignentVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                target_id = getattr(target, 'id', None)
+                target_id = getattr(target, "id", None)
                 if target_id == key:
                     try:
                         self.value = _parse_static_node_value(node.value)
@@ -107,7 +107,7 @@ def parse_static_value(key, source=None, fpath=None):
 
         def visit_AnnAssign(self, node):
             """Handle annotated assignments like `VAR: Type = value`"""
-            target_id = getattr(node.target, 'id', None)
+            target_id = getattr(node.target, "id", None)
             if target_id == key:
                 if node.value is not None:
                     try:
@@ -122,7 +122,8 @@ def parse_static_value(key, source=None, fpath=None):
     visitor.value = sentinal
     visitor.visit(pt)
     if visitor.value is sentinal:
-        raise NameError('No static variable named {!r}'.format(key))
+        msg = f"No static variable named {key!r}"
+        raise NameError(msg)
     return visitor.value
 
 
@@ -157,42 +158,42 @@ def package_modpaths(
 
     Example:
         >>> from mkinit.static_analysis import *
-        >>> pkgpath = util_import.modname_to_modpath('mkinit')
+        >>> pkgpath = util_import.modname_to_modpath("mkinit")
         >>> paths = list(package_modpaths(pkgpath))
-        >>> print('\n'.join(paths))
+        >>> print("\n".join(paths))
         >>> names = list(map(util_import.modpath_to_modname, paths))
-        >>> assert 'mkinit.static_mkinit' in names
-        >>> assert 'mkinit.__main__' in names
-        >>> assert 'mkinit' not in names
-        >>> print('\n'.join(names))
+        >>> assert "mkinit.static_mkinit" in names
+        >>> assert "mkinit.__main__" in names
+        >>> assert "mkinit" not in names
+        >>> print("\n".join(names))
     """
     if isfile(pkgpath):
         # If input is a file, just return it
         yield pkgpath
     else:
         if with_pkg:
-            root_path = join(pkgpath, '__init__.py')
+            root_path = join(pkgpath, "__init__.py")
             if not check or exists(root_path):
                 yield root_path
 
-        valid_exts = ['.py']
+        valid_exts = [".py"]
         if with_libs:
             valid_exts += util_import._platform_pylib_exts()  # type: ignore
 
         for dpath, dnames, fnames in os.walk(pkgpath, followlinks=followlinks):
-            ispkg = exists(join(dpath, '__init__.py'))
+            ispkg = exists(join(dpath, "__init__.py"))
             if ispkg or not check:
                 check = True  # always check subdirs
                 if with_mod:
                     for fname in fnames:
                         if splitext(fname)[1] in valid_exts:
                             # dont yield inits. Handled in pkg loop.
-                            if fname != '__init__.py':
+                            if fname != "__init__.py":
                                 path = join(dpath, fname)
                                 yield path
                 if with_pkg:
                     for dname in dnames:
-                        path = join(dpath, dname, '__init__.py')
+                        path = join(dpath, dname, "__init__.py")
                         if exists(path):
                             yield path
             else:
@@ -213,19 +214,18 @@ def is_balanced_statement(lines):
         bool: False if the statement is not balanced
 
     Doctest:
-        >>> assert is_balanced_statement(['print(foobar)'])
-        >>> assert is_balanced_statement(['foo = bar']) is True
-        >>> assert is_balanced_statement(['foo = (']) is False
-        >>> assert is_balanced_statement(['foo = (', "')(')"]) is True
-        >>> assert is_balanced_statement(
-        ...     ['foo = (', "'''", ")]'''", ')']) is True
-        >>> #assert is_balanced_statement(['foo = ']) is False
-        >>> #assert is_balanced_statement(['== ']) is False
+        >>> assert is_balanced_statement(["print(foobar)"])
+        >>> assert is_balanced_statement(["foo = bar"]) is True
+        >>> assert is_balanced_statement(["foo = ("]) is False
+        >>> assert is_balanced_statement(["foo = (", "')(')"]) is True
+        >>> assert is_balanced_statement(["foo = (", "'''", ")]'''", ")"]) is True
+        >>> # assert is_balanced_statement(['foo = ']) is False
+        >>> # assert is_balanced_statement(['== ']) is False
 
     """
     from io import StringIO
 
-    block = '\n'.join(lines)
+    block = "\n".join(lines)
     stream = StringIO()
     stream.write(block)
     stream.seek(0)
@@ -234,7 +234,7 @@ def is_balanced_statement(lines):
             pass
     except tokenize.TokenError as ex:
         message = ex.args[0]
-        if message.startswith('EOF in multi-line'):
+        if message.startswith("EOF in multi-line"):
             return False
         raise
     else:
@@ -261,13 +261,13 @@ def _locate_ps1_linenos(source_lines):
             got/want assertion.
 
     Example:
-        >>> source_lines = ['>>> def foo():', '>>>     return 0', '>>> 3']
+        >>> source_lines = [">>> def foo():", ">>>     return 0", ">>> 3"]
         >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
         >>> assert linenos == [0, 2]
         >>> assert eval_final is True
 
     Example:
-        >>> source_lines = ['>>> x = [1, 2, ', '>>> 3, 4]', '>>> print(len(x))']
+        >>> source_lines = [">>> x = [1, 2, ", ">>> 3, 4]", ">>> print(len(x))"]
         >>> linenos, eval_final = _locate_ps1_linenos(source_lines)
         >>> assert linenos == [0, 2]
         >>> assert eval_final is True
@@ -280,12 +280,12 @@ def _locate_ps1_linenos(source_lines):
     # note, this hack never leaves this function because we only are
     # returning line numbers.
     exec_source_lines = [
-        '_._  = None' if p.startswith('#') else p for p in exec_source_lines
+        "_._  = None" if p.startswith("#") else p for p in exec_source_lines
     ]
 
-    source_block = '\n'.join(exec_source_lines)
+    source_block = "\n".join(exec_source_lines)
     try:
-        pt = ast.parse(source_block, filename='<source_block>')
+        pt = ast.parse(source_block, filename="<source_block>")
     except SyntaxError as syn_ex:
         # Assign missing information to the syntax error.
         if syn_ex.text is None:
@@ -293,8 +293,8 @@ def _locate_ps1_linenos(source_lines):
                 # Grab the line where the error occurs
                 # (why is this not populated in SyntaxError by default?)
                 # (because filename does not point to a valid loc)
-                line = source_block.split('\n')[syn_ex.lineno - 1]
-                syn_ex.text = line + '\n'
+                line = source_block.split("\n")[syn_ex.lineno - 1]
+                syn_ex.text = line + "\n"
         raise syn_ex
 
     statement_nodes = pt.body
@@ -303,19 +303,18 @@ def _locate_ps1_linenos(source_lines):
     if NEED_16806_WORKAROUND:  # pragma: nobranch
         ps1_linenos = _workaround_16806(ps1_linenos, exec_source_lines)
     # Respect any line explicitly defined as PS2 (via its prefix)
-    ps2_linenos = {x for x, p in enumerate(source_lines) if p[:4] != '>>> '}
+    ps2_linenos = {x for x, p in enumerate(source_lines) if p[:4] != ">>> "}
     ps1_linenos = sorted(ps1_linenos.difference(ps2_linenos))
 
     if len(statement_nodes) == 0:
         eval_final = False
+    # Is the last statement evaluatable?
+    elif sys.version_info.major == 2:  # nocover
+        eval_final = isinstance(statement_nodes[-1], (ast.Expr, ast.Print))
     else:
-        # Is the last statement evaluatable?
-        if sys.version_info.major == 2:  # nocover
-            eval_final = isinstance(statement_nodes[-1], (ast.Expr, ast.Print))
-        else:
-            # This should just be an Expr in python3
-            # (todo: ensure this is true)
-            eval_final = isinstance(statement_nodes[-1], ast.Expr)
+        # This should just be an Expr in python3
+        # (todo: ensure this is true)
+        eval_final = isinstance(statement_nodes[-1], ast.Expr)
 
     return ps1_linenos, eval_final
 
@@ -349,5 +348,4 @@ def _workaround_16806(ps1_linenos, exec_source_lines):
         # note, because this `a` is correct, the next `b` is
         # must also be correct.
         b = a
-    ps1_linenos = set(new_ps1_lines)
-    return ps1_linenos
+    return set(new_ps1_lines)

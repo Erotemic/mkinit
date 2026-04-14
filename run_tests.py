@@ -1,21 +1,21 @@
 #!/usr/bin/env python
-if __name__ == '__main__':
+if __name__ == "__main__":
     import sys
 
     import pytest
 
-    package_name = 'mkinit'
-    mod_dpath = 'mkinit'
-    test_dpath = 'tests'
+    package_name = "mkinit"
+    mod_dpath = "mkinit"
+    test_dpath = "tests"
     pytest_args = [
-        '--cov-config',
-        'pyproject.toml',
-        '--cov-report',
-        'html',
-        '--cov-report',
-        'term',
-        '--xdoctest',
-        '--cov=' + package_name,
+        "--cov-config",
+        "pyproject.toml",
+        "--cov-report",
+        "html",
+        "--cov-report",
+        "term",
+        "--xdoctest",
+        "--cov=" + package_name,
         mod_dpath,
         test_dpath,
     ]
