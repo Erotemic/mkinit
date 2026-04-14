@@ -4,7 +4,6 @@ dev/maintain/port_ubelt_code.py in the mkinit repo.
 """
 
 import os
-import sys
 from os.path import (
     abspath,
     basename,
@@ -19,6 +18,7 @@ from os.path import (
     split,
     splitext,
 )
+import sys
 
 IS_PY_GE_308 = (sys.version_info[0] >= 3) and (sys.version_info[1] >= 8)
 
@@ -28,8 +28,8 @@ def _parse_static_node_value(node):
     Extract a constant value from a node if possible
     """
     import ast
-    import numbers
     from collections import OrderedDict
+    import numbers
 
     if (
         isinstance(node, ast.Constant)
@@ -56,9 +56,12 @@ def _parse_static_node_value(node):
     elif isinstance(node, (ast.Constant)):
         value = node.value
     else:
+        msg = (
+            "Cannot parse a static value from non-static node "
+            f"of type: {type(node)!r}"
+        )
         raise TypeError(
-            'Cannot parse a static value from non-static node '
-            'of type: {!r}'.format(type(node))
+            msg
         )
     return value
 
@@ -75,10 +78,9 @@ def _extension_module_tags():
     tags = []
     # handle PEP 3149 -- ABI version tagged .so files
     # ABI = application binary interface
-    tags.append(sysconfig.get_config_var('SOABI'))
-    tags.append('abi3')  # not sure why this one is valid but it is
-    tags = [t for t in tags if t]
-    return tags
+    tags.append(sysconfig.get_config_var("SOABI"))
+    tags.append("abi3")  # not sure why this one is valid but it is
+    return [t for t in tags if t]
 
 
 def _static_parse(varname, fpath):
@@ -123,21 +125,22 @@ def _static_parse(varname, fpath):
     import ast
 
     if not exists(fpath):
-        raise ValueError('fpath={!r} does not exist'.format(fpath))
-    with open(fpath, 'r') as file_:
+        msg = f"fpath={fpath!r} does not exist"
+        raise ValueError(msg)
+    with open(fpath) as file_:
         sourcecode = file_.read()
     pt = ast.parse(sourcecode)
 
     class StaticVisitor(ast.NodeVisitor):
         def visit_Assign(self, node):
             for target in node.targets:
-                target_id = getattr(target, 'id', None)
+                target_id = getattr(target, "id", None)
                 if target_id == varname:
                     self.static_value = _parse_static_node_value(node.value)
 
         def visit_AnnAssign(self, node):
             """Handle annotated assignments like `VAR: Type = value`"""
-            if getattr(node.target, 'id', None) == varname:
+            if getattr(node.target, "id", None) == varname:
                 if node.value is not None:
                     self.static_value = _parse_static_node_value(node.value)
 
@@ -146,7 +149,7 @@ def _static_parse(varname, fpath):
     try:
         value = visitor.static_value
     except AttributeError:
-        value = 'Unknown {}'.format(varname)
+        value = f"Unknown {varname}"
         raise AttributeError(value)
     return value
 
@@ -166,9 +169,9 @@ def _platform_pylib_exts():  # nocover
     valid_exts = []
     # return with and without API flags
     # handle PEP 3149 -- ABI version tagged .so files
-    base_ext = '.' + sysconfig.get_config_var('EXT_SUFFIX').split('.')[-1]
+    base_ext = "." + sysconfig.get_config_var("EXT_SUFFIX").split(".")[-1]
     for tag in _extension_module_tags():
-        valid_exts.append('.' + tag + base_ext)
+        valid_exts.append("." + tag + base_ext)
     valid_exts.append(base_ext)
     return tuple(valid_exts)
 
@@ -241,14 +244,14 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         # every directory up to the module, should have an init
         subdir = dirname(modpath)
         while subdir and subdir != base:
-            if not exists(join(subdir, '__init__.py')):
+            if not exists(join(subdir, "__init__.py")):
                 return False
             subdir = dirname(subdir)
         return True
 
-    _fname_we = modname.replace('.', os.path.sep)
+    _fname_we = modname.replace(".", os.path.sep)
     candidate_fnames = [
-        _fname_we + '.py',
+        _fname_we + ".py",
         # _fname_we + '.pyc',
         # _fname_we + '.pyo',
     ]
@@ -259,15 +262,14 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         sys_path = sys.path
 
     # the empty string in sys.path indicates cwd. Change this to a '.'
-    candidate_dpaths = ['.' if p == '' else p for p in sys_path]
+    candidate_dpaths = ["." if p == "" else p for p in sys_path]
 
     if exclude:
 
         def normalize(p):
-            if sys.platform.startswith('win32'):  # nocover
+            if sys.platform.startswith("win32"):  # nocover
                 return realpath(p).lower()
-            else:
-                return realpath(p)
+            return realpath(p)
 
         # Keep only the paths not in exclude
         real_exclude = {normalize(p) for p in exclude}
@@ -279,7 +281,7 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         # Check for directory-based modules (has presidence over files)
         modpath = join(dpath, _fname_we)
         if exists(modpath):
-            if isfile(join(modpath, '__init__.py')):
+            if isfile(join(modpath, "__init__.py")):
                 if _isvalid(modpath, dpath):
                     return modpath
 
@@ -291,22 +293,22 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
                     return modpath
 
     _pkg_name = _fname_we.split(os.path.sep)[0]
-    _pkg_name_hypen = _pkg_name.replace('_', '-')
+    _pkg_name_hypen = _pkg_name.replace("_", "-")
 
-    _egglink_fname1 = _pkg_name + '.egg-link'
-    _egglink_fname2 = _pkg_name_hypen + '.egg-link'
+    _egglink_fname1 = _pkg_name + ".egg-link"
+    _egglink_fname2 = _pkg_name_hypen + ".egg-link"
     # FIXME! suffixed modules will clobber break!
     # Currently mitigating this by looping over all possible matches,
     # but it would be nice to ensure we are not matching suffixes.
     # however, we should probably match and handle different versions.
-    _editable_fname_pth_pat = '__editable__.' + _pkg_name + '-*.pth'
+    _editable_fname_pth_pat = "__editable__." + _pkg_name + "-*.pth"
 
     # NOTE: the __editable__ finders are named after the package, but the
     # module could have a different name, so we cannot use the package name
     # (which in this case is really the module name) in the pattern, and we
     # have to check all of the finders.
     # _editable_fname_finder_py_pat = '__editable___' + _pkg_name + '_*finder.py'
-    _editable_fname_finder_py_pat = '__editable___*_*finder.py'
+    _editable_fname_finder_py_pat = "__editable___*_*finder.py"
 
     found_modpath = None
     for dpath in candidate_dpaths:
@@ -334,7 +336,7 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             # with it.
             for finder_fpath in new_editable_finder_paths:
                 try:
-                    mapping = _static_parse('MAPPING', finder_fpath)
+                    mapping = _static_parse("MAPPING", finder_fpath)
                 except AttributeError:
                     ...
                 else:
@@ -365,7 +367,7 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
 
             for editable_pth in new_editable_pth_paths:
                 editable_pth = pathlib.Path(editable_pth)
-                target = editable_pth.read_text().strip().split('\n')[-1]
+                target = editable_pth.read_text().strip().split("\n")[-1]
                 if not exclude or normalize(target) not in real_exclude:
                     modpath = check_dpath(target)
                     if modpath:  # pragma: nobranch
@@ -394,7 +396,7 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
             # TODO: ensure this is the correct way to parse egg-link files
             # https://setuptools.readthedocs.io/en/latest/formats.html#egg-links
             # The docs state there should only be one line, but I see two.
-            with open(linkpath, 'r') as file:
+            with open(linkpath) as file:
                 target = file.readline().strip()
             if not exclude or normalize(target) not in real_exclude:
                 modpath = check_dpath(target)
@@ -461,10 +463,9 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
     if modpath is None:
         return None
 
-    modpath = normalize_modpath(
+    return normalize_modpath(
         modpath, hide_init=hide_init, hide_main=hide_main
     )
-    return modpath
 
 
 def normalize_modpath(modpath, hide_init=True, hide_main=False):
@@ -504,19 +505,19 @@ def normalize_modpath(modpath, hide_init=True, hide_main=False):
         >>> assert not res3.endswith('.py')
     """
     if hide_init:
-        if basename(modpath) == '__init__.py':
+        if basename(modpath) == "__init__.py":
             modpath = dirname(modpath)
             hide_main = True
     else:
         # add in init, if reasonable
-        modpath_with_init = join(modpath, '__init__.py')
+        modpath_with_init = join(modpath, "__init__.py")
         if exists(modpath_with_init):
             modpath = modpath_with_init
     if hide_main:
         # We can remove main, but dont add it
-        if basename(modpath) == '__main__.py':
+        if basename(modpath) == "__main__.py":
             # corner case where main might just be a module name not in a pkg
-            parallel_init = join(dirname(modpath), '__init__.py')
+            parallel_init = join(dirname(modpath), "__init__.py")
             if exists(parallel_init):
                 modpath = dirname(modpath)
     return modpath
@@ -588,7 +589,8 @@ def modpath_to_modname(
     """
     if check and relativeto is None:
         if not exists(modpath):
-            raise ValueError('modpath={} does not exist'.format(modpath))
+            msg = f"modpath={modpath} does not exist"
+            raise ValueError(msg)
     modpath_ = abspath(expanduser(modpath))
 
     modpath_ = normalize_modpath(
@@ -601,11 +603,10 @@ def modpath_to_modname(
         dpath, rel_modpath = split_modpath(modpath_, check=check)
 
     modname = splitext(rel_modpath)[0]
-    if '.' in modname:
-        modname, abi_tag = modname.split('.', 1)
-    modname = modname.replace('/', '.')
-    modname = modname.replace('\\', '.')
-    return modname
+    if "." in modname:
+        modname, _abi_tag = modname.split(".", 1)
+    modname = modname.replace("/", ".")
+    return modname.replace("\\", ".")
 
 
 def split_modpath(modpath, check=True):
@@ -637,16 +638,19 @@ def split_modpath(modpath, check=True):
     if check:
         if not exists(modpath_):
             if not exists(modpath):
-                raise ValueError('modpath={} does not exist'.format(modpath))
-            raise ValueError('modpath={} is not a module'.format(modpath))
-        if isdir(modpath_) and not exists(join(modpath, '__init__.py')):
+                msg = f"modpath={modpath} does not exist"
+                raise ValueError(msg)
+            msg = f"modpath={modpath} is not a module"
+            raise ValueError(msg)
+        if isdir(modpath_) and not exists(join(modpath, "__init__.py")):
             # dirs without inits are not modules
-            raise ValueError('modpath={} is not a module'.format(modpath))
+            msg = f"modpath={modpath} is not a module"
+            raise ValueError(msg)
     full_dpath, fname_ext = split(modpath_)
     _relmod_parts = [fname_ext]
     # Recurse down directories until we are out of the package
     dpath = full_dpath
-    while exists(join(dpath, '__init__.py')):
+    while exists(join(dpath, "__init__.py")):
         dpath, dname = split(dpath)
         _relmod_parts.append(dname)
     relmod_parts = _relmod_parts[::-1]

@@ -1,14 +1,7 @@
-# -*- coding: utf-8 -*-
 """
 Port of ubelt utilities + difftext wrapper around difflib
 """
 
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
 
 import os
 import sys
@@ -16,7 +9,7 @@ import sys
 # Global state that determines if ANSI-coloring text is allowed
 # (which is mainly to address non-ANSI complient windows consoles)
 # complient with https://no-color.org/
-NO_COLOR = bool(os.environ.get('NO_COLOR'))
+NO_COLOR = bool(os.environ.get("NO_COLOR"))
 
 
 def difftext(
@@ -66,9 +59,9 @@ def difftext(
     if ignore_whitespace:
         text1_lines = [t.rstrip() for t in text1_lines]
         text2_lines = [t.rstrip() for t in text2_lines]
-        ndiff_kw = dict(
-            linejunk=difflib.IS_LINE_JUNK, charjunk=difflib.IS_CHARACTER_JUNK
-        )
+        ndiff_kw = {
+            "linejunk": difflib.IS_LINE_JUNK, "charjunk": difflib.IS_CHARACTER_JUNK
+        }
     else:
         ndiff_kw = {}
     all_diff_lines = list(difflib.ndiff(text1_lines, text2_lines, **ndiff_kw))
@@ -78,7 +71,7 @@ def difftext(
     else:
         # boolean for every line if it is marked or not
         ismarked_list = [
-            len(line) > 0 and line[0] in '+-?' for line in all_diff_lines
+            len(line) > 0 and line[0] in "+-?" for line in all_diff_lines
         ]
         # flag lines that are within context_lines away from a diff line
         isvalid_list = ismarked_list[:]
@@ -95,7 +88,7 @@ def difftext(
             # insert a visual break when there is a break in context
             diff_lines = []
             prev = False
-            visual_break = '\n <... FILTERED CONTEXT ...> \n'
+            visual_break = "\n <... FILTERED CONTEXT ...> \n"
             # print(isvalid_list)
             for line, valid in zip(all_diff_lines, isvalid_list):
                 if valid:
@@ -108,13 +101,13 @@ def difftext(
             diff_lines = [
                 line for line, flag in zip(all_diff_lines, isvalid_list) if flag
             ]
-    text = '\n'.join(diff_lines)
+    text = "\n".join(diff_lines)
     if colored:
-        text = highlight_code(text, lexer_name='diff')
+        text = highlight_code(text, lexer_name="diff")
     return text
 
 
-def highlight_code(text, lexer_name='python', **kwargs):
+def highlight_code(text, lexer_name="python", **kwargs):
     """
     Highlights a block of text using ANSI tags based on language syntax.
 
@@ -136,31 +129,31 @@ def highlight_code(text, lexer_name='python', **kwargs):
         return text
     # Resolve extensions to languages
     lexer_name = {
-        'py': 'python',
-        'h': 'cpp',
-        'cpp': 'cpp',
-        'cxx': 'cpp',
-        'c': 'cpp',
-    }.get(lexer_name.replace('.', ''), lexer_name)
+        "py": "python",
+        "h": "cpp",
+        "cpp": "cpp",
+        "cxx": "cpp",
+        "c": "cpp",
+    }.get(lexer_name.replace(".", ""), lexer_name)
     try:
         import pygments
         import pygments.formatters
         import pygments.formatters.terminal
         import pygments.lexers
 
-        if sys.platform.startswith('win32'):  # nocover
+        if sys.platform.startswith("win32"):  # nocover
             # Hack on win32 to support colored output
             import colorama
 
             colorama.init()
 
-        formater = pygments.formatters.terminal.TerminalFormatter(bg='dark')
+        formater = pygments.formatters.terminal.TerminalFormatter(bg="dark")
         lexer = pygments.lexers.get_lexer_by_name(lexer_name, **kwargs)
         new_text = pygments.highlight(text, lexer, formater)
 
     except ImportError:  # nocover
         import warnings
 
-        warnings.warn('pygments is not installed, code will not be highlighted')
+        warnings.warn("pygments is not installed, code will not be highlighted")
         new_text = text
     return new_text

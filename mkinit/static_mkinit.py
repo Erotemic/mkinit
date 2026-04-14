@@ -5,9 +5,9 @@ Static version of :mod:`mkinit.dynamic_autogen`
 import fnmatch
 import logging
 import os
+from os.path import abspath, basename, dirname, exists, join
 import pathlib
 import warnings
-from os.path import abspath, basename, dirname, exists, join
 
 from mkinit import static_analysis as static
 from mkinit.formatting import _ensure_options, _initstr, _insert_autogen_text
@@ -19,8 +19,8 @@ logger = logging.getLogger(__name__)
 
 
 __all__ = [
-    'autogen_init',
-    'static_init',
+    "autogen_init",
+    "static_init",
 ]
 
 
@@ -86,14 +86,15 @@ def autogen_init(
         >>> assert 'autogen_init' in new_text
     """
     logger.info(
-        'Autogenerating __init__ for modpath_or_name={}'.format(modpath_or_name)
+        f"Autogenerating __init__ for modpath_or_name={modpath_or_name}"
     )
     options = _ensure_options(options)
     modpath = _rectify_to_modpath(modpath_or_name)
 
     if recursive:
         if submodules is not None:
-            raise AssertionError('cannot specify submodules in recursive mode')
+            msg = "cannot specify submodules in recursive mode"
+            raise AssertionError(msg)
         all_init_fpaths = list(
             static.package_modpaths(modpath, with_pkg=True, with_mod=False)
         )
@@ -101,8 +102,8 @@ def autogen_init(
         for fpath in reversed(all_init_fpaths):
             if diff:
                 # TODO: use a real diff patch format
-                print('--- ' + str(fpath))
-                print('+++ ' + str(fpath))
+                print("--- " + str(fpath))
+                print("+++ " + str(fpath))
             autogen_init(
                 fpath,
                 submodules=None,
@@ -112,14 +113,14 @@ def autogen_init(
                 diff=diff,
                 recursive=False,
             )
-        return
+        return None
 
-    if options['lazy_loader_typed'] and options['lazy_loader']:
+    if options["lazy_loader_typed"] and options["lazy_loader"]:
         autogen_init(
             modpath,
             submodules=None,
             respect_all=respect_all,
-            options={**options, 'lazy_loader': False},
+            options={**options, "lazy_loader": False},
             dry=dry,
             diff=diff,
             recursive=False,
@@ -131,17 +132,17 @@ def autogen_init(
     init_fpath, new_text = _insert_autogen_text(
         modpath,
         initstr,
-        interface=options['lazy_loader_typed'] and not options['lazy_loader'],
+        interface=options["lazy_loader_typed"] and not options["lazy_loader"],
     )
     if dry:
-        logger.info('(DRY) would write updated file: %r' % init_fpath)
+        logger.info("(DRY) would write updated file: %r" % init_fpath)
         if diff:
             # Display difference
             try:
-                with open(init_fpath, 'r') as file:
+                with open(init_fpath) as file:
                     old_text = file.read()
             except Exception:
-                old_text = ''
+                old_text = ""
             display_text = difftext(
                 old_text, new_text, colored=True, context_lines=3
             )
@@ -149,11 +150,10 @@ def autogen_init(
         else:
             print(new_text)
         return init_fpath, new_text
-    else:
-        logger.info('writing updated file: %r' % init_fpath)
-        # print(new_text)
-        with open(init_fpath, 'w') as file_:
-            file_.write(new_text)
+    logger.info("writing updated file: %r" % init_fpath)
+    # print(new_text)
+    with open(init_fpath, "w") as file_:
+        file_.write(new_text)
 
 
 def _rectify_to_modpath(modpath_or_name):
@@ -162,8 +162,9 @@ def _rectify_to_modpath(modpath_or_name):
     else:
         modpath = util_import.modname_to_modpath(modpath_or_name)
         if modpath is None:
-            raise ValueError('Invalid module {}'.format(modpath_or_name))
-    if basename(modpath) == '__init__.py':
+            msg = f"Invalid module {modpath_or_name}"
+            raise ValueError(msg)
+    if basename(modpath) == "__init__.py":
         modpath = dirname(modpath)
     return modpath
 
@@ -190,43 +191,40 @@ def static_init(
     modpath = _rectify_to_modpath(modpath_or_name)
 
     user_decl = parse_user_declarations(modpath)
-    logger.debug('user_decl = {}'.format(user_decl))
+    logger.debug(f"user_decl = {user_decl}")
     if submodules is not None:
-        user_decl['__submodules__'] = submodules
+        user_decl["__submodules__"] = submodules
 
-    submodules = user_decl.get('__submodules__', None)
-    explicit = user_decl.get('__explicit__', [])
-    private = user_decl.get('__private__', [])
-    protected = user_decl.get('__protected__', [])
-    external = user_decl.get('__external__', [])
-    ignore = user_decl.get('__ignore__', [])
+    submodules = user_decl.get("__submodules__", None)
+    explicit = user_decl.get("__explicit__", [])
+    private = user_decl.get("__private__", [])
+    protected = user_decl.get("__protected__", [])
+    external = user_decl.get("__external__", [])
+    ignore = user_decl.get("__ignore__", [])
 
-    #
-    module_property_names = user_decl.get('module_property_names', None)
+    module_property_names = user_decl.get("module_property_names", None)
 
     PARSE_USER_TEXT_FOR_OTHER_NAMES = True
     if PARSE_USER_TEXT_FOR_OTHER_NAMES:
-        from mkinit.formatting import _find_insert_points  # NOQA
+        from mkinit.formatting import _find_insert_points
 
-        init_fpath = join(modpath, '__init__.py')
+        init_fpath = join(modpath, "__init__.py")
         if exists(init_fpath):
-            with open(init_fpath, 'r') as file_:
+            with open(init_fpath) as file_:
                 lines = file_.readlines()
         else:
             lines = []
-        startline, endline, init_indent = _find_insert_points(lines)
-        user_text = ''.join(lines[:startline] + lines[endline:])
+        startline, endline, _init_indent = _find_insert_points(lines)
+        user_text = "".join(lines[:startline] + lines[endline:])
 
         try:
             user_attrs = _extract_attributes(source=user_text)
         except Exception:
-            logger.error('Unable to parse user attributes')
+            logger.error("Unable to parse user attributes")
             raise
 
         logger.debug(
-            'Updating explicit with variable names parsed from existing text: {}'.format(
-                user_attrs
-            )
+            f"Updating explicit with variable names parsed from existing text: {user_attrs}"
         )
         explicit.extend(user_attrs)
 
@@ -238,11 +236,11 @@ def static_init(
         ignore=ignore,
     )
 
-    logger.debug('Found {} imports'.format(len(imports)))
-    logger.debug('Found {} from_imports'.format(len(from_imports)))
-    logger.debug('modname={}'.format(modname))
+    logger.debug(f"Found {len(imports)} imports")
+    logger.debug(f"Found {len(from_imports)} from_imports")
+    logger.debug(f"modname={modname}")
 
-    initstr = _initstr(
+    return _initstr(
         modname,
         imports,
         from_imports,
@@ -252,7 +250,6 @@ def static_init(
         private=private,
         module_property_names=module_property_names,
     )
-    return initstr
 
 
 def parse_user_declarations(modpath):
@@ -264,42 +261,42 @@ def parse_user_declarations(modpath):
     # __submodules__?
     user_decl = {}
 
-    init_fpath = join(modpath, '__init__.py')
+    init_fpath = join(modpath, "__init__.py")
     if exists(init_fpath):
         if 1:
             user_decl = _parse_user_declarations2(init_fpath)
         else:
             # TODO: can remove this code if _parse_user_declarations2 works out
-            with open(init_fpath, 'r') as file:
+            with open(init_fpath) as file:
                 source = file.read()
             try:
                 # Include only these submodules
-                user_decl['__submodules__'] = static.parse_static_value(
-                    '__submodules__', source
+                user_decl["__submodules__"] = static.parse_static_value(
+                    "__submodules__", source
                 )
             except NameError:
                 try:
-                    user_decl['__submodules__'] = static.parse_static_value(
-                        '__SUBMODULES__', source
+                    user_decl["__submodules__"] = static.parse_static_value(
+                        "__SUBMODULES__", source
                     )
                 except NameError:
                     pass
                 else:
                     warnings.warn(
-                        'Use __submodules__, __SUBMODULES__ is depricated',
+                        "Use __submodules__, __SUBMODULES__ is depricated",
                         DeprecationWarning,
                     )
 
             try:
-                user_decl['__explicit__'] = static.parse_static_value(
-                    '__extra_all__', source
+                user_decl["__explicit__"] = static.parse_static_value(
+                    "__extra_all__", source
                 )
             except NameError:
                 pass
 
             try:
-                user_decl['__external__'] = static.parse_static_value(
-                    '__external__', source
+                user_decl["__external__"] = static.parse_static_value(
+                    "__external__", source
                 )
             except NameError:
                 pass
@@ -307,48 +304,48 @@ def parse_user_declarations(modpath):
             try:
                 # Add custom explicitly defined names to this, and they will be
                 # automatically added to the __all__ variable.
-                user_decl['__explicit__'] = static.parse_static_value(
-                    '__explicit__', source
+                user_decl["__explicit__"] = static.parse_static_value(
+                    "__explicit__", source
                 )
             except NameError:
                 pass
 
             try:
                 # Protected items are exposed, but their attributes are not
-                user_decl['__protected__'] = static.parse_static_value(
-                    '__protected__', source
+                user_decl["__protected__"] = static.parse_static_value(
+                    "__protected__", source
                 )
             except NameError:
                 pass
 
             try:
                 # Private items and their attributes are not exposed
-                user_decl['__private__'] = static.parse_static_value(
-                    '__private__', source
+                user_decl["__private__"] = static.parse_static_value(
+                    "__private__", source
                 )
             except NameError:
                 pass
 
             try:
                 # Protected modules are exposed, but their attributes are not
-                user_decl['__protected__'] = static.parse_static_value(
-                    '__protected__', source
+                user_decl["__protected__"] = static.parse_static_value(
+                    "__protected__", source
                 )
             except NameError:
                 pass
 
             try:
                 # Private modules and their attributes are not exposed
-                user_decl['__private__'] = static.parse_static_value(
-                    '__private__', source
+                user_decl["__private__"] = static.parse_static_value(
+                    "__private__", source
                 )
             except NameError:
                 pass
 
             try:
                 # Ignored modules and their attributes are not exposedmodules
-                user_decl['__ignore__'] = static.parse_static_value(
-                    '__ignore__', source
+                user_decl["__ignore__"] = static.parse_static_value(
+                    "__ignore__", source
                 )
             except NameError:
                 pass
@@ -398,11 +395,11 @@ def _parse_user_declarations2(init_fpath):
     init_fpath = pathlib.Path(init_fpath)
 
     user_decl_main_to_aliases = {
-        '__submodules__': ['__SUBMODULES__'],
-        '__explicit__': ['__extra_all__'],
-        '__protected__': [],
-        '__private__': [],
-        '__ignore__': [],
+        "__submodules__": ["__SUBMODULES__"],
+        "__explicit__": ["__extra_all__"],
+        "__protected__": [],
+        "__private__": [],
+        "__ignore__": [],
     }
 
     user_decl_name_to_main = {}
@@ -425,10 +422,10 @@ def _parse_user_declarations2(init_fpath):
             self.generic_visit(node)
             self._current_classname = None
 
-            if node.name == '__module_properties__':
+            if node.name == "__module_properties__":
                 # If we detect a special class named __module_properties__ we
                 # will inject its properties into our module namespace.
-                self.user_decl['module_property_names'] = self._classmethods[
+                self.user_decl["module_property_names"] = self._classmethods[
                     node.name
                 ]
 
@@ -438,16 +435,16 @@ def _parse_user_declarations2(init_fpath):
 
         def visit_Assign(self, node):
             for target in node.targets:
-                target_id = getattr(target, 'id', None)
+                target_id = getattr(target, "id", None)
                 if target_id in user_decl_name_to_main:
                     main_id = user_decl_name_to_main[target_id]
                     if main_id != target_id:
                         # TODO: come up with a schedule to deprecate old
                         # aliases.
                         warnings.warn(
-                            f'Use {main_id} instead, {target_id} is deprecated as a '
-                            'mkinit attribute and may no longer be respected in '
-                            'future versions.',
+                            f"Use {main_id} instead, {target_id} is deprecated as a "
+                            "mkinit attribute and may no longer be respected in "
+                            "future versions.",
                             DeprecationWarning,
                         )
 
@@ -464,8 +461,7 @@ def _parse_user_declarations2(init_fpath):
     visitor = UserDeclarationVisiter()
     visitor.visit(pt)
 
-    user_decl = visitor.user_decl
-    return user_decl
+    return visitor.user_decl
 
 
 def _find_local_submodules(pkgpath):
@@ -483,14 +479,15 @@ def _find_local_submodules(pkgpath):
     # Find all the children modules in this package (non recursive)
     pkgname = util_import.modpath_to_modname(pkgpath, check=False)
     if pkgname is None:
-        raise Exception('cannot import {!r}'.format(pkgpath))
+        msg = f"cannot import {pkgpath!r}"
+        raise Exception(msg)
     # TODO:
     # DOES THIS NEED A REWRITE TO HANDLE THE CASE WHEN __init__ does not exist?
 
     try:
         # Hack to grab the root package
         a, b = util_import.split_modpath(pkgpath, check=False)
-        root_pkgpath = join(a, b.replace('\\', '/').split('/')[0])
+        root_pkgpath = join(a, b.replace("\\", "/").split("/")[0])
     except ValueError:
         # Assume that the path is the root package if split_modpath fails
         root_pkgpath = pkgpath
@@ -502,7 +499,7 @@ def _find_local_submodules(pkgpath):
             sub_modpath, check=False, relativeto=root_pkgpath
         )
         rel_modname = sub_modname[len(pkgname) + 1 :]
-        if not rel_modname or rel_modname.startswith('_'):
+        if not rel_modname or rel_modname.startswith("_"):
             # Skip private modules
             pass
         else:
@@ -522,16 +519,17 @@ def _extract_attributes(modpath=None, source=None, respect_all=True):
     if source is None:
         try:
             assert modpath is not None
-            with open(modpath, 'r', encoding='utf8') as file:
+            with open(modpath, encoding="utf8") as file:
                 source = file.read()
         except Exception as ex:  # nocover
-            raise IOError(
-                'Error reading {}, caused by {}'.format(modpath, repr(ex))
+            msg = f"Error reading {modpath}, caused by {ex!r}"
+            raise OSError(
+                msg
             )
     valid_attrs = None
     if respect_all:  # pragma: nobranch
         try:
-            valid_attrs = static.parse_static_value('__all__', source)
+            valid_attrs = static.parse_static_value("__all__", source)
         except NameError:
             pass
     if valid_attrs is None:
@@ -541,14 +539,14 @@ def _extract_attributes(modpath=None, source=None, respect_all=True):
         try:
             top_level = TopLevelVisitor.parse(source)
         except SyntaxError as ex:
-            msg = 'modpath={} has bad syntax: {}'.format(modpath, ex)
+            msg = f"modpath={modpath} has bad syntax: {ex}"
             raise SyntaxError(msg)
         attrnames = top_level.attrnames
         # list of names we wont export by default
         invalid_callnames = dir(builtins)
         valid_attrs = []
         for attr in attrnames:
-            if attr.startswith('_'):
+            if attr.startswith("_"):
                 continue
             if attr in invalid_callnames:  # nocover
                 continue
@@ -601,7 +599,7 @@ def _static_parse_imports(
         >>> print('from_imports = {!r}'.format(from_imports))
         >>> # assert 'autogen_init' in submodules
     """
-    logger.debug('Parse static submodules: {}'.format(modpath))
+    logger.debug(f"Parse static submodules: {modpath}")
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = util_import.modpath_to_modname(modpath, check=False)
     if submodules is None:
@@ -609,22 +607,23 @@ def _static_parse_imports(
         # TODO: refactor to reduce code size and collapse cases
         # TODO: could pull in pattern matching generalization from xdev and
         # allow regex or glob-type matches.
-        logger.debug('Parsing implicit submodules!')
+        logger.debug("Parsing implicit submodules!")
         import_paths = dict(_find_local_submodules(modpath))
-        submodules = {k: None for k in sorted(import_paths.keys())}
+        submodules = dict.fromkeys(sorted(import_paths.keys()))
         # logger.debug('Found {} import paths'.format(len(import_paths)))
         # logger.debug('Found {} submodules'.format(len(submodules)))
     else:
-        logger.debug('Given explicit submodules')
+        logger.debug("Given explicit submodules")
         if modname is None:
-            raise AssertionError('modname is None')
+            msg = "modname is None"
+            raise AssertionError(msg)
 
         if isinstance(submodules, list):
             # Make a dict mapping module names to None
-            submodules = {m: None for m in submodules}
+            submodules = dict.fromkeys(submodules)
 
         # Determine which submodules were given as a pattern
-        implicit_submodules = {k: v for k, v in submodules.items() if '*' in k}
+        implicit_submodules = {k: v for k, v in submodules.items() if "*" in k}
         if implicit_submodules:
             submodule_patterns = submodules.copy()
             explicit_keys = set(submodule_patterns) - set(implicit_submodules)
@@ -648,7 +647,7 @@ def _static_parse_imports(
 
         import_paths = {
             m: util_import.modname_to_modpath(
-                modname + '.' + m, hide_init=False
+                modname + "." + m, hide_init=False
             )
             for m in submodules.keys()
         }
@@ -658,19 +657,20 @@ def _static_parse_imports(
             if oldval is None:
                 candidates = [
                     join(modpath, m),
-                    join(modpath, m) + '.py',
+                    join(modpath, m) + ".py",
                 ]
                 for newval in candidates:
                     if exists(newval):
                         import_paths[m] = newval
                         break
-    imports = ['.' + m for m in submodules.keys()]
+    imports = ["." + m for m in submodules.keys()]
 
     def _lookup_extractable_attrs(rel_modname):
         sub_modpath = import_paths[rel_modname]
         if sub_modpath is None:
+            msg = f"Failed to submodule lookup {rel_modname!r}"
             raise Exception(
-                'Failed to submodule lookup {!r}'.format(rel_modname)
+                msg
             )
         try:
             extracted_attrs = _extract_attributes(
@@ -678,7 +678,7 @@ def _static_parse_imports(
             )
         except SyntaxError as ex:
             warnings.warn(
-                'Failed to parse module {!r}, ex = {!r}'.format(rel_modname, ex)
+                f"Failed to parse module {rel_modname!r}, ex = {ex!r}"
             )
             extracted_attrs = None
         return extracted_attrs
@@ -693,10 +693,10 @@ def _static_parse_imports(
                 if ignore:
                     ignore = set(ignore)
                     valid_attrs = [v for v in valid_attrs if v not in ignore]
-                from_imports.append(('.' + rel_modname, sorted(valid_attrs)))
+                from_imports.append(("." + rel_modname, sorted(valid_attrs)))
         else:
             # Determine which attrs were given as a pattern
-            implicit_attrs = {a for a in attr_list if '*' in a}
+            implicit_attrs = {a for a in attr_list if "*" in a}
             if implicit_attrs:
                 # pattern matching on implicit attrs
                 explicit_attrs = set(attr_list) - implicit_attrs
@@ -720,7 +720,7 @@ def _static_parse_imports(
             if ignore:
                 ignore = set(ignore)
                 valid_attrs = [v for v in valid_attrs if v not in ignore]
-            from_imports.append(('.' + rel_modname, valid_attrs))
+            from_imports.append(("." + rel_modname, valid_attrs))
 
     if external:
         for ext_modname in external:
@@ -728,8 +728,9 @@ def _static_parse_imports(
                 ext_modname, hide_init=False
             )
             if ext_modpath is None:
+                msg = f"Failed to external lookup {ext_modpath!r}"
                 raise Exception(
-                    'Failed to external lookup {!r}'.format(ext_modpath)
+                    msg
                 )
             try:
                 valid_attrs = _extract_attributes(
@@ -737,7 +738,7 @@ def _static_parse_imports(
                 )
             except SyntaxError as ex:
                 warnings.warn(
-                    'Failed to parse {!r}, ex = {!r}'.format(ext_modname, ex)
+                    f"Failed to parse {ext_modname!r}, ex = {ex!r}"
                 )
             else:
                 from_imports.append((ext_modname, sorted(valid_attrs)))
