@@ -237,7 +237,7 @@ Running ``mkint --help`` displays:
 
 
     usage: python -m mkinit [-h] [--dry] [-i] [--diff] [--noattrs] [--nomods] [--noall] [--relative] [--lazy | --lazy_loader] [--black] [--lazy_boilerplate LAZY_BOILERPLATE] [--recursive] [--norespect_all]
-                            [--verbose [VERBOSE]] [--version]
+                            [--source-order] [--verbose [VERBOSE]] [--version]
                             [modname_or_path]
 
     Autogenerate an `__init__.py` that exposes a top-level API.
@@ -287,6 +287,11 @@ Running ``mkint --help`` displays:
                             Code that defines a custom lazy_import callable
       --recursive           If specified, runs mkinit on all subpackages in a package
       --norespect_all       if False does not respect __all__ attributes of submodules when parsing
+      --source-order        Preserve the order in which symbols appear in their source module
+                            (and the order of submodules in __submodules__) instead of sorting
+                            names alphabetically. Note that submodules discovered implicitly
+                            (i.e. when __submodules__ is unspecified) are still ordered
+                            alphabetically.
       --verbose [VERBOSE]   Verbosity level
       --version             print version and exit
 

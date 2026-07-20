@@ -407,7 +407,8 @@ def _initstr(
         exposed_from_imports = raw_from_imports
     elif protected:
         exposed_from_imports = [
-            (m, set(sub) & protected) for m, sub in raw_from_imports
+            (m, [a for a in sub if a in protected])
+            for m, sub in raw_from_imports
         ]
     exposed_from_imports = [(m, sub) for m, sub in exposed_from_imports if sub]
     exposed_all.update(

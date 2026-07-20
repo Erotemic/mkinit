@@ -172,7 +172,9 @@ def main():
         help=(
             'Preserve the order in which symbols appear in their source '
             'module (and the order of submodules in __submodules__) instead '
-            'of sorting names alphabetically'
+            'of sorting names alphabetically. Note that submodules '
+            'discovered implicitly (i.e. when __submodules__ is unspecified) '
+            'are still ordered alphabetically.'
         ),
     )
 
