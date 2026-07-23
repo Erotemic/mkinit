@@ -164,6 +164,21 @@ def main():
     )
 
     parser.add_argument(
+        '--source-order',
+        '--source_order',
+        dest='source_order',
+        action='store_true',
+        default=False,
+        help=(
+            'Preserve the order in which symbols appear in their source '
+            'module (and the order of submodules in __submodules__) instead '
+            'of sorting names alphabetically. Note that submodules '
+            'discovered implicitly (i.e. when __submodules__ is unspecified) '
+            'are still ordered alphabetically.'
+        ),
+    )
+
+    parser.add_argument(
         '--verbose', nargs='?', default=0, type=int, help='Verbosity level'
     )
 
@@ -221,6 +236,7 @@ def main():
         'lazy_loader_typed': ns['lazy_loader_typed'],
         'lazy_boilerplate': ns['lazy_boilerplate'],
         'use_black': ns['black'],
+        'source_order': ns['source_order'],
     }
 
     diff = ns['diff']

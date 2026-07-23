@@ -39,6 +39,7 @@ def _ensure_options(given_options=None):
         'lazy_loader_typed': False,
         'lazy_boilerplate': None,
         'use_black': False,
+        'source_order': False,
     }
     options = default_options.copy()
     for k in given_options.keys():
@@ -406,7 +407,8 @@ def _initstr(
         exposed_from_imports = raw_from_imports
     elif protected:
         exposed_from_imports = [
-            (m, set(sub) & protected) for m, sub in raw_from_imports
+            (m, [a for a in sub if a in protected])
+            for m, sub in raw_from_imports
         ]
     exposed_from_imports = [(m, sub) for m, sub in exposed_from_imports if sub]
     exposed_all.update(
@@ -422,8 +424,29 @@ def _initstr(
     if module_property_names:
         exposed_all.update(module_property_names)
 
-    exposed_all = sorted(exposed_all)
-    exposed_submodules = sorted(exposed_submodules)
+    if options.get('source_order', False):
+        # Preserve the order in which submodules and their attributes appear,
+        # following the order of submodules in __submodules__ (reflected by the
+        # `imports` order) and the source order of names within each submodule.
+        ordered_names = list(submod_to_import.keys())
+        for _, _sub in exposed_from_imports:
+            ordered_names.extend(_sub)
+        ordered_names.extend(explicit)
+        if module_property_names:
+            ordered_names.extend(module_property_names)
+
+        _seen = set()
+        exposed_all = [
+            n
+            for n in ordered_names
+            if n in exposed_all and not (n in _seen or _seen.add(n))
+        ]
+        exposed_submodules = [
+            m for m in submod_to_import.keys() if m in exposed_submodules
+        ]
+    else:
+        exposed_all = sorted(exposed_all)
+        exposed_submodules = sorted(exposed_submodules)
 
     def append_part(new_part):
         """appends a new part if it is nonempty"""
@@ -530,7 +553,7 @@ def _initstr(
                 """
                 ).rstrip()
             )
-        exports_repr = ["'{}'".format(e) for e in sorted(exposed_all)]
+        exports_repr = ["'{}'".format(e) for e in exposed_all]
         rhs_body = ', '.join(exports_repr)
         packed = _packed_rhs_text('__all__ = [', rhs_body + ']')
         append_part(packed)

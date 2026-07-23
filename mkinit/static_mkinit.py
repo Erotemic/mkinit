@@ -189,6 +189,8 @@ def static_init(
     """
     modpath = _rectify_to_modpath(modpath_or_name)
 
+    options = _ensure_options(options)
+
     user_decl = parse_user_declarations(modpath)
     logger.debug('user_decl = {}'.format(user_decl))
     if submodules is not None:
@@ -236,6 +238,7 @@ def static_init(
         respect_all=respect_all,
         external=external,
         ignore=ignore,
+        source_order=options['source_order'],
     )
 
     logger.debug('Found {} imports'.format(len(imports)))
@@ -557,7 +560,12 @@ def _extract_attributes(modpath=None, source=None, respect_all=True):
 
 
 def _static_parse_imports(
-    modpath, submodules=None, external=None, respect_all=True, ignore=None
+    modpath,
+    submodules=None,
+    external=None,
+    respect_all=True,
+    ignore=None,
+    source_order=False,
 ):
     """
     Search local submodules for names that should be exposed in the top-level
@@ -601,6 +609,10 @@ def _static_parse_imports(
         >>> print('from_imports = {!r}'.format(from_imports))
         >>> # assert 'autogen_init' in submodules
     """
+    def _ordered(attrs):
+        """Sort alphabetically unless source order is requested"""
+        return list(attrs) if source_order else sorted(attrs)
+
     logger.debug('Parse static submodules: {}'.format(modpath))
     # FIXME: handle the case where the __init__.py file doesn't exist yet
     modname = util_import.modpath_to_modname(modpath, check=False)
@@ -693,7 +705,7 @@ def _static_parse_imports(
                 if ignore:
                     ignore = set(ignore)
                     valid_attrs = [v for v in valid_attrs if v not in ignore]
-                from_imports.append(('.' + rel_modname, sorted(valid_attrs)))
+                from_imports.append(('.' + rel_modname, _ordered(valid_attrs)))
         else:
             # Determine which attrs were given as a pattern
             implicit_attrs = {a for a in attr_list if '*' in a}
@@ -714,7 +726,19 @@ def _static_parse_imports(
                 resolved_attrs = set()
                 resolved_attrs.update(explicit_attrs)
                 resolved_attrs.update(matched_attrs)
-                attr_list = sorted(resolved_attrs)
+                if source_order and extracted_attrs is not None:
+                    # Order by the position each name appears in the source,
+                    # appending any explicit names not found in the module.
+                    in_source = [
+                        a for a in extracted_attrs if a in resolved_attrs
+                    ]
+                    leftover = [
+                        a for a in attr_list if a in resolved_attrs
+                        and a not in extracted_attrs
+                    ]
+                    attr_list = in_source + leftover
+                else:
+                    attr_list = sorted(resolved_attrs)
 
             valid_attrs = attr_list
             if ignore:
@@ -740,6 +764,6 @@ def _static_parse_imports(
                     'Failed to parse {!r}, ex = {!r}'.format(ext_modname, ex)
                 )
             else:
-                from_imports.append((ext_modname, sorted(valid_attrs)))
+                from_imports.append((ext_modname, _ordered(valid_attrs)))
 
     return modname, imports, from_imports

@@ -689,6 +689,53 @@ def test_ignore_filtering():
         assert 'PUBLIC_VAR' in import_line[0], 'PUBLIC_VAR should be included'
 
 
+def test_source_order():
+    """Test that source_order preserves declaration order instead of sorting."""
+    import re
+
+    import mkinit
+
+    cache_dpath = ub.Path.appdir('mkinit/tests').ensuredir()
+    root = ub.ensuredir(join(cache_dpath, 'test_source_order_pkg'))
+    ub.delete(root)
+    ub.ensuredir(root)
+
+    # Names are deliberately declared in non-alphabetical order
+    ub.Path(join(root, 'zebra.py')).write_text(
+        'def zulu(): pass\ndef alpha(): pass\ndef mike(): pass\n'
+    )
+    ub.Path(join(root, 'apple.py')).write_text(
+        'def yankee(): pass\ndef bravo(): pass\n'
+    )
+    ub.Path(join(root, '__init__.py')).write_text(
+        "__submodules__ = ['zebra', 'apple']\n"
+    )
+
+    def parse_all(text):
+        match = re.search(r'__all__ = \[(.*?)\]', text, flags=re.DOTALL)
+        assert match is not None, 'expected an __all__ variable'
+        return [
+            part.strip().strip('\'"')
+            for part in match.group(1).split(',')
+            if part.strip()
+        ]
+
+    # Default behavior alphabetizes everything
+    text = mkinit.static_init(root)
+    assert parse_all(text) == [
+        'alpha', 'apple', 'bravo', 'mike', 'yankee', 'zebra', 'zulu',
+    ]
+
+    # source_order follows __submodules__ order and in-module source order
+    text = mkinit.static_init(root, options={'source_order': True})
+    assert parse_all(text) == [
+        'zebra', 'apple', 'zulu', 'alpha', 'mike', 'yankee', 'bravo',
+    ]
+    assert 'import (zulu, alpha, mike,)' in text
+    assert 'import (yankee, bravo,)' in text
+    assert text.index('import zebra') < text.index('import apple')
+
+
 if __name__ == '__main__':
     """
     CommandLine:
