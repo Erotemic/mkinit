@@ -20,6 +20,8 @@ url="https://github.com/Erotemic/mkinit"
 license = "Apache 2"
 dev_status = "stable"
 typing = true
+use_setup_py = false
+
 [tool.xcookie.entry_points]
 # the console_scripts entry point creates the xdoctest executable
 console_scripts = [
