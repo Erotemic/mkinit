@@ -364,8 +364,8 @@ def _initstr(
     submodules = set(submod_to_import.keys())
     protected = set(protected)
     private = set(private)
-    exposed_submodules = set()
-    exposed_all = set()
+    exposed_submodule_set: set[str] = set()
+    exposed_name_set: set[str] = set()
 
     from fnmatch import fnmatch
 
@@ -388,11 +388,11 @@ def _initstr(
     protected_submodules = non_private_submodules & protected
 
     if options.get('with_mods', True):
-        exposed_submodules.update(non_private_submodules)
-        exposed_all.update(non_private_submodules)
+        exposed_submodule_set.update(non_private_submodules)
+        exposed_name_set.update(non_private_submodules)
 
-    exposed_submodules.update(protected_submodules)
-    exposed_all.update(protected_submodules)
+    exposed_submodule_set.update(protected_submodules)
+    exposed_name_set.update(protected_submodules)
 
     def _pp_matches(x):
         # TODO: standardize how explicit vs submodules are handled
@@ -411,7 +411,7 @@ def _initstr(
             for m, sub in raw_from_imports
         ]
     exposed_from_imports = [(m, sub) for m, sub in exposed_from_imports if sub]
-    exposed_all.update(
+    exposed_name_set.update(
         {
             n
             for m, sub in exposed_from_imports
@@ -419,10 +419,10 @@ def _initstr(
             if not _private_matches(n)
         }
     )
-    exposed_all.update(explicit)
+    exposed_name_set.update(explicit)
 
     if module_property_names:
-        exposed_all.update(module_property_names)
+        exposed_name_set.update(module_property_names)
 
     if options.get('source_order', False):
         # Preserve the order in which submodules and their attributes appear,
@@ -436,14 +436,14 @@ def _initstr(
             ordered_names.extend(module_property_names)
 
         exposed_all = [
-            n for n in dict.fromkeys(ordered_names) if n in exposed_all
+            n for n in dict.fromkeys(ordered_names) if n in exposed_name_set
         ]
         exposed_submodules = [
-            m for m in submod_to_import.keys() if m in exposed_submodules
+            m for m in submod_to_import.keys() if m in exposed_submodule_set
         ]
     else:
-        exposed_all = sorted(exposed_all)
-        exposed_submodules = sorted(exposed_submodules)
+        exposed_all = sorted(exposed_name_set)
+        exposed_submodules = sorted(exposed_submodule_set)
 
     def append_part(new_part):
         """appends a new part if it is nonempty"""
