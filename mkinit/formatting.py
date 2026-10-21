@@ -232,6 +232,39 @@ def _indent(text: str, indent: str = '    ') -> str:
     return new_text
 
 
+def _format_export_literal(
+    value: list[str] | dict[str, list[str]] | set[str],
+    *,
+    as_set: bool = False,
+    multiline: bool = True,
+) -> str:
+    """Render the string-only containers used in generated lazy imports.
+
+    Unlike a general-purpose pretty printer, these values are always names:
+    lists of strings, dictionaries mapping names to lists, or sets of names.
+    Preserve list/dict ordering and sort sets for reproducible output.
+    """
+    if isinstance(value, dict):
+        left, right = '{', '}'
+        items = [
+            f'{name!r}: {_format_export_literal(names)}'
+            for name, names in value.items()
+        ]
+    elif isinstance(value, set):
+        left, right = '{', '}'
+        items = [repr(name) for name in sorted(value)]
+    else:
+        left, right = ('{', '}') if as_set else ('[', ']')
+        items = [repr(name) for name in value]
+
+    if not items:
+        return 'set()' if as_set or isinstance(value, set) else left + right
+    if not multiline:
+        return left + ', '.join(items) + right
+    body = ',\n'.join(_indent(item) for item in items)
+    return left + '\n' + body + ',\n' + right
+
+
 def _initstr(
     modname: str,
     imports: list[str],
@@ -467,19 +500,13 @@ def _initstr(
         else:
             submodules = set()
 
-        # Currently this is the only use of ubelt, but urepr
-        # is easier to use in testing than pprint, so perhaps
-        # we can remove complexity and just use ubelt elsewhere
-        import ubelt as ub
-
-        # exposed_submodules = set(exposed_submodules)
-        submodules_repr = ub.urepr(exposed_submodules).replace('\n', '\n    ')
-        # The generated lazy loader expects a set literal.
-        submodules_repr = submodules_repr.replace('[', '{').replace(']', '}')
+        submodules_repr = _format_export_literal(
+            exposed_submodules, as_set=True
+        ).replace('\n', '\n    ')
 
         initstr = template.format(
             submodules=submodules_repr,
-            submod_attrs=ub.urepr(submod_attrs).replace('\n', '\n    '),
+            submod_attrs=_format_export_literal(submod_attrs).replace('\n', '\n    '),
         )
 
         # print("options = {!r}".format(options))
@@ -568,17 +595,12 @@ def _make_lazy_boilerplate(exposed_submodules: list[str], exposed_from_imports: 
             submod = submod.lstrip('.')
             submod_attrs[submod] = attrs
 
-    # Currently this is the only use of ubelt, but urepr
-    # is easier to use in testing than pprint, so perhaps
-    # we can remove complexity and just use ubelt elsewhere
-    import ubelt as ub
-
-    # exposed_submodules = set(exposed_submodules)
-    submodules_text = ub.urepr(exposed_submodules).replace('\n', '\n    ')
-    # The generated lazy loader expects a set literal.
-    submodules_text = submodules_text.replace('[', '{').replace(']', '}')
-
-    submod_attr_text = ub.urepr(submod_attrs).replace('\n', '\n    ')
+    submodules_text = _format_export_literal(
+        exposed_submodules, as_set=True
+    ).replace('\n', '\n    ')
+    submod_attr_text = _format_export_literal(submod_attrs).replace(
+        '\n', '\n    '
+    )
 
     lazy_init_text = template.format(
         submodules_text=submodules_text,
@@ -619,8 +641,6 @@ def _make_our_lazy_boilerplate(module_property_names: list[str] | None = None) -
     # still be parsed in older versions of python.
     # NOTE: We differentiate between submodule and submodule_attrs, as
     # the keys in submodule_attrs aren't added by default.
-    import ubelt as ub
-
     lines = {}
     lines['def'] = codeblock(
         """
@@ -640,7 +660,9 @@ def _make_our_lazy_boilerplate(module_property_names: list[str] | None = None) -
     )
 
     if module_property_names is not None:
-        name_text = ub.urepr(set(module_property_names), nl=0)
+        name_text = _format_export_literal(
+            set(module_property_names), multiline=False
+        )
         lines['body2'] = codeblock(
             f"""
             module_property_names = {name_text}

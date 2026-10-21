@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Replace `ubelt.urepr` with a small formatter for generated lazy-import
+  literals. `ubelt` is no longer a runtime dependency; tests and docs may
+  still use it as a development dependency.
 * Use Python 3.10+ AST statement positions to find insertion boundaries
   instead of repeatedly tokenizing source. This simplifies the implementation
   and improves insertion-point performance.
