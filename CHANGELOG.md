@@ -7,9 +7,31 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version: 1.3.0 - Unreleased
 
+### Added
+
+* Added inline type annotations throughout the package while retaining the
+  `py.typed` marker for downstream type checkers.
+
 ### Changed
 
-* Dropped support for Python 3.8 and 3.9.
+* Dropped support for Python 3.8 and 3.9; Python 3.10 is now the minimum.
+* Replaced `setup.py` with declarative packaging metadata in `pyproject.toml`.
+* Refreshed the xcookie-generated test and release workflows, including the
+  configuration for trusted publishing to TestPyPI and PyPI.
+* Simplified the optional dependency groups. The `runtime` and `*-strict`
+  extras are no longer provided, and `all` now selects the optional dependency
+  group rather than the former aggregate requirements. Runtime dependencies
+  remain part of the base installation.
+
+### Removed
+
+* Removed separate `.pyi` stubs in favor of inline annotations. Vendored
+  tokenizer code remains excluded from project type and lint checks.
+
+### Fixed
+
+* Made extension-module path-resolution doctests independent of whether a
+  particular CPython extension is available in the testing environment.
 
 
 ## Version: 1.2.0 - Released 2025-12-02
