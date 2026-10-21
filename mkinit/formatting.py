@@ -435,11 +435,8 @@ def _initstr(
         if module_property_names:
             ordered_names.extend(module_property_names)
 
-        _seen = set()
         exposed_all = [
-            n
-            for n in ordered_names
-            if n in exposed_all and not (n in _seen or _seen.add(n))
+            n for n in dict.fromkeys(ordered_names) if n in exposed_all
         ]
         exposed_submodules = [
             m for m in submod_to_import.keys() if m in exposed_submodules
@@ -840,7 +837,7 @@ def _packed_rhs_text(lhs_text, rhs_text):
 
         FIX_FORMAT = 1
         if FIX_FORMAT:
-            regex = r'\s*'.join(list(map(re.escape, lhs_text.split(' '))))
+            regex = r'\s*'.join([re.escape(p) for p in lhs_text.split(' ')])
             assert re.match(regex, lhs_text)
             match = re.search(regex, packstr)
             assert match is not None
