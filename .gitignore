@@ -91,3 +91,5 @@ ENV/
 .pytest_cache
 
 docs/source/mkinit.*.rst
+*.tar.gz
+git-of-theseus

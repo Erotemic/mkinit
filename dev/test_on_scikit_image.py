@@ -6,7 +6,7 @@ mkdir -p $HOME/tmp/lazy-init-test
 cd $HOME/tmp/lazy-init-test
 git clone https://github.com/scikit-image/scikit-image.git
 cd $HOME/tmp/lazy-init-test/scikit-image
-python setup.py build_ext --inplace
+python -m pip install -e .
 
 
 python -c "import skimage.filters; print(skimage.filters.__file__)"

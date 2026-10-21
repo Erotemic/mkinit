@@ -1,5 +1,8 @@
+from __future__ import annotations
+
 import ast
 import sys
+from collections.abc import Iterable
 
 __all__ = [
     'TopLevelVisitor',
@@ -12,22 +15,22 @@ IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
 IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
 
 
-class oset(dict):
+class oset(dict[str, None]):
     """
     Minimal orderedset
     """
 
-    def __init__(self, iterable=()):
+    def __init__(self, iterable: Iterable[str] = ()) -> None:
         super().__init__((item, None) for item in iterable)
 
-    def add(self, item):
+    def add(self, item: str) -> None:
         self[item] = None
 
-    def discard(self, item):
+    def discard(self, item: str) -> None:
         self.pop(item, None)
 
     @classmethod
-    def intersection(cls, *sets_):
+    def intersection(cls, *sets_: Iterable[str]) -> oset:
         if not sets_:
             return cls()
         first, *rest = sets_
@@ -139,12 +142,12 @@ class TopLevelVisitor(ast.NodeVisitor):
         attrnames = ['BAR', 'BAZ', 'FOO']
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         super(TopLevelVisitor, self).__init__()
         self.attrnames = oset()
         self.removed = oset()  # keep track of which variables were deleted
 
-    def _register(self, name):
+    def _register(self, name: str | list[str] | tuple[str, ...] | oset) -> None:
         if isinstance(name, (list, tuple, oset)):
             for n in name:
                 self._register(n)
@@ -153,14 +156,14 @@ class TopLevelVisitor(ast.NodeVisitor):
                 self.attrnames.add(name)
                 self.removed.discard(name)
 
-    def _unregister(self, name):
+    def _unregister(self, name: str) -> None:
         if name in self.attrnames:
             self.attrnames.discard(name)
             self.removed.add(name)
 
     @classmethod
-    def parse(TopLevelVisitor, source):
-        self = TopLevelVisitor()
+    def parse(cls, source: str) -> TopLevelVisitor:
+        self = cls()
 
         source_utf8 = source.encode('utf8')
         pt = ast.parse(source_utf8)
@@ -171,29 +174,29 @@ class TopLevelVisitor(ast.NodeVisitor):
     # def visit(self, node):
     #     super(TopLevelVisitor, self).visit(node)
 
-    def visit_FunctionDef(self, node):
+    def visit_FunctionDef(self, node: ast.FunctionDef) -> None:
         self._register(node.name)
 
-    def visit_AsyncFunctionDef(self, node):
+    def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
         self._register(node.name)
 
-    def visit_ClassDef(self, node):
+    def visit_ClassDef(self, node: ast.ClassDef) -> None:
         self._register(node.name)
 
-    def visit_Assign(self, node):
+    def visit_Assign(self, node: ast.Assign) -> None:
         for target in node.targets:
-            if hasattr(target, 'id'):
+            if isinstance(target, ast.Name):
                 self._register(target.id)
         # TODO: assign constants to self.const_lookup?
         self.generic_visit(node)
 
-    def visit_AnnAssign(self, node):
+    def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
         """Handle annotated assignments like `VAR: Type = value`"""
-        if hasattr(node.target, 'id'):
+        if isinstance(node.target, ast.Name):
             self._register(node.target.id)
         self.generic_visit(node)
 
-    def visit_If(self, node):
+    def visit_If(self, node: ast.If) -> None:
         """
         Note:
             elif clauses don't have a special representation in the AST, but
@@ -201,29 +204,20 @@ class TopLevelVisitor(ast.NodeVisitor):
             previous one.
         """
         if isinstance(node.test, ast.Compare):  # pragma: nobranch
-            try:
-                if IS_PY_GE_312:
-                    if all(
-                        [
-                            isinstance(node.test.ops[0], ast.Eq),
-                            node.test.left.id == '__name__',
-                            node.test.comparators[0].value == '__main__',
-                        ]
-                    ):
-                        # Ignore main block
-                        return
-                else:
-                    if all(
-                        [
-                            isinstance(node.test.ops[0], ast.Eq),
-                            node.test.left.id == '__name__',
-                            node.test.comparators[0].s == '__main__',
-                        ]
-                    ):
-                        # Ignore main block
-                        return
-            except Exception:  # nocover
-                pass
+            comparison = node.test
+            if comparison.ops and comparison.comparators:
+                operator = comparison.ops[0]
+                lhs = comparison.left
+                rhs = comparison.comparators[0]
+                if (
+                    isinstance(operator, ast.Eq)
+                    and isinstance(lhs, ast.Name)
+                    and lhs.id == '__name__'
+                    and isinstance(rhs, ast.Constant)
+                    and rhs.value == '__main__'
+                ):
+                    # Ignore the module's main block.
+                    return
 
         # TODO: handled deleted attributes?
         # Find definitions from conditionals that always accept or
@@ -276,7 +270,7 @@ class TopLevelVisitor(ast.NodeVisitor):
                 # common = set.intersection(*map(set, required))
             self._register(sorted(common))
 
-    def visit_Try(self, node):
+    def visit_Try(self, node: ast.Try) -> None:
         """
         We only care about checking if (a) a variable is defined in the main
         body, and (b) that the variable is defined in all except blacks that
@@ -306,14 +300,14 @@ class TopLevelVisitor(ast.NodeVisitor):
     # for python2
     visit_TryExcept = visit_Try
 
-    def visit_Delete(self, node):
+    def visit_Delete(self, node: ast.Delete) -> None:
         for item in node.targets:
             if isinstance(item, ast.Name):
                 self._unregister(item.id)
         self.generic_visit(node)
 
 
-def unpack_if_nodes(if_node):
+def unpack_if_nodes(if_node: ast.If) -> tuple[ast.If, list[ast.If], list[ast.stmt] | None]:
     """
     Extract chain of `<if><elif>*<else>?` statements
     """
@@ -337,7 +331,7 @@ def unpack_if_nodes(if_node):
     return if_node, elif_nodes, else_body
 
 
-def static_truthiness(node):
+def static_truthiness(node: ast.AST) -> bool | None:
     """
     Extracts static truthiness of a node if possible
 
@@ -386,7 +380,7 @@ def static_truthiness(node):
         return _UNHANDLED
 
 
-def get_conditional_attrnames(body):
+def get_conditional_attrnames(body: list[ast.stmt]) -> oset:
     """
     Gets attrnames within a list of nodes
     """

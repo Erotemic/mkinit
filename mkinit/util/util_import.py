@@ -5,6 +5,8 @@ dev/maintain/port_ubelt_code.py in the mkinit repo.
 
 import os
 import sys
+from collections.abc import Sequence
+from typing import Any, cast
 from os.path import (
     abspath,
     basename,
@@ -23,7 +25,7 @@ from os.path import (
 IS_PY_GE_308 = (sys.version_info[0] >= 3) and (sys.version_info[1] >= 8)
 
 
-def _parse_static_node_value(node):
+def _parse_static_node_value(node: Any) -> Any:
     """
     Extract a constant value from a node if possible
     """
@@ -63,7 +65,7 @@ def _parse_static_node_value(node):
     return value
 
 
-def _extension_module_tags():
+def _extension_module_tags() -> list[str]:
     """
     Returns valid tags an extension module might have
 
@@ -81,7 +83,7 @@ def _extension_module_tags():
     return tags
 
 
-def _static_parse(varname, fpath):
+def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
     """
     Statically parse the a constant variable from a python file
 
@@ -151,7 +153,7 @@ def _static_parse(varname, fpath):
     return value
 
 
-def _platform_pylib_exts():  # nocover
+def _platform_pylib_exts() -> tuple[str, ...]:  # nocover
     """
     Returns .so, .pyd, or .dylib depending on linux, win or mac.
     On python3 return the previous with and without abi (e.g.
@@ -173,7 +175,11 @@ def _platform_pylib_exts():  # nocover
     return tuple(valid_exts)
 
 
-def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
+def _syspath_modname_to_modpath(
+    modname: str,
+    sys_path: Sequence[str | os.PathLike[str]] | None = None,
+    exclude: list[str | os.PathLike[str]] | None = None,
+) -> str | None:
     """
     syspath version of modname_to_modpath
 
@@ -206,9 +212,12 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
         ...static_analysis.py
         >>> print(_syspath_modname_to_modpath('xdoctest'))
         ...xdoctest
-        >>> # xdoctest: +REQUIRES(CPython)
-        >>> print(_syspath_modname_to_modpath('_ctypes'))
-        ..._ctypes...
+        >>> # Exercise compiled-extension lookup without depending on _ctypes.
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as dpath:
+        ...     extpath = join(dpath, 'example_ext' + _platform_pylib_exts()[0])
+        ...     open(extpath, 'wb').close()
+        ...     assert _syspath_modname_to_modpath('example_ext', sys_path=[dpath]) == extpath
         >>> assert _syspath_modname_to_modpath('xdoctest', sys_path=[]) is None
         >>> assert _syspath_modname_to_modpath('xdoctest.static_analysis', sys_path=[]) is None
         >>> assert _syspath_modname_to_modpath('_ctypes', sys_path=[]) is None
@@ -405,7 +414,12 @@ def _syspath_modname_to_modpath(modname, sys_path=None, exclude=None):
     return found_modpath
 
 
-def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
+def modname_to_modpath(
+    modname: str,
+    hide_init: bool = True,
+    hide_main: bool = False,
+    sys_path: Sequence[str | os.PathLike[str]] | None = None,
+) -> str | None:
     """
     Finds the path to a python module from its name.
 
@@ -442,9 +456,12 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
         >>> modname = 'xdoctest'
         >>> modpath = modname_to_modpath(modname, hide_init=False)
         >>> assert modpath.endswith('__init__.py')
-        >>> # xdoctest: +REQUIRES(CPython)
-        >>> modpath = basename(modname_to_modpath('_ctypes'))
-        >>> assert 'ctypes' in modpath
+        >>> # Exercise extension lookup independently of installed extensions.
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as dpath:
+        ...     extpath = join(dpath, 'example_ext' + _platform_pylib_exts()[0])
+        ...     open(extpath, 'wb').close()
+        ...     assert modname_to_modpath('example_ext', sys_path=[dpath]) == extpath
     """
     if hide_main or sys_path:
         modpath = _syspath_modname_to_modpath(modname, sys_path)
@@ -461,13 +478,18 @@ def modname_to_modpath(modname, hide_init=True, hide_main=False, sys_path=None):
     if modpath is None:
         return None
 
-    modpath = normalize_modpath(
-        modpath, hide_init=hide_init, hide_main=hide_main
+    modpath = cast(
+        str,
+        normalize_modpath(modpath, hide_init=hide_init, hide_main=hide_main),
     )
     return modpath
 
 
-def normalize_modpath(modpath, hide_init=True, hide_main=False):
+def normalize_modpath(
+    modpath: str | os.PathLike[str],
+    hide_init: bool = True,
+    hide_main: bool = False,
+) -> str | os.PathLike[str]:
     """
     Normalizes __init__ and __main__ paths.
 
@@ -523,8 +545,12 @@ def normalize_modpath(modpath, hide_init=True, hide_main=False):
 
 
 def modpath_to_modname(
-    modpath, hide_init=True, hide_main=False, check=True, relativeto=None
-):
+    modpath: str,
+    hide_init: bool = True,
+    hide_main: bool = False,
+    check: bool = True,
+    relativeto: str | None = None,
+) -> str:
     """
     Determines importable name from file path
 
@@ -576,10 +602,12 @@ def modpath_to_modname(
         >>> assert modpath_to_modname(dirname(xdoctest.__file__.replace('.pyc', '.py'))) == 'xdoctest'
 
     Example:
-        >>> # xdoctest: +REQUIRES(CPython)
-        >>> modpath = modname_to_modpath('_ctypes')
-        >>> modname = modpath_to_modname(modpath)
-        >>> assert modname == '_ctypes'
+        >>> # The extension suffix can be checked without an installed extension.
+        >>> from tempfile import TemporaryDirectory
+        >>> with TemporaryDirectory() as dpath:
+        ...     extpath = join(dpath, 'example_ext' + _platform_pylib_exts()[0])
+        ...     open(extpath, 'wb').close()
+        ...     assert modpath_to_modname(extpath) == 'example_ext'
 
     Example:
         >>> modpath = '/foo/libfoobar.linux-x86_64-3.6.so'
@@ -591,8 +619,8 @@ def modpath_to_modname(
             raise ValueError('modpath={} does not exist'.format(modpath))
     modpath_ = abspath(expanduser(modpath))
 
-    modpath_ = normalize_modpath(
-        modpath_, hide_init=hide_init, hide_main=hide_main
+    modpath_ = os.fspath(
+        normalize_modpath(modpath_, hide_init=hide_init, hide_main=hide_main)
     )
     if relativeto:
         dpath = dirname(abspath(expanduser(relativeto)))
@@ -608,7 +636,7 @@ def modpath_to_modname(
     return modname
 
 
-def split_modpath(modpath, check=True):
+def split_modpath(modpath: str, check: bool = True) -> tuple[str, str]:
     """
     Splits the modpath into the dir that must be in PYTHONPATH for the module
     to be imported and the modulepath relative to this directory.

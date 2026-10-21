@@ -12,6 +12,7 @@ from __future__ import (
 
 import os
 import sys
+from typing import Any
 
 # Global state that determines if ANSI-coloring text is allowed
 # (which is mainly to address non-ANSI complient windows consoles)
@@ -20,8 +21,12 @@ NO_COLOR = bool(os.environ.get('NO_COLOR'))
 
 
 def difftext(
-    text1, text2, context_lines=0, ignore_whitespace=False, colored=False
-):
+    text1: str,
+    text2: str,
+    context_lines: int | None = 0,
+    ignore_whitespace: bool = False,
+    colored: bool = False,
+) -> str:
     r"""
     Uses difflib to return a difference string between two similar texts
 
@@ -114,7 +119,7 @@ def difftext(
     return text
 
 
-def highlight_code(text, lexer_name='python', **kwargs):
+def highlight_code(text: str, lexer_name: str = 'python', **kwargs: Any) -> str:
     """
     Highlights a block of text using ANSI tags based on language syntax.
 

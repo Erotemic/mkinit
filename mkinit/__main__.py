@@ -1,4 +1,4 @@
-def main():
+def main() -> None:
     """
     The mkinit CLI main
     """
