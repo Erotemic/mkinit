@@ -7,7 +7,6 @@ Submodules
 .. toctree::
    :maxdepth: 4
 
-   mkinit.util.orderedset
    mkinit.util.util_diff
    mkinit.util.util_import
 

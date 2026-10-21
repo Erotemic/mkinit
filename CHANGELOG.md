@@ -7,6 +7,21 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ## Version: 1.3.1 - Unreleased
 
+### Changed
+
+* Use Python 3.10+ AST statement positions to find insertion boundaries
+  instead of repeatedly tokenizing source. This simplifies the implementation
+  and improves insertion-point performance.
+* Add regression coverage for multiline statements, continuation lines,
+  comments, docstrings, and modern f-strings.
+
+### Removed
+
+* Remove the vendored `mkinit._tokenize` module and the obsolete workaround
+  for CPython issue 16806, along with pre-3.10 AST compatibility paths.
+* Remove `is_balanced_statement`, an internal helper previously used only by
+  the obsolete workaround, and stale documentation for removed modules.
+
 
 ## Version: 1.3.0 - Released 2026-10-21
 

@@ -107,16 +107,7 @@ unused-ignore-comment = "ignore"
 unused-type-ignore-comment = "ignore"
 unresolved-import = "ignore"
 
-# The vendored tokenizer should be kept in sync with CPython, not locally typed.
-[[tool.ty.overrides]]
-include = ["mkinit/_tokenize.py"]
-
-[tool.ty.overrides.rules]
-all = "ignore"
-
 [tool.ruff]
-# Vendored CPython code is maintained upstream.
-extend-exclude = ["mkinit/_tokenize.py"]
 line-length = 80
 target-version = "py310"
 

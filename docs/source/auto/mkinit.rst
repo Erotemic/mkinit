@@ -16,7 +16,6 @@ Submodules
    :maxdepth: 4
 
    mkinit.__main__
-   mkinit._tokenize
    mkinit.dynamic_mkinit
    mkinit.formatting
    mkinit.static_analysis

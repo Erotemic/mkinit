@@ -1,24 +1,15 @@
 """
-A paired down version of static_anslysis from xdoctest
+Static analysis helpers for mkinit
 """
 
 import ast
 import os
-import sys
 from collections import OrderedDict
 from os.path import exists, isfile, join, splitext
 from collections.abc import Iterator
 from typing import Any
 
 from mkinit.util import util_import
-
-IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
-IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
-
-if IS_PY_GE_312:
-    from mkinit import _tokenize as tokenize
-else:
-    import tokenize
 
 
 def _parse_static_node_value(node: ast.AST | None) -> Any:
@@ -27,19 +18,8 @@ def _parse_static_node_value(node: ast.AST | None) -> Any:
     """
     if node is None:
         raise TypeError('Cannot statically parse dictionary unpacking')
-    # TODO: ast.Constant for 3.8
-    if (
-        isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.n
-    elif (
-        isinstance(node, ast.Constant) and isinstance(node.value, str)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.s
+    if isinstance(node, ast.Constant):
+        value = node.value
     elif isinstance(node, ast.List):
         value = list(map(_parse_static_node_value, node.elts))
     elif isinstance(node, ast.Tuple):
@@ -49,8 +29,6 @@ def _parse_static_node_value(node: ast.AST | None) -> Any:
         values = map(_parse_static_node_value, node.values)
         value = OrderedDict(zip(keys, values))
         # value = dict(zip(keys, values))
-    elif isinstance(node, (ast.Constant)):
-        value = node.value
     else:
         print(node.__dict__)
         raise TypeError(
@@ -206,53 +184,11 @@ def package_modpaths(
                 break
 
 
-def is_balanced_statement(lines: list[str]) -> bool:
-    """
-    Checks if the lines have balanced parens, brakets, curlies and strings
-
-    Args:
-        lines (List[str]): list of text lines
-
-    Returns:
-        bool: False if the statement is not balanced
-
-    Doctest:
-        >>> assert is_balanced_statement(['print(foobar)'])
-        >>> assert is_balanced_statement(['foo = bar']) is True
-        >>> assert is_balanced_statement(['foo = (']) is False
-        >>> assert is_balanced_statement(['foo = (', "')(')"]) is True
-        >>> assert is_balanced_statement(
-        ...     ['foo = (', "'''", ")]'''", ')']) is True
-        >>> #assert is_balanced_statement(['foo = ']) is False
-        >>> #assert is_balanced_statement(['== ']) is False
-
-    """
-    from io import StringIO
-
-    block = '\n'.join(lines)
-    stream = StringIO()
-    stream.write(block)
-    stream.seek(0)
-    try:
-        for t in tokenize.generate_tokens(stream.readline):
-            pass
-    except tokenize.TokenError as ex:
-        message = ex.args[0]
-        if message.startswith('EOF in multi-line'):
-            return False
-        raise
-    else:
-        # Note: trying to use ast.parse(block) will not work
-        # here because it breaks in try, except, else
-        return True
-
-
 def _locate_ps1_linenos(source_lines: list[str]) -> tuple[list[int], bool]:
     """
     Determines which lines in the source begin a "logical block" of code.
 
-    Note:
-        implementation taken from xdoctest.parser
+    Uses the starting line numbers on Python 3.10+ AST statements.
 
     Args:
         source_lines (List[str]): lines belonging only to the doctest src
@@ -293,66 +229,23 @@ def _locate_ps1_linenos(source_lines: list[str]) -> tuple[list[int], bool]:
     except SyntaxError as syn_ex:
         # Assign missing information to the syntax error.
         if syn_ex.text is None:
-            if syn_ex.lineno is not None:
-                # Grab the line where the error occurs
-                # (why is this not populated in SyntaxError by default?)
-                # (because filename does not point to a valid loc)
-                line = source_block.split('\n')[syn_ex.lineno - 1]
-                syn_ex.text = line + '\n'
-        raise syn_ex
+            source_parts = source_block.split('\n')
+            if syn_ex.lineno is not None and 1 <= syn_ex.lineno <= len(
+                source_parts
+            ):
+                syn_ex.text = source_parts[syn_ex.lineno - 1] + '\n'
+        raise
 
     statement_nodes = pt.body
-    candidate_linenos = [node.lineno - 1 for node in statement_nodes]
-    NEED_16806_WORKAROUND = True
-    if NEED_16806_WORKAROUND:  # pragma: nobranch
-        ps1_linenos = _workaround_16806(candidate_linenos, exec_source_lines)
-    else:
-        ps1_linenos = set(candidate_linenos)
+    # Python >= 3.10 reports the *start* of every statement, including
+    # multiline strings. The old tokenize-based workaround for CPython issue
+    # 16806 is no longer needed. Inspect each AST node once instead of
+    # re-tokenizing progressively larger blocks of source.
+    ps1_linenos = {node.lineno - 1 for node in statement_nodes}
     # Respect any line explicitly defined as PS2 (via its prefix)
     ps2_linenos = {x for x, p in enumerate(source_lines) if p[:4] != '>>> '}
     ps1_linenos = sorted(ps1_linenos.difference(ps2_linenos))
 
-    if len(statement_nodes) == 0:
-        eval_final = False
-    else:
-        # Is the last statement evaluatable?
-        if sys.version_info.major == 2:  # nocover
-            eval_final = isinstance(statement_nodes[-1], (ast.Expr, ast.Print))
-        else:
-            # This should just be an Expr in python3
-            # (todo: ensure this is true)
-            eval_final = isinstance(statement_nodes[-1], ast.Expr)
-
+    # Only a final expression can produce an interactive result.
+    eval_final = bool(statement_nodes) and isinstance(statement_nodes[-1], ast.Expr)
     return ps1_linenos, eval_final
-
-
-def _workaround_16806(ps1_linenos: list[int], exec_source_lines: list[str]) -> set[int]:
-    """
-    workaround for python issue 16806 (https://bugs.python.org/issue16806)
-
-    Issue causes lineno for multiline strings to give the line they end on,
-    not the line they start on.  A patch for this issue exists
-    `https://github.com/python/cpython/pull/1800`
-
-    Note:
-        Starting from the end look at consecutive pairs of indices to
-        inspect the statment it corresponds to.  (the first statment goes
-        from ps1_linenos[-1] to the end of the line list.
-
-        Implementation taken from xdoctest.parser
-    """
-    new_ps1_lines = []
-    b = len(exec_source_lines)
-    for a in ps1_linenos[::-1]:
-        # the position of `b` is correct, but `a` may be wrong
-        # is_balanced_statement will be False iff `a` is wrong.
-        while not is_balanced_statement(exec_source_lines[a:b]):
-            # shift `a` down until it becomes correct
-            a -= 1
-        # push the new correct value back into the list
-        new_ps1_lines.append(a)
-        # set the end position of the next string to be `a` ,
-        # note, because this `a` is correct, the next `b` is
-        # must also be correct.
-        b = a
-    return set(new_ps1_lines)

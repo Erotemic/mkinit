@@ -19,7 +19,7 @@ Notes:
     # Remove any old auto docs folder and regenerate it.
     rm -rf ~/code/mkinit/docs/source/auto
     cd ~/code/mkinit/docs
-    sphinx-apidoc --private --separate --force --output-dir ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit '_tokenize.py'
+    sphinx-apidoc --private --separate --force --output-dir ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit
     git add source/auto/*.rst
 
     # Note: the module should importable before running this

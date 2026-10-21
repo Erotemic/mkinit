@@ -22,30 +22,16 @@ from os.path import (
     splitext,
 )
 
-IS_PY_GE_308 = (sys.version_info[0] >= 3) and (sys.version_info[1] >= 8)
-
 
 def _parse_static_node_value(node: Any) -> Any:
     """
     Extract a constant value from a node if possible
     """
     import ast
-    import numbers
     from collections import OrderedDict
 
-    if (
-        isinstance(node, ast.Constant)
-        and isinstance(node.value, numbers.Number)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.n
-    elif (
-        isinstance(node, ast.Constant) and isinstance(node.value, str)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.s
+    if isinstance(node, ast.Constant):
+        value = node.value
     elif isinstance(node, ast.List):
         value = list(map(_parse_static_node_value, node.elts))
     elif isinstance(node, ast.Tuple):
@@ -55,8 +41,6 @@ def _parse_static_node_value(node: Any) -> Any:
         values = map(_parse_static_node_value, node.values)
         value = OrderedDict(zip(keys, values))
         # value = dict(zip(keys, values))
-    elif isinstance(node, (ast.Constant)):
-        value = node.value
     else:
         raise TypeError(
             'Cannot parse a static value from non-static node '
