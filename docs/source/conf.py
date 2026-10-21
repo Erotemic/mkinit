@@ -111,9 +111,7 @@ Notes:
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
-from os.path import exists
-from os.path import dirname
-from os.path import join
+from os.path import dirname, exists, join
 
 
 def parse_version(fpath):

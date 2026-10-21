@@ -5,8 +5,8 @@ into the final product.
 
 import logging
 import textwrap
-from os.path import exists, join
 from collections.abc import Iterable
+from os.path import exists, join
 from typing import Any
 
 from mkinit import static_analysis as static

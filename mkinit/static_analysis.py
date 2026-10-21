@@ -5,8 +5,8 @@ Static analysis helpers for mkinit
 import ast
 import os
 from collections import OrderedDict
-from os.path import exists, isfile, join, splitext
 from collections.abc import Iterator
+from os.path import exists, isfile, join, splitext
 from typing import Any
 
 from mkinit.util import util_import

@@ -6,8 +6,8 @@ import multiprocessing
 import os
 import sys
 import textwrap
-from os.path import dirname, exists, join
 from collections.abc import Sequence
+from os.path import dirname, exists, join
 from types import ModuleType
 
 

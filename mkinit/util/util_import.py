@@ -6,7 +6,6 @@ dev/maintain/port_ubelt_code.py in the mkinit repo.
 import os
 import sys
 from collections.abc import Sequence
-from typing import Any, cast
 from os.path import (
     abspath,
     basename,
@@ -21,6 +20,7 @@ from os.path import (
     split,
     splitext,
 )
+from typing import Any, cast
 
 
 def _parse_static_node_value(node: Any) -> Any:

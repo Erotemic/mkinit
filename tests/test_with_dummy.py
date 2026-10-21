@@ -354,7 +354,6 @@ def test_lazy_import(option, typed):
     """
     python ~/code/mkinit/tests/test_with_dummy.py test_lazy_import
     """
-    import pytest
 
     import mkinit
 

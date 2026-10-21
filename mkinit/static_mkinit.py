@@ -7,8 +7,8 @@ import logging
 import os
 import pathlib
 import warnings
-from os.path import abspath, basename, dirname, exists, join
 from collections.abc import Iterator
+from os.path import abspath, basename, dirname, exists, join
 from typing import Any, TypeAlias
 
 from mkinit import static_analysis as static
