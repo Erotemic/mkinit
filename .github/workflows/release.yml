@@ -46,7 +46,7 @@ jobs:
       shell: bash
       run: |-
         python -m pip install pip uv -U
-        python -m uv pip install setuptools>=77 wheel build twine
+        python -m uv pip install 'setuptools>=77' wheel build twine
         python -m build --sdist --outdir wheelhouse
         python -m twine check ./wheelhouse/mkinit*.tar.gz
     - name: Show built files
@@ -83,7 +83,7 @@ jobs:
       shell: bash
       run: |-
         python -m pip install pip uv -U
-        python -m uv pip install setuptools>=77 wheel build twine
+        python -m uv pip install 'setuptools>=77' wheel build twine
         python -m build --wheel --outdir wheelhouse
         python -m twine check ./wheelhouse/mkinit*.whl
     - name: Show built files

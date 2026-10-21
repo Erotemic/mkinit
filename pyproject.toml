@@ -1,6 +1,63 @@
 [build-system]
-requires = [ "setuptools>=41.0.1",]
+requires = ["setuptools>=77"]
 build-backend = "setuptools.build_meta"
+
+[project]
+name = "mkinit"
+description = "Autogenerate __init__.py files"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "LICENCE"]
+authors = [{name = "Jon Crall", email = "erotemic@gmail.com"}]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Programming Language :: Python :: 3.15",
+    "Topic :: Software Development :: Code Generators",
+]
+dynamic = ["version", "readme", "dependencies", "optional-dependencies"]
+
+[project.urls]
+Homepage = "https://github.com/Erotemic/mkinit"
+
+[project.scripts]
+mkinit = "mkinit.__main__:main"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["mkinit*"]
+
+[tool.setuptools.package-data]
+mkinit = ["py.typed"]
+"*" = ["requirements/*.txt"]
+
+[tool.setuptools.dynamic]
+version = {attr = "mkinit.__version__"}
+readme = {file = ["README.rst"], content-type = "text/x-rst"}
+dependencies = {file = ["requirements/runtime.txt"]}
+
+[tool.setuptools.dynamic.optional-dependencies]
+tests = {file = ["requirements/tests.txt"]}
+optional = {file = ["requirements/optional.txt"]}
+docs = {file = ["requirements/docs.txt"]}
+all = {file = ["requirements/optional.txt"]}
+
+[tool.uv]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "requirements/*.txt" },
+    { file = "README.rst" },
+    { file = "mkinit/__init__.py" },
+]
 
 [tool.xcookie]
 tags = [ "purepy", "github", "erotemic",]
@@ -29,7 +86,7 @@ console_scripts = [
 ]
 
 [tool.pytest.ini_options]
-addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=setup.py --ignore-glob=dev --ignore-glob=docs"
+addopts = "-p no:doctest --xdoctest --xdoctest-style=google --ignore-glob=dev --ignore-glob=docs"
 norecursedirs = ".git ignore build __pycache__ dev _skbuild"
 filterwarnings = [ "default", "ignore:.*No cfgstr given in Cacher constructor or call.*:Warning", "ignore:.*Define the __nice__ method for.*:Warning", "ignore:.*private pytest class or function.*:Warning",]
 
@@ -38,7 +95,7 @@ branch = true
 
 [tool.coverage.report]
 exclude_lines = [ "pragma: no cover", ".*  # pragma: no cover", ".*  # nocover", "def __repr__", "raise AssertionError", "raise NotImplementedError", "if 0:", "if trace is not None", "verbose = .*", "^ *raise", "^ *pass *$", "if _debug:", "if __name__ == .__main__.:", ".*if six.PY2:",]
-omit = [ "mkinit/__main__.py", "*/setup.py",]
+omit = [ "mkinit/__main__.py",]
 
 
 [tool.mypy]
@@ -50,9 +107,18 @@ unused-ignore-comment = "ignore"
 unused-type-ignore-comment = "ignore"
 unresolved-import = "ignore"
 
+# The vendored tokenizer should be kept in sync with CPython, not locally typed.
+[[tool.ty.overrides]]
+include = ["mkinit/_tokenize.py"]
+
+[tool.ty.overrides.rules]
+all = "ignore"
+
 [tool.ruff]
+# Vendored CPython code is maintained upstream.
+extend-exclude = ["mkinit/_tokenize.py"]
 line-length = 80
-target-version = "py38"
+target-version = "py310"
 
 [tool.ruff.lint]
 # Enable Flake8 (E, F) and isort (I) rules.

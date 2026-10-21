@@ -7,9 +7,16 @@ import os
 import sys
 import textwrap
 from os.path import dirname, exists, join
+from collections.abc import Sequence
+from types import ModuleType
 
 
-def dynamic_init(modname, submodules=None, dump=False, verbose=False):
+def dynamic_init(
+    modname: str,
+    submodules: list[str] | None = None,
+    dump: bool = False,
+    verbose: bool = False,
+) -> str:
     """
     Main entry point for dynamic mkinit.
 
@@ -82,11 +89,11 @@ def dynamic_init(modname, submodules=None, dump=False, verbose=False):
     return initstr
 
 
-def _indent(str_, indent='    '):
+def _indent(str_: str, indent: str = '    ') -> str:
     return indent + str_.replace('\n', '\n' + indent)
 
 
-def _excecute_imports(module, modname, imports, verbose=False):
+def _excecute_imports(module: ModuleType, modname: str, imports: list[str], verbose: bool = False) -> None:
     """Module Imports"""
     # level: -1 is a the Python2 import strategy
     # level:  0 is a the Python3 absolute import
@@ -106,8 +113,12 @@ def _excecute_imports(module, modname, imports, verbose=False):
 
 
 def _execute_fromimport_star(
-    module, modname, imports, check_not_imported=False, verbose=False
-):
+    module: ModuleType,
+    modname: str,
+    imports: list[str],
+    check_not_imported: bool = False,
+    verbose: bool = False,
+) -> list[tuple[str, Sequence[str]]]:
     """
     Effectively import * statements
 
@@ -202,7 +213,7 @@ def _execute_fromimport_star(
     return from_imports
 
 
-def _make_initstr(modname, imports, from_imports, withheader=True):
+def _make_initstr(modname: str, imports: list[str], from_imports: list[tuple[str, Sequence[str]]], withheader: bool = True) -> str:
     """Calls the other string makers"""
     header = _make_module_header() if withheader else ''
     import_str = _make_imports_str(imports, modname)
@@ -221,7 +232,7 @@ def _make_initstr(modname, imports, from_imports, withheader=True):
     return initstr
 
 
-def _make_module_header():
+def _make_module_header() -> str:
     return '\n'.join(
         [
             '# flake8:'
@@ -231,14 +242,14 @@ def _make_module_header():
     )
 
 
-def _make_imports_str(imports, rootmodname='.'):
+def _make_imports_str(imports: list[str], rootmodname: str = '.') -> str:
     imports_fmtstr = 'from {rootmodname} import %s'.format(
         rootmodname=rootmodname
     )
     return '\n'.join([imports_fmtstr % (name,) for name in imports])
 
 
-def _make_fromimport_str(from_imports, rootmodname='.'):
+def _make_fromimport_str(from_imports: list[tuple[str, Sequence[str]]], rootmodname: str = '.') -> str:
     if rootmodname == '.':
         # dot is already taken care of in fmtstr
         rootmodname = ''
@@ -270,7 +281,7 @@ def _make_fromimport_str(from_imports, rootmodname='.'):
     return from_str
 
 
-def _find_local_submodule_names(pkgpath):
+def _find_local_submodule_names(pkgpath: str) -> list[str]:
     # Automatically find the imports if they are not specified
     from mkinit import static_mkinit
 
@@ -279,7 +290,7 @@ def _find_local_submodule_names(pkgpath):
     return imports
 
 
-def _autogen_write(modpath, initstr):
+def _autogen_write(modpath: str, initstr: str) -> None:
     """
     TODO:
         - [ ] : replace with code in mkinit/formatting.py

@@ -3,8 +3,8 @@ __doc__='
 Script to build, sign, tag, and optionally upload Python distributions.
 
 This script is intentionally local-first: it can perform the same release
-steps that CI performs, but without requiring a CI provider.  It supports both
-PEP 517 / pyproject.toml projects and older setup.py projects.
+steps that CI performs, but without requiring a CI provider. It supports
+PEP 517 / pyproject.toml projects.
 
 Common dry-run usage:
     DO_UPLOAD=0 DO_TAG=0 ./publish.sh
@@ -81,15 +81,7 @@ if pyproject.exists():
     if name:
         print(name)
         raise SystemExit
-setup_py = root / 'setup.py'
-if setup_py.exists():
-    ns = {}
-    exec(setup_py.read_text(), ns)
-    name = ns.get('NAME')
-    if name:
-        print(name)
-        raise SystemExit
-print(root.name)
+raise SystemExit('Expected [project].name in pyproject.toml')
 PY
 }
 
@@ -159,15 +151,7 @@ if pyproject.exists():
                     print(version)
                     raise SystemExit
 
-setup_py = root / 'setup.py'
-if setup_py.exists():
-    ns = {}
-    exec(setup_py.read_text(), ns)
-    version = ns.get('VERSION')
-    if version:
-        print(version)
-        raise SystemExit
-raise SystemExit('Could not determine project version')
+raise SystemExit('Could not determine project version from pyproject.toml')
 PY
 }
 

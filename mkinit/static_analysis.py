@@ -7,6 +7,8 @@ import os
 import sys
 from collections import OrderedDict
 from os.path import exists, isfile, join, splitext
+from collections.abc import Iterator
+from typing import Any
 
 from mkinit.util import util_import
 
@@ -19,10 +21,12 @@ else:
     import tokenize
 
 
-def _parse_static_node_value(node):
+def _parse_static_node_value(node: ast.AST | None) -> Any:
     """
     Extract a constant value from a node if possible
     """
+    if node is None:
+        raise TypeError('Cannot statically parse dictionary unpacking')
     # TODO: ast.Constant for 3.8
     if (
         isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
@@ -56,7 +60,7 @@ def _parse_static_node_value(node):
     return value
 
 
-def parse_static_value(key, source=None, fpath=None):
+def parse_static_value(key: str, source: str | None = None, fpath: str | None = None) -> Any:
     """
     Statically parse a constant variable's value from python code.
 
@@ -127,14 +131,14 @@ def parse_static_value(key, source=None, fpath=None):
 
 
 def package_modpaths(
-    pkgpath,
-    with_pkg=False,
-    with_mod=True,
-    followlinks=True,
-    recursive=True,
-    with_libs=False,
-    check=True,
-):
+    pkgpath: str,
+    with_pkg: bool = False,
+    with_mod: bool = True,
+    followlinks: bool = True,
+    recursive: bool = True,
+    with_libs: bool = False,
+    check: bool = True,
+) -> Iterator[str]:
     r"""
     Finds sub-packages and sub-modules belonging to a package.
 
@@ -202,7 +206,7 @@ def package_modpaths(
                 break
 
 
-def is_balanced_statement(lines):
+def is_balanced_statement(lines: list[str]) -> bool:
     """
     Checks if the lines have balanced parens, brakets, curlies and strings
 
@@ -243,7 +247,7 @@ def is_balanced_statement(lines):
         return True
 
 
-def _locate_ps1_linenos(source_lines):
+def _locate_ps1_linenos(source_lines: list[str]) -> tuple[list[int], bool]:
     """
     Determines which lines in the source begin a "logical block" of code.
 
@@ -298,10 +302,12 @@ def _locate_ps1_linenos(source_lines):
         raise syn_ex
 
     statement_nodes = pt.body
-    ps1_linenos = [node.lineno - 1 for node in statement_nodes]
+    candidate_linenos = [node.lineno - 1 for node in statement_nodes]
     NEED_16806_WORKAROUND = True
     if NEED_16806_WORKAROUND:  # pragma: nobranch
-        ps1_linenos = _workaround_16806(ps1_linenos, exec_source_lines)
+        ps1_linenos = _workaround_16806(candidate_linenos, exec_source_lines)
+    else:
+        ps1_linenos = set(candidate_linenos)
     # Respect any line explicitly defined as PS2 (via its prefix)
     ps2_linenos = {x for x, p in enumerate(source_lines) if p[:4] != '>>> '}
     ps1_linenos = sorted(ps1_linenos.difference(ps2_linenos))
@@ -320,7 +326,7 @@ def _locate_ps1_linenos(source_lines):
     return ps1_linenos, eval_final
 
 
-def _workaround_16806(ps1_linenos, exec_source_lines):
+def _workaround_16806(ps1_linenos: list[int], exec_source_lines: list[str]) -> set[int]:
     """
     workaround for python issue 16806 (https://bugs.python.org/issue16806)
 
@@ -349,5 +355,4 @@ def _workaround_16806(ps1_linenos, exec_source_lines):
         # note, because this `a` is correct, the next `b` is
         # must also be correct.
         b = a
-    ps1_linenos = set(new_ps1_lines)
-    return ps1_linenos
+    return set(new_ps1_lines)
