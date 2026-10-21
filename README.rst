@@ -122,8 +122,8 @@ See ``mkinit --help`` for more details.
 Lastly, while exposing all attributes can be helpful for larger projects,
 import time can start to become a consideration. Thankfully,
 `PEP 0562 <https://peps.python.org/pep-0562/>`_ outlines
-a lazy import specification for Python >= 3.7. As of 2020-12-26 mkinit
-supports autogenerating these lazy init files.
+a lazy import specification introduced in Python 3.7. On supported
+Python 3.10+ versions, mkinit can autogenerate these lazy init files.
 
 Unfortunately, there is no syntax support for lazy imports, so mkinit must
 define a ``lazy_import`` boilerplate function in each ``__init__.py`` file.
@@ -278,10 +278,10 @@ Running ``mkint --help`` displays:
       --nomods              Do not generate modules imports
       --noall               Do not generate an __all__ variable
       --relative            Use relative . imports instead of <modname>
-      --lazy                Use lazy imports with more boilerplate but no dependencies (Python >= 3.7 only!)
-      --lazy_loader         Use lazy imports with less boilerplate but requires the lazy_loader module (Python >= 3.7 only!)
+      --lazy                Use lazy imports with more boilerplate but no dependencies
+      --lazy_loader         Use lazy imports with less boilerplate but requires the lazy_loader module
       --lazy_loader_typed   Use lazy imports with the lazy_loader module, additionally generating 
-                            ``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)
+                            ``__init__.pyi`` files for static typing (e.g. with mypy or pyright)
       --black               Use black formatting
       --lazy_boilerplate LAZY_BOILERPLATE
                             Code that defines a custom lazy_import callable
@@ -341,8 +341,6 @@ manually written code in the ``0.2.0.dev0`` version of ``ubelt``.
     #     * inject_func_as_property
     #     * accumulate
     #     * rsync
-    from __future__ import absolute_import, division, print_function, unicode_literals
-
     __version__ = '0.2.0'
 
 It doesn't particularly matter what the above code is, the point is to

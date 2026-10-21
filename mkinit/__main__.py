@@ -128,7 +128,7 @@ def main() -> None:
         default=False,
         help=(
             'Use lazy imports with the lazy_loader module, additionally generating '
-            '``__init__.pyi`` files for static typing (e.g. with mypy or pyright) (Python >= 3.7 only!)'
+            '``__init__.pyi`` files for static typing (e.g. with mypy or pyright) '
         ),
     )
 

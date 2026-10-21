@@ -101,10 +101,9 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         >>> with pytest.raises(AttributeError):
         >>>     fpath.write_text('a = list(range(10))')
         >>>     assert _static_parse('c', fpath) is None
-        >>> if sys.version_info[0:2] >= (3, 6):
-        >>>     # Test with type annotations
-        >>>     fpath.write_text('b: int = 10')
-        >>>     assert _static_parse('b', fpath) == 10
+        >>> # Type-annotated assignments are supported throughout Python 3.10+.
+        >>> fpath.write_text('b: int = 10')
+        >>> assert _static_parse('b', fpath) == 10
     """
     import ast
 
@@ -140,9 +139,8 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
 def _platform_pylib_exts() -> tuple[str, ...]:  # nocover
     """
     Returns .so, .pyd, or .dylib depending on linux, win or mac.
-    On python3 return the previous with and without abi (e.g.
-    .cpython-35m-x86_64-linux-gnu) flags. On python2 returns with
-    and without multiarch.
+    Include both PEP 3149 ABI-tagged extension suffixes and the
+    platform's untagged extension suffix.
 
     Returns:
         tuple

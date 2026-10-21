@@ -9,11 +9,6 @@ from os.path import dirname, join
 import pytest
 import ubelt as ub
 
-try:
-    from packaging.version import parse as LooseVersion
-except ImportError:
-    from distutils.version import LooseVersion
-
 
 def make_dummy_package(dpath, pkgname='mkinit_dummy_module', side_effects=0):
     """
@@ -363,9 +358,6 @@ def test_lazy_import(option, typed):
 
     import mkinit
 
-    if sys.version_info[0:2] < (3, 7):
-        pytest.skip('Only 3.7+ has lazy imports')
-
     cache_dpath = ub.Path.appdir('mkinit/tests').ensuredir()
     paths = make_dummy_package(cache_dpath)
 
@@ -376,11 +368,6 @@ def test_lazy_import(option, typed):
         dry=False,
         recursive=True,
     )
-
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
-        '3.7'
-    ):
-        pytest.skip()
 
     dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(os.fspath(dpath)):
@@ -412,9 +399,6 @@ def test_recursive_lazy_autogen(option, typed):
 
     import mkinit
 
-    if sys.version_info[0:2] < (3, 7):
-        pytest.skip('Only 3.7+ has lazy imports')
-
     cache_dpath = ub.Path.appdir('mkinit/tests').ensuredir()
     paths = make_dummy_package(
         cache_dpath, pkgname='mkinit_rec_lazy_autogen', side_effects=True
@@ -427,11 +411,6 @@ def test_recursive_lazy_autogen(option, typed):
         dry=False,
         recursive=True,
     )
-
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
-        '3.7'
-    ):
-        pytest.skip()
 
     print(f'cache_dpath={cache_dpath}')
     with ub.util_import.PythonPathContext(os.fspath(cache_dpath)):
@@ -470,9 +449,6 @@ def test_typed_pyi_file():
 
     import mkinit
 
-    if sys.version_info[0:2] < (3, 7):
-        pytest.skip('Only 3.7+ has lazy imports')
-
     cache_dpath = ub.Path.appdir('mkinit/tests').ensuredir()
     paths = make_dummy_package(cache_dpath)
     pkg_path = paths['root']
@@ -483,11 +459,6 @@ def test_typed_pyi_file():
         dry=False,
         recursive=True,
     )
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
-        '3.7'
-    ):
-        pytest.skip()
-
     dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(os.fspath(dpath)):
         import mkinit_dummy_module

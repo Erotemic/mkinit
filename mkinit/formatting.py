@@ -331,10 +331,6 @@ def _initstr(
                    'y', 'z']
 
     Example:
-        >>> import pytest
-        >>> import sys
-        >>> if sys.version_info < (3, 7):
-        >>>     pytest.skip('lazy only works on 3.7+')
         >>> modname = 'foo'
         >>> imports = ['.bar', '.baz']
         >>> from_imports = [('.bar', ['func1', 'func2'])]

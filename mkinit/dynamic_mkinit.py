@@ -95,21 +95,10 @@ def _indent(str_: str, indent: str = '    ') -> str:
 
 def _excecute_imports(module: ModuleType, modname: str, imports: list[str], verbose: bool = False) -> None:
     """Module Imports"""
-    # level: -1 is a the Python2 import strategy
-    # level:  0 is a the Python3 absolute import
     if verbose:
-        print('[MKINIT] EXECUTING %d IMPORT TUPLES' % (len(imports),))
-    level = 0
+        print('[MKINIT] EXECUTING %d IMPORT TUPLES' % len(imports))
     for name in imports:
-        if level == -1:
-            tmp = __import__(
-                name, globals(), locals(), fromlist=[], level=level
-            )
-        elif level == 0:
-            # FIXME: should support unicode. Maybe just a python2 thing
-            tmp = __import__(
-                modname, globals(), locals(), fromlist=[str(name)], level=level
-            )
+        __import__(modname, fromlist=[name])
 
 
 def _execute_fromimport_star(
@@ -233,13 +222,8 @@ def _make_initstr(modname: str, imports: list[str], from_imports: list[tuple[str
 
 
 def _make_module_header() -> str:
-    return '\n'.join(
-        [
-            '# flake8:'
-            + ' noqa',  # the plus prevents it from triggering on this file
-            'from __future__ import absolute_import, division, print_function, unicode_literals',
-        ]
-    )
+    # Retain the generated lint marker, but no Python 2 compatibility imports.
+    return '# flake8:' + ' noqa'
 
 
 def _make_imports_str(imports: list[str], rootmodname: str = '.') -> str:

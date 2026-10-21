@@ -270,101 +270,10 @@ def parse_user_declarations(modpath: str) -> dict[str, Any]:
     """
     Statically determine special file-specific user options and declarations
     """
-    # the __init__ file may have a variable describing the correct imports
-    # should imports specify the name of this variable or should it always be
-    # __submodules__?
-    user_decl = {}
-
     init_fpath = join(modpath, '__init__.py')
-    if exists(init_fpath):
-        if 1:
-            user_decl = _parse_user_declarations2(init_fpath)
-        else:
-            # TODO: can remove this code if _parse_user_declarations2 works out
-            with open(init_fpath, 'r') as file:
-                source = file.read()
-            try:
-                # Include only these submodules
-                user_decl['__submodules__'] = static.parse_static_value(
-                    '__submodules__', source
-                )
-            except NameError:
-                try:
-                    user_decl['__submodules__'] = static.parse_static_value(
-                        '__SUBMODULES__', source
-                    )
-                except NameError:
-                    pass
-                else:
-                    warnings.warn(
-                        'Use __submodules__, __SUBMODULES__ is depricated',
-                        DeprecationWarning,
-                    )
-
-            try:
-                user_decl['__explicit__'] = static.parse_static_value(
-                    '__extra_all__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                user_decl['__external__'] = static.parse_static_value(
-                    '__external__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Add custom explicitly defined names to this, and they will be
-                # automatically added to the __all__ variable.
-                user_decl['__explicit__'] = static.parse_static_value(
-                    '__explicit__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Protected items are exposed, but their attributes are not
-                user_decl['__protected__'] = static.parse_static_value(
-                    '__protected__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Private items and their attributes are not exposed
-                user_decl['__private__'] = static.parse_static_value(
-                    '__private__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Protected modules are exposed, but their attributes are not
-                user_decl['__protected__'] = static.parse_static_value(
-                    '__protected__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Private modules and their attributes are not exposed
-                user_decl['__private__'] = static.parse_static_value(
-                    '__private__', source
-                )
-            except NameError:
-                pass
-
-            try:
-                # Ignored modules and their attributes are not exposedmodules
-                user_decl['__ignore__'] = static.parse_static_value(
-                    '__ignore__', source
-                )
-            except NameError:
-                pass
-
-    return user_decl
+    if not exists(init_fpath):
+        return {}
+    return _parse_user_declarations2(init_fpath)
 
 
 def _parse_user_declarations2(init_fpath: str | os.PathLike[str]) -> dict[str, Any]:

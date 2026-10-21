@@ -68,7 +68,6 @@ class TopLevelVisitor(ast.NodeVisitor):
         attrnames = ['Spam', 'bar', 'foo']
 
     Example:
-        >>> # xdoctest: +REQUIRES(PY3)
         >>> from mkinit.top_level_ast import *  # NOQA
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
@@ -139,7 +138,7 @@ class TopLevelVisitor(ast.NodeVisitor):
     """
 
     def __init__(self) -> None:
-        super(TopLevelVisitor, self).__init__()
+        super().__init__()
         self.attrnames = oset()
         self.removed = oset()  # keep track of which variables were deleted
 

@@ -1,14 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Port of ubelt utilities + difftext wrapper around difflib
-"""
-
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
+"""Port of ubelt utilities + difftext wrapper around difflib."""
 
 import os
 import sys
@@ -95,24 +85,9 @@ def difftext(
                 map(any, zip(isvalid_list[i:], ismarked_list[:-i]))
             )
 
-        USE_BREAK_LINE = True
-        if USE_BREAK_LINE:
-            # insert a visual break when there is a break in context
-            diff_lines = []
-            prev = False
-            visual_break = '\n <... FILTERED CONTEXT ...> \n'
-            # print(isvalid_list)
-            for line, valid in zip(all_diff_lines, isvalid_list):
-                if valid:
-                    diff_lines.append(line)
-                elif prev:
-                    if False:
-                        diff_lines.append(visual_break)
-                prev = valid
-        else:
-            diff_lines = [
-                line for line, flag in zip(all_diff_lines, isvalid_list) if flag
-            ]
+        diff_lines = [
+            line for line, valid in zip(all_diff_lines, isvalid_list) if valid
+        ]
     text = '\n'.join(diff_lines)
     if colored:
         text = highlight_code(text, lexer_name='diff')

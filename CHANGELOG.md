@@ -9,6 +9,11 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Simplify development-time dependency markers to Python 3.10+ and
+  remove Python 2/3.7 compatibility branches, redundant legacy
+  `__future__` imports, and unreachable declaration-parsing code.
+* Stop emitting obsolete compatibility imports in dynamically generated
+  module headers; the lint marker remains unchanged.
 * Replace `ubelt.urepr` with a small formatter for generated lazy-import
   literals. `ubelt` is no longer a runtime dependency; tests and docs may
   still use it as a development dependency.
