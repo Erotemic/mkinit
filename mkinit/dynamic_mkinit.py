@@ -157,7 +157,7 @@ def _execute_fromimport_star(
         varset = set(vars(module)) if check_not_imported else set()
         fromset = set()  # set(fromlist) if fromlist is not None else set()
 
-        def valid_attrname(attrname):
+        def valid_attrname(attrname: str) -> bool:
             """
             Guess if the attrname is valid based on its name
             """
@@ -211,6 +211,9 @@ def _make_initstr(
     withheader: bool = True,
 ) -> str:
     """Calls the other string makers"""
+    # This generator describes imports executed by dynamic_init. Do not
+    # substitute formatting._initstr: static generation also supports __all__,
+    # relative imports, stub files, and lazy-import modes.
     header = _make_module_header() if withheader else ''
     import_str = _make_imports_str(imports, modname)
     fromimport_str = _make_fromimport_str(from_imports, modname)
@@ -247,7 +250,7 @@ def _make_fromimport_str(
         # dot is already taken care of in fmtstr
         rootmodname = ''
 
-    def _pack_fromimport(tup):
+    def _pack_fromimport(tup: tuple[str, Sequence[str]]) -> str:
         name, fromlist = tup[0], tup[1]
         from_module_str = 'from {rootmodname}.{name} import ('.format(
             rootmodname=rootmodname, name=name
@@ -278,7 +281,7 @@ def _find_local_submodule_names(pkgpath: str) -> list[str]:
     # Automatically find the imports if they are not specified
     from mkinit import static_mkinit
 
-    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))  # type: ignore
+    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))
     imports = list(import_paths.keys())
     return imports
 

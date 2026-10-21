@@ -4,43 +4,20 @@ Static analysis helpers for mkinit
 
 import ast
 import os
-from collections import OrderedDict
 from collections.abc import Iterator
 from os.path import exists, isfile, join, splitext
-from typing import Any
 
+from mkinit import _static_eval
+from mkinit._static_eval import StaticValue, find_static_assignment
 from mkinit.util import util_import
 
-
-def _parse_static_node_value(node: ast.AST | None) -> Any:
-    """
-    Extract a constant value from a node if possible
-    """
-    if node is None:
-        raise TypeError('Cannot statically parse dictionary unpacking')
-    if isinstance(node, ast.Constant):
-        value = node.value
-    elif isinstance(node, ast.List):
-        value = list(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, ast.Tuple):
-        value = tuple(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, (ast.Dict)):
-        keys = map(_parse_static_node_value, node.keys)
-        values = map(_parse_static_node_value, node.values)
-        value = OrderedDict(zip(keys, values))
-        # value = dict(zip(keys, values))
-    else:
-        print(node.__dict__)
-        raise TypeError(
-            'Cannot parse a static value from non-static node '
-            'of type: {!r}'.format(type(node))
-        )
-    return value
+# Kept as a compatibility alias for existing private API consumers.
+_parse_static_node_value = _static_eval.parse_static_node_value
 
 
 def parse_static_value(
     key: str, source: str | None = None, fpath: str | None = None
-) -> Any:
+) -> StaticValue:
     """
     Statically parse a constant variable's value from python code.
 
@@ -53,7 +30,7 @@ def parse_static_value(
         fpath (str | None): filepath to read if source is not specified
 
     Returns:
-        Any: a parsed value with a basic python builtin type
+        StaticValue: a supported Python literal value
 
     Example:
         >>> key = 'foo'
@@ -77,37 +54,10 @@ def parse_static_value(
 
     pt = ast.parse(source)
 
-    class AssignentVisitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            for target in node.targets:
-                target_id = getattr(target, 'id', None)
-                if target_id == key:
-                    try:
-                        self.value = _parse_static_node_value(node.value)
-                    except TypeError as ex:
-                        import warnings
-
-                        warnings.warn(repr(ex))
-
-        def visit_AnnAssign(self, node):
-            """Handle annotated assignments like `VAR: Type = value`"""
-            target_id = getattr(node.target, 'id', None)
-            if target_id == key:
-                if node.value is not None:
-                    try:
-                        self.value = _parse_static_node_value(node.value)
-                    except TypeError as ex:
-                        import warnings
-
-                        warnings.warn(repr(ex))
-
-    sentinal = object()
-    visitor = AssignentVisitor()
-    visitor.value = sentinal
-    visitor.visit(pt)
-    if visitor.value is sentinal:
+    found, value = find_static_assignment(pt, key, on_invalid='warn')
+    if not found:
         raise NameError('No static variable named {!r}'.format(key))
-    return visitor.value
+    return value
 
 
 def package_modpaths(
@@ -161,7 +111,7 @@ def package_modpaths(
 
         valid_exts = ['.py']
         if with_libs:
-            valid_exts += util_import._platform_pylib_exts()  # type: ignore
+            valid_exts += util_import._platform_pylib_exts()
 
         for dpath, dnames, fnames in os.walk(pkgpath, followlinks=followlinks):
             ispkg = exists(join(dpath, '__init__.py'))

@@ -142,14 +142,13 @@ class TopLevelVisitor(ast.NodeVisitor):
         self.attrnames = oset()
         self.removed = oset()  # keep track of which variables were deleted
 
-    def _register(self, name: str | list[str] | tuple[str, ...] | oset) -> None:
-        if isinstance(name, (list, tuple, oset)):
-            for n in name:
-                self._register(n)
-        else:
-            if name not in self.attrnames:
-                self.attrnames.add(name)
-                self.removed.discard(name)
+    def _register(self, name: str | Iterable[str]) -> None:
+        if not isinstance(name, str):
+            for item in name:
+                self._register(item)
+        elif name not in self.attrnames:
+            self.attrnames.add(name)
+            self.removed.discard(name)
 
     def _unregister(self, name: str) -> None:
         if name in self.attrnames:
@@ -223,7 +222,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         test_nodes = [if_node] + elif_nodes
 
         has_unconditional = False
-        required = []
+        required: list[oset] = []
 
         for item in test_nodes:
             truth = static_truthiness(item.test)
@@ -278,7 +277,7 @@ class TopLevelVisitor(ast.NodeVisitor):
             body_attrs.add(attr)
 
         # Require that attributes are defined in all non-error branches
-        required = []
+        required: list[oset] = []
         for handler in node.handlers:
             # Ignore any handlers that will always reraise
             if not any(isinstance(n, ast.Raise) for n in handler.body):
@@ -305,10 +304,10 @@ def unpack_if_nodes(
     """
     Extract chain of `<if><elif>*<else>?` statements
     """
-    elif_nodes = []
-    else_body = None
+    elif_nodes: list[ast.If] = []
+    else_body: list[ast.stmt] | None = None
 
-    curr = if_node
+    curr: ast.If | None = if_node
     while curr:
         if len(curr.orelse) == 1 and isinstance(curr.orelse[0], ast.If):
             # The current node is followed by an else-if statement

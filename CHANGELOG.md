@@ -9,6 +9,14 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Introduce typed formatting options and user declarations, precise AST
+  visitor annotations, and annotations for remaining nested helpers.
+* Consolidate duplicated AST literal and assignment parsing into a shared,
+  non-executing evaluator while retaining existing static-parsing errors and
+  generated import output. Keep static and dynamic generators distinct because
+  dynamic generation has runtime import side effects and different output modes.
+* Recognize annotated user declarations and documented `__external__`
+  declarations; validate declaration shapes before using them for generation.
 * Simplify development-time dependency markers to Python 3.10+ and
   remove Python 2/3.7 compatibility branches, redundant legacy
   `__future__` imports, and unreachable declaration-parsing code.

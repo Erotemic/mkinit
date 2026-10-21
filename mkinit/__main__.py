@@ -7,6 +7,7 @@ def main() -> None:
     import textwrap
 
     from mkinit import static_mkinit
+    from mkinit.formatting import FormatOptions
 
     description = textwrap.dedent(
         """
@@ -226,7 +227,7 @@ def main() -> None:
         )
 
     # Formatting options
-    options = {
+    options: FormatOptions = {
         'with_attrs': ns['with_attrs'],
         'with_mods': ns['with_mods'],
         'with_all': ns['with_all'],

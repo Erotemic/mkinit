@@ -20,33 +20,13 @@ from os.path import (
     split,
     splitext,
 )
-from typing import Any, cast
+from typing import cast
 
+from mkinit import _static_eval
+from mkinit._static_eval import StaticValue, find_static_assignment
 
-def _parse_static_node_value(node: Any) -> Any:
-    """
-    Extract a constant value from a node if possible
-    """
-    import ast
-    from collections import OrderedDict
-
-    if isinstance(node, ast.Constant):
-        value = node.value
-    elif isinstance(node, ast.List):
-        value = list(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, ast.Tuple):
-        value = tuple(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, (ast.Dict)):
-        keys = map(_parse_static_node_value, node.keys)
-        values = map(_parse_static_node_value, node.values)
-        value = OrderedDict(zip(keys, values))
-        # value = dict(zip(keys, values))
-    else:
-        raise TypeError(
-            'Cannot parse a static value from non-static node '
-            'of type: {!r}'.format(type(node))
-        )
-    return value
+# Kept as a compatibility alias for existing private API consumers.
+_parse_static_node_value = _static_eval.parse_static_node_value
 
 
 def _extension_module_tags() -> list[str]:
@@ -67,7 +47,7 @@ def _extension_module_tags() -> list[str]:
     return tags
 
 
-def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
+def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> StaticValue:
     """
     Statically parse the a constant variable from a python file
 
@@ -76,7 +56,7 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         fpath (str | PathLike): path to python file to parse
 
     Returns:
-        Any: the static value
+        StaticValue: the statically extracted literal value
 
     Example:
         >>> # xdoctest: +SKIP("ubelt dependency")
@@ -111,28 +91,10 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         raise ValueError('fpath={!r} does not exist'.format(fpath))
     with open(fpath, 'r') as file_:
         sourcecode = file_.read()
-    pt = ast.parse(sourcecode)
-
-    class StaticVisitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            for target in node.targets:
-                target_id = getattr(target, 'id', None)
-                if target_id == varname:
-                    self.static_value = _parse_static_node_value(node.value)
-
-        def visit_AnnAssign(self, node):
-            """Handle annotated assignments like `VAR: Type = value`"""
-            if getattr(node.target, 'id', None) == varname:
-                if node.value is not None:
-                    self.static_value = _parse_static_node_value(node.value)
-
-    visitor = StaticVisitor()
-    visitor.visit(pt)
-    try:
-        value = visitor.static_value
-    except AttributeError:
-        value = 'Unknown {}'.format(varname)
-        raise AttributeError(value)
+    tree = ast.parse(sourcecode)
+    found, value = find_static_assignment(tree, varname)
+    if not found:
+        raise AttributeError('Unknown {}'.format(varname))
     return value
 
 
@@ -228,7 +190,7 @@ def _syspath_modname_to_modpath(
     """
     import glob
 
-    def _isvalid(modpath, base):
+    def _isvalid(modpath: str, base: str) -> bool:
         # every directory up to the module, should have an init
         subdir = dirname(modpath)
         while subdir and subdir != base:
@@ -250,11 +212,13 @@ def _syspath_modname_to_modpath(
         sys_path = sys.path
 
     # the empty string in sys.path indicates cwd. Change this to a '.'
-    candidate_dpaths = ['.' if p == '' else p for p in sys_path]
+    # Normalize each element independently: os.fspath is overloaded, so
+    # passing it directly to map loses the str-only return type for our paths.
+    candidate_dpaths = [os.fspath(p) or '.' for p in sys_path]
 
     if exclude:
 
-        def normalize(p):
+        def normalize(p: str | os.PathLike[str]) -> str:
             if sys.platform.startswith('win32'):  # nocover
                 return realpath(p).lower()
             else:
@@ -266,7 +230,7 @@ def _syspath_modname_to_modpath(
             p for p in candidate_dpaths if normalize(p) not in real_exclude
         ]
 
-    def check_dpath(dpath):
+    def check_dpath(dpath: str) -> str | None:
         # Check for directory-based modules (has presidence over files)
         modpath = join(dpath, _fname_we)
         if exists(modpath):
@@ -327,20 +291,21 @@ def _syspath_modname_to_modpath(
                 try:
                     mapping = _static_parse('MAPPING', finder_fpath)
                 except AttributeError:
-                    ...
-                else:
-                    try:
-                        target = dirname(mapping[_pkg_name])
-                    except KeyError:
-                        ...
-                    else:
-                        if (
-                            not exclude or normalize(target) not in real_exclude
-                        ):  # pragma: nobranch
-                            modpath = check_dpath(target)
-                            if modpath:  # pragma: nobranch
-                                found_modpath = modpath
-                                break
+                    continue
+                # The restricted literal evaluator allows values other than
+                # dictionaries, but setuptools' MAPPING must map names to
+                # filesystem paths. Narrow the value at this boundary.
+                if not isinstance(mapping, dict):
+                    continue
+                package_path = mapping.get(_pkg_name)
+                if not isinstance(package_path, str):
+                    continue
+                target = dirname(package_path)
+                if not exclude or normalize(target) not in real_exclude:
+                    modpath = check_dpath(target)
+                    if modpath:  # pragma: nobranch
+                        found_modpath = modpath
+                        break
             if found_modpath is not None:
                 break
 
