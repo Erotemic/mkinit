@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Use the xcookie-generated `pyproject.toml` pytest configuration instead
+  of a redundant `pytest.ini`; align the retained legacy `.coveragerc`
+  coverage exclusions with the project configuration.
 * Introduce typed formatting options and user declarations, precise AST
   visitor annotations, and annotations for remaining nested helpers.
 * Consolidate duplicated AST literal and assignment parsing into a shared,
@@ -33,6 +36,8 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Removed
 
+* Remove the obsolete archived Travis configuration and developer setup
+  script that depended on the removed `setup.py`.
 * Remove the vendored `mkinit._tokenize` module and the obsolete workaround
   for CPython issue 16806, along with pre-3.10 AST compatibility paths.
 * Remove `is_balanced_statement`, an internal helper previously used only by
