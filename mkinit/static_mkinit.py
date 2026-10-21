@@ -276,7 +276,9 @@ def parse_user_declarations(modpath: str) -> dict[str, Any]:
     return _parse_user_declarations2(init_fpath)
 
 
-def _parse_user_declarations2(init_fpath: str | os.PathLike[str]) -> dict[str, Any]:
+def _parse_user_declarations2(
+    init_fpath: str | os.PathLike[str],
+) -> dict[str, Any]:
     """
     New experimental implementation of parse_user_declarations
 
@@ -429,7 +431,11 @@ def _find_local_submodules(pkgpath: str) -> Iterator[tuple[str, str]]:
             yield rel_modname, sub_modpath
 
 
-def _extract_attributes(modpath: str | None = None, source: str | None = None, respect_all: bool = True) -> list[str] | None:
+def _extract_attributes(
+    modpath: str | None = None,
+    source: str | None = None,
+    respect_all: bool = True,
+) -> list[str] | None:
     """
     This is the function that basically simulates import *
 
@@ -526,6 +532,7 @@ def _static_parse_imports(
         >>> print('from_imports = {!r}'.format(from_imports))
         >>> # assert 'autogen_init' in submodules
     """
+
     def _ordered(attrs):
         """Sort alphabetically unless source order is requested"""
         return list(attrs) if source_order else sorted(attrs)
@@ -652,8 +659,9 @@ def _static_parse_imports(
                         a for a in extracted_attrs if a in resolved_attrs
                     ]
                     leftover = [
-                        a for a in attr_list if a in resolved_attrs
-                        and a not in extracted_attrs
+                        a
+                        for a in attr_list
+                        if a in resolved_attrs and a not in extracted_attrs
                     ]
                     attr_list = in_source + leftover
                 else:
@@ -662,9 +670,7 @@ def _static_parse_imports(
             valid_attrs = attr_list
             if ignore:
                 ignored_names = set(ignore)
-                valid_attrs = [
-                    v for v in valid_attrs if v not in ignored_names
-                ]
+                valid_attrs = [v for v in valid_attrs if v not in ignored_names]
             from_imports.append(('.' + rel_modname, valid_attrs))
 
     if external:

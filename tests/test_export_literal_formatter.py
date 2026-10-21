@@ -19,9 +19,7 @@ def test_pretty_export_literals():
     assert _format_export_literal({'bar': ['func1', 'func2']}) == (
         "{\n    'bar': [\n        'func1',\n        'func2',\n    ],\n}"
     )
-    assert _format_export_literal({'empty': []}) == (
-        "{\n    'empty': [],\n}"
-    )
+    assert _format_export_literal({'empty': []}) == ("{\n    'empty': [],\n}")
     assert _format_export_literal(['bar', 'baz'], as_set=True) == (
         "{\n    'bar',\n    'baz',\n}"
     )
@@ -51,9 +49,14 @@ def test_literals_retain_semantics_and_empty_set_type():
 
 
 def test_generated_lazy_import_literals():
-    options = {'lazy_import': True, 'lazy_boilerplate': 'from importlib import lazy_import'}
+    options = {
+        'lazy_import': True,
+        'lazy_boilerplate': 'from importlib import lazy_import',
+    }
     generated = _initstr(
-        'sample', ['.bar', '.baz'], [('.bar', ['func1', 'func2'])],
+        'sample',
+        ['.bar', '.baz'],
+        [('.bar', ['func1', 'func2'])],
         options=options,
     )
     assert "submodules={\n        'bar',\n        'baz',\n    }," in generated
@@ -71,15 +74,20 @@ def test_generated_lazy_import_literals():
 
 def test_lazy_loader_literals_and_module_properties():
     generated = _initstr(
-        'sample', ['.bar'], [('.bar', ['func'])],
+        'sample',
+        ['.bar'],
+        [('.bar', ['func'])],
         options={'lazy_loader': True},
     )
     assert "submodules={\n        'bar',\n    }," in generated
-    assert "submod_attrs={\n        'bar': [\n            'func',\n" in generated
+    assert (
+        "submod_attrs={\n        'bar': [\n            'func',\n" in generated
+    )
     ast.parse(generated)
 
     boilerplate, code = _make_lazy_boilerplate(
-        ['bar'], [('.bar', ['func'])],
+        ['bar'],
+        [('.bar', ['func'])],
         {'lazy_boilerplate': None},
         ['zeta', 'alpha', 'alpha'],
     )

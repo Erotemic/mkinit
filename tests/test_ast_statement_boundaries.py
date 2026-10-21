@@ -78,12 +78,14 @@ def test_ast_starts_match_multiline_literal_start():
     code = '"""\nlong\nmultiline\n"""\nvalue = 2\n'
     parsed = ast.parse(code)
     assert [stmt.lineno for stmt in parsed.body] == [1, 5]
-    assert _locate_ps1_linenos(['>>> ' + line for line in code.splitlines()]) == (
-        [0, 4], False
-    )
+    assert _locate_ps1_linenos(
+        ['>>> ' + line for line in code.splitlines()]
+    ) == ([0, 4], False)
 
 
-@pytest.mark.skipif(sys.version_info < (3, 12), reason='PEP 701 requires Python 3.12')
+@pytest.mark.skipif(
+    sys.version_info < (3, 12), reason='PEP 701 requires Python 3.12'
+)
 def test_pep701_nested_fstring_quotes():
     # Valid since Python 3.12, whereas the previous vendored tokenizer
     # recognized an older subset of f-string syntax.

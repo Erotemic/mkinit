@@ -93,7 +93,9 @@ def _indent(str_: str, indent: str = '    ') -> str:
     return indent + str_.replace('\n', '\n' + indent)
 
 
-def _excecute_imports(module: ModuleType, modname: str, imports: list[str], verbose: bool = False) -> None:
+def _excecute_imports(
+    module: ModuleType, modname: str, imports: list[str], verbose: bool = False
+) -> None:
     """Module Imports"""
     if verbose:
         print('[MKINIT] EXECUTING %d IMPORT TUPLES' % len(imports))
@@ -202,7 +204,12 @@ def _execute_fromimport_star(
     return from_imports
 
 
-def _make_initstr(modname: str, imports: list[str], from_imports: list[tuple[str, Sequence[str]]], withheader: bool = True) -> str:
+def _make_initstr(
+    modname: str,
+    imports: list[str],
+    from_imports: list[tuple[str, Sequence[str]]],
+    withheader: bool = True,
+) -> str:
     """Calls the other string makers"""
     header = _make_module_header() if withheader else ''
     import_str = _make_imports_str(imports, modname)
@@ -233,7 +240,9 @@ def _make_imports_str(imports: list[str], rootmodname: str = '.') -> str:
     return '\n'.join([imports_fmtstr % (name,) for name in imports])
 
 
-def _make_fromimport_str(from_imports: list[tuple[str, Sequence[str]]], rootmodname: str = '.') -> str:
+def _make_fromimport_str(
+    from_imports: list[tuple[str, Sequence[str]]], rootmodname: str = '.'
+) -> str:
     if rootmodname == '.':
         # dot is already taken care of in fmtstr
         rootmodname = ''

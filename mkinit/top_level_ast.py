@@ -299,7 +299,9 @@ class TopLevelVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def unpack_if_nodes(if_node: ast.If) -> tuple[ast.If, list[ast.If], list[ast.stmt] | None]:
+def unpack_if_nodes(
+    if_node: ast.If,
+) -> tuple[ast.If, list[ast.If], list[ast.stmt] | None]:
     """
     Extract chain of `<if><elif>*<else>?` statements
     """

@@ -694,13 +694,25 @@ def test_source_order():
     # Default behavior alphabetizes everything
     text = mkinit.static_init(root)
     assert parse_all(text) == [
-        'alpha', 'apple', 'bravo', 'mike', 'yankee', 'zebra', 'zulu',
+        'alpha',
+        'apple',
+        'bravo',
+        'mike',
+        'yankee',
+        'zebra',
+        'zulu',
     ]
 
     # source_order follows __submodules__ order and in-module source order
     text = mkinit.static_init(root, options={'source_order': True})
     assert parse_all(text) == [
-        'zebra', 'apple', 'zulu', 'alpha', 'mike', 'yankee', 'bravo',
+        'zebra',
+        'apple',
+        'zulu',
+        'alpha',
+        'mike',
+        'yankee',
+        'bravo',
     ]
     assert 'import (zulu, alpha, mike,)' in text
     assert 'import (yankee, bravo,)' in text

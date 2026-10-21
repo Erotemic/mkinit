@@ -38,7 +38,9 @@ def _parse_static_node_value(node: ast.AST | None) -> Any:
     return value
 
 
-def parse_static_value(key: str, source: str | None = None, fpath: str | None = None) -> Any:
+def parse_static_value(
+    key: str, source: str | None = None, fpath: str | None = None
+) -> Any:
     """
     Statically parse a constant variable's value from python code.
 
@@ -247,5 +249,7 @@ def _locate_ps1_linenos(source_lines: list[str]) -> tuple[list[int], bool]:
     ps1_linenos = sorted(ps1_linenos.difference(ps2_linenos))
 
     # Only a final expression can produce an interactive result.
-    eval_final = bool(statement_nodes) and isinstance(statement_nodes[-1], ast.Expr)
+    eval_final = bool(statement_nodes) and isinstance(
+        statement_nodes[-1], ast.Expr
+    )
     return ps1_linenos, eval_final
