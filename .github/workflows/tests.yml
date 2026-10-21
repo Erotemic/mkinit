@@ -71,7 +71,7 @@ jobs:
       shell: bash
       run: |-
         python -m pip install pip uv -U
-        python -m uv pip install 'setuptools>=77' wheel build twine
+        python -m uv pip install "setuptools>=77" wheel build twine
         python -m build --sdist --outdir wheelhouse
         python -m twine check ./wheelhouse/mkinit*.tar.gz
     - name: Install sdist
@@ -143,7 +143,7 @@ jobs:
       shell: bash
       run: |-
         python -m pip install pip uv -U
-        python -m uv pip install 'setuptools>=77' wheel build twine
+        python -m uv pip install "setuptools>=77" wheel build twine
         python -m build --wheel --outdir wheelhouse
         python -m twine check ./wheelhouse/mkinit*.whl
     - name: Show built files
@@ -170,188 +170,188 @@ jobs:
         # for testing instead of using the more concise matrix notation.
         include:
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests.txt
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests.txt
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests.txt
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests-optional.txt
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests-optional.txt
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'true'
-          lock-requirements: requirements/locks/runtime.txt
+          lock-requirements: requirements/locks/tests-optional.txt
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.11'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.12'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.13'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.14'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: ubuntu-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.11'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.12'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.13'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.14'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: macOS-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.10'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.11'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.12'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.13'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.14'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
           check-latest: 'false'
           use-lockfile: 'false'
         - python-version: '3.15'
-          install-extras: ''
+          install-extras: tests,optional
           os: windows-latest
           arch: auto
           allow-prereleases: 'false'
@@ -401,7 +401,7 @@ jobs:
         echo "Installing helpers: update pip"
         python -m pip install pip uv -U
         echo "Installing helpers: setuptools"
-        python -m uv pip install --resolution=highest 'setuptools>=77' setuptools_scm wheel build -U
+        python -m uv pip install --resolution=highest "setuptools>=77" setuptools_scm wheel build -U
         echo "Installing helpers: tomli and pkginfo"
         python -m uv pip install --resolution=highest tomli pkginfo packaging
         export WHEEL_FPATH=$(python -c "if 1:
