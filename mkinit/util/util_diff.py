@@ -1,14 +1,4 @@
-# -*- coding: utf-8 -*-
-"""
-Port of ubelt utilities + difftext wrapper around difflib
-"""
-
-from __future__ import (
-    absolute_import,
-    division,
-    print_function,
-    unicode_literals,
-)
+"""Port of ubelt utilities + difftext wrapper around difflib."""
 
 import os
 import sys
@@ -101,7 +91,6 @@ def difftext(
             diff_lines = []
             prev = False
             visual_break = '\n <... FILTERED CONTEXT ...> \n'
-            # print(isvalid_list)
             for line, valid in zip(all_diff_lines, isvalid_list):
                 if valid:
                     diff_lines.append(line)

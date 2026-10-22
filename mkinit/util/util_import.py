@@ -6,7 +6,6 @@ dev/maintain/port_ubelt_code.py in the mkinit repo.
 import os
 import sys
 from collections.abc import Sequence
-from typing import Any, cast
 from os.path import (
     abspath,
     basename,
@@ -21,48 +20,13 @@ from os.path import (
     split,
     splitext,
 )
+from typing import cast
 
-IS_PY_GE_308 = (sys.version_info[0] >= 3) and (sys.version_info[1] >= 8)
+from mkinit import _static_eval
+from mkinit._static_eval import StaticValue, find_static_assignment
 
-
-def _parse_static_node_value(node: Any) -> Any:
-    """
-    Extract a constant value from a node if possible
-    """
-    import ast
-    import numbers
-    from collections import OrderedDict
-
-    if (
-        isinstance(node, ast.Constant)
-        and isinstance(node.value, numbers.Number)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.n
-    elif (
-        isinstance(node, ast.Constant) and isinstance(node.value, str)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        value = node.value if IS_PY_GE_308 else node.s
-    elif isinstance(node, ast.List):
-        value = list(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, ast.Tuple):
-        value = tuple(map(_parse_static_node_value, node.elts))
-    elif isinstance(node, (ast.Dict)):
-        keys = map(_parse_static_node_value, node.keys)
-        values = map(_parse_static_node_value, node.values)
-        value = OrderedDict(zip(keys, values))
-        # value = dict(zip(keys, values))
-    elif isinstance(node, (ast.Constant)):
-        value = node.value
-    else:
-        raise TypeError(
-            'Cannot parse a static value from non-static node '
-            'of type: {!r}'.format(type(node))
-        )
-    return value
+# Kept as a compatibility alias for existing private API consumers.
+_parse_static_node_value = _static_eval.parse_static_node_value
 
 
 def _extension_module_tags() -> list[str]:
@@ -83,7 +47,7 @@ def _extension_module_tags() -> list[str]:
     return tags
 
 
-def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
+def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> StaticValue:
     """
     Statically parse the a constant variable from a python file
 
@@ -92,7 +56,7 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         fpath (str | PathLike): path to python file to parse
 
     Returns:
-        Any: the static value
+        StaticValue: the statically extracted literal value
 
     Example:
         >>> # xdoctest: +SKIP("ubelt dependency")
@@ -117,10 +81,9 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         >>> with pytest.raises(AttributeError):
         >>>     fpath.write_text('a = list(range(10))')
         >>>     assert _static_parse('c', fpath) is None
-        >>> if sys.version_info[0:2] >= (3, 6):
-        >>>     # Test with type annotations
-        >>>     fpath.write_text('b: int = 10')
-        >>>     assert _static_parse('b', fpath) == 10
+        >>> # Type-annotated assignments are supported throughout Python 3.10+.
+        >>> fpath.write_text('b: int = 10')
+        >>> assert _static_parse('b', fpath) == 10
     """
     import ast
 
@@ -128,37 +91,18 @@ def _static_parse(varname: str, fpath: str | os.PathLike[str]) -> Any:
         raise ValueError('fpath={!r} does not exist'.format(fpath))
     with open(fpath, 'r') as file_:
         sourcecode = file_.read()
-    pt = ast.parse(sourcecode)
-
-    class StaticVisitor(ast.NodeVisitor):
-        def visit_Assign(self, node):
-            for target in node.targets:
-                target_id = getattr(target, 'id', None)
-                if target_id == varname:
-                    self.static_value = _parse_static_node_value(node.value)
-
-        def visit_AnnAssign(self, node):
-            """Handle annotated assignments like `VAR: Type = value`"""
-            if getattr(node.target, 'id', None) == varname:
-                if node.value is not None:
-                    self.static_value = _parse_static_node_value(node.value)
-
-    visitor = StaticVisitor()
-    visitor.visit(pt)
-    try:
-        value = visitor.static_value
-    except AttributeError:
-        value = 'Unknown {}'.format(varname)
-        raise AttributeError(value)
+    tree = ast.parse(sourcecode)
+    found, value = find_static_assignment(tree, varname)
+    if not found:
+        raise AttributeError('Unknown {}'.format(varname))
     return value
 
 
 def _platform_pylib_exts() -> tuple[str, ...]:  # nocover
     """
     Returns .so, .pyd, or .dylib depending on linux, win or mac.
-    On python3 return the previous with and without abi (e.g.
-    .cpython-35m-x86_64-linux-gnu) flags. On python2 returns with
-    and without multiarch.
+    Include both PEP 3149 ABI-tagged extension suffixes and the
+    platform's untagged extension suffix.
 
     Returns:
         tuple
@@ -246,7 +190,7 @@ def _syspath_modname_to_modpath(
     """
     import glob
 
-    def _isvalid(modpath, base):
+    def _isvalid(modpath: str, base: str | os.PathLike[str]) -> bool:
         # every directory up to the module, should have an init
         subdir = dirname(modpath)
         while subdir and subdir != base:
@@ -267,12 +211,13 @@ def _syspath_modname_to_modpath(
     if sys_path is None:
         sys_path = sys.path
 
-    # the empty string in sys.path indicates cwd. Change this to a '.'
+    # The empty string in sys.path indicates cwd; keep other inputs as-is.
+    # Avoid an additional fspath conversion of every search-path element.
     candidate_dpaths = ['.' if p == '' else p for p in sys_path]
 
     if exclude:
 
-        def normalize(p):
+        def normalize(p: str | os.PathLike[str]) -> str:
             if sys.platform.startswith('win32'):  # nocover
                 return realpath(p).lower()
             else:
@@ -284,7 +229,7 @@ def _syspath_modname_to_modpath(
             p for p in candidate_dpaths if normalize(p) not in real_exclude
         ]
 
-    def check_dpath(dpath):
+    def check_dpath(dpath: str | os.PathLike[str]) -> str | None:
         # Check for directory-based modules (has presidence over files)
         modpath = join(dpath, _fname_we)
         if exists(modpath):
@@ -348,7 +293,9 @@ def _syspath_modname_to_modpath(
                     ...
                 else:
                     try:
-                        target = dirname(mapping[_pkg_name])
+                        # Keep original access/error behavior. Static typing
+                        # must not introduce runtime schema guards here.
+                        target = dirname(mapping[_pkg_name])  # type: ignore
                     except KeyError:
                         ...
                     else:

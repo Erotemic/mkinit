@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import ast
-import sys
 from collections.abc import Iterable
 
 __all__ = [
@@ -10,9 +9,6 @@ __all__ = [
 
 
 _UNHANDLED = None
-
-IS_PY_GE_308 = sys.version_info[0] >= 3 and sys.version_info[1] >= 8
-IS_PY_GE_312 = sys.version_info[0] >= 3 and sys.version_info[1] >= 12
 
 
 class oset(dict[str, None]):
@@ -72,7 +68,6 @@ class TopLevelVisitor(ast.NodeVisitor):
         attrnames = ['Spam', 'bar', 'foo']
 
     Example:
-        >>> # xdoctest: +REQUIRES(PY3)
         >>> from mkinit.top_level_ast import *  # NOQA
         >>> from xdoctest import utils
         >>> source = utils.codeblock(
@@ -143,18 +138,17 @@ class TopLevelVisitor(ast.NodeVisitor):
     """
 
     def __init__(self) -> None:
-        super(TopLevelVisitor, self).__init__()
+        super().__init__()
         self.attrnames = oset()
         self.removed = oset()  # keep track of which variables were deleted
 
     def _register(self, name: str | list[str] | tuple[str, ...] | oset) -> None:
         if isinstance(name, (list, tuple, oset)):
-            for n in name:
-                self._register(n)
-        else:
-            if name not in self.attrnames:
-                self.attrnames.add(name)
-                self.removed.discard(name)
+            for item in name:
+                self._register(item)
+        elif name not in self.attrnames:
+            self.attrnames.add(name)
+            self.removed.discard(name)
 
     def _unregister(self, name: str) -> None:
         if name in self.attrnames:
@@ -228,7 +222,7 @@ class TopLevelVisitor(ast.NodeVisitor):
         test_nodes = [if_node] + elif_nodes
 
         has_unconditional = False
-        required = []
+        required: list[oset] = []
 
         for item in test_nodes:
             truth = static_truthiness(item.test)
@@ -283,7 +277,7 @@ class TopLevelVisitor(ast.NodeVisitor):
             body_attrs.add(attr)
 
         # Require that attributes are defined in all non-error branches
-        required = []
+        required: list[oset] = []
         for handler in node.handlers:
             # Ignore any handlers that will always reraise
             if not any(isinstance(n, ast.Raise) for n in handler.body):
@@ -297,9 +291,6 @@ class TopLevelVisitor(ast.NodeVisitor):
             # common = set.intersection(set(body_attrs), *map(set, required))
         self._register(sorted(common))
 
-    # for python2
-    visit_TryExcept = visit_Try
-
     def visit_Delete(self, node: ast.Delete) -> None:
         for item in node.targets:
             if isinstance(item, ast.Name):
@@ -307,14 +298,16 @@ class TopLevelVisitor(ast.NodeVisitor):
         self.generic_visit(node)
 
 
-def unpack_if_nodes(if_node: ast.If) -> tuple[ast.If, list[ast.If], list[ast.stmt] | None]:
+def unpack_if_nodes(
+    if_node: ast.If,
+) -> tuple[ast.If, list[ast.If], list[ast.stmt] | None]:
     """
     Extract chain of `<if><elif>*<else>?` statements
     """
-    elif_nodes = []
-    else_body = None
+    elif_nodes: list[ast.If] = []
+    else_body: list[ast.stmt] | None = None
 
-    curr = if_node
+    curr: ast.If | None = if_node
     while curr:
         if len(curr.orelse) == 1 and isinstance(curr.orelse[0], ast.If):
             # The current node is followed by an else-if statement
@@ -342,42 +335,11 @@ def static_truthiness(node: ast.AST) -> bool | None:
         bool or None: True or False if a node can be statically bound to a
         truthy value, otherwise returns None.
     """
-    if (
-        isinstance(node, ast.Constant) and isinstance(node.value, str)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        return bool(node.value if IS_PY_GE_308 else node.s)
-    # if isinstance(node, ast.Constant):
-    #     return bool(node.s)
-    elif isinstance(node, ast.Tuple):
-        return bool(node.elts)
-    # elif isinstance(node, ast.Constant):
-    #     return bool(node.n)
-    elif (
-        isinstance(node, ast.Constant) and isinstance(node.value, (int, float))
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        return bool(node.value if IS_PY_GE_308 else node.n)
-    # elif isinstance(node, ast.Constant):  # nocover
-    #     return bool(node.s)
-    elif (
-        isinstance(node, ast.Constant) and isinstance(node.value, bytes)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
-        return bool(node.value if IS_PY_GE_308 else node.s)
-    # elif isinstance(node, ast.Constant):
-    #     return bool(node.value)
-    elif (
-        isinstance(node, ast.Constant)
-        if IS_PY_GE_308
-        else isinstance(node, ast.Constant)
-    ):
+    if isinstance(node, ast.Constant):
         return bool(node.value)
-    else:
-        return _UNHANDLED
+    if isinstance(node, ast.Tuple):
+        return bool(node.elts)
+    return _UNHANDLED
 
 
 def get_conditional_attrnames(body: list[ast.stmt]) -> oset:

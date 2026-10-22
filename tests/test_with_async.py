@@ -1,12 +1,6 @@
-import sys
 from os.path import dirname, join
 
 import ubelt as ub
-
-try:
-    from packaging.version import parse as LooseVersion
-except ImportError:
-    from distutils.version import LooseVersion
 
 
 def make_simple_dummy_package():
@@ -73,12 +67,7 @@ def make_simple_dummy_package():
 
 def test_async():
     """ """
-    import pytest
-
     import mkinit
-
-    if sys.version_info[0] < 3:
-        pytest.skip('Only 3.x+ has async')
 
     paths = make_simple_dummy_package()
     pkg_path = paths['root']
@@ -86,11 +75,6 @@ def test_async():
     mkinit.autogen_init(pkg_path, dry=False, recursive=True)
     paths['root_init']
     paths['submod']
-
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
-        '3.7'
-    ):
-        pytest.skip()
 
     dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(dpath):

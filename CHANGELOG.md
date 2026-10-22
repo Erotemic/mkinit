@@ -5,7 +5,50 @@ We are currently working on porting this changelog to the specifications in
 This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## Version: 1.3.0 - Unreleased
+## Version: 1.3.1 - Unreleased
+
+### Changed
+
+* Keep legacy, unchecked declaration parsing while giving `ty` narrowly
+  scoped, Ruff-stable, static-only suppressions; annotate intentional
+  test-fixture exports for Ruff without changing import behavior.
+* Use the xcookie-generated `pyproject.toml` pytest configuration instead
+  of a redundant `pytest.ini`; align the retained legacy `.coveragerc`
+  coverage exclusions with the project configuration.
+* Introduce typed formatting options and user declarations, precise AST
+  visitor annotations, and annotations for remaining nested helpers.
+* Consolidate duplicated AST literal and assignment parsing into a shared,
+  non-executing evaluator, preserving the established declaration and error
+  behavior. Keep static and dynamic generators distinct because dynamic
+  generation has runtime import side effects and different output modes.
+* Preserve original static declaration, `__all__`, formatting, and diff
+  behavior: no new runtime validation, normalizations, or generated-output
+  changes are part of the typing and dependency-cleanup refactors.
+* Simplify development-time dependency markers to Python 3.10+ and
+  remove Python 2/3.7 compatibility branches, redundant legacy
+  `__future__` imports, and unreachable declaration-parsing code.
+* Stop emitting obsolete compatibility imports in dynamically generated
+  module headers; the lint marker remains unchanged.
+* Replace `ubelt.urepr` with a small formatter for generated lazy-import
+  literals. `ubelt` is no longer a runtime dependency; tests and docs may
+  still use it as a development dependency.
+* Use Python 3.10+ AST statement positions to find insertion boundaries
+  instead of repeatedly tokenizing source. This simplifies the implementation
+  and improves insertion-point performance.
+* Add regression coverage for multiline statements, continuation lines,
+  comments, docstrings, and modern f-strings.
+
+### Removed
+
+* Remove the obsolete archived Travis configuration and developer setup
+  script that depended on the removed `setup.py`.
+* Remove the vendored `mkinit._tokenize` module and the obsolete workaround
+  for CPython issue 16806, along with pre-3.10 AST compatibility paths.
+* Remove `is_balanced_statement`, an internal helper previously used only by
+  the obsolete workaround, and stale documentation for removed modules.
+
+
+## Version: 1.3.0 - Released 2026-10-21
 
 ### Added
 

@@ -19,7 +19,7 @@ Notes:
     # Remove any old auto docs folder and regenerate it.
     rm -rf ~/code/mkinit/docs/source/auto
     cd ~/code/mkinit/docs
-    sphinx-apidoc --private --separate --force --output-dir ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit '_tokenize.py'
+    sphinx-apidoc --private --separate --force --output-dir ~/code/mkinit/docs/source/auto ~/code/mkinit/mkinit
     git add source/auto/*.rst
 
     # Note: the module should importable before running this
@@ -111,9 +111,7 @@ Notes:
 # sys.path.insert(0, os.path.abspath('.'))
 
 # -- Project information -----------------------------------------------------
-from os.path import exists
-from os.path import dirname
-from os.path import join
+from os.path import dirname, exists, join
 
 
 def parse_version(fpath):

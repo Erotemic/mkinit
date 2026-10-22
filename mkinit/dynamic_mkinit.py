@@ -6,8 +6,8 @@ import multiprocessing
 import os
 import sys
 import textwrap
-from os.path import dirname, exists, join
 from collections.abc import Sequence
+from os.path import dirname, exists, join
 from types import ModuleType
 
 
@@ -93,23 +93,14 @@ def _indent(str_: str, indent: str = '    ') -> str:
     return indent + str_.replace('\n', '\n' + indent)
 
 
-def _excecute_imports(module: ModuleType, modname: str, imports: list[str], verbose: bool = False) -> None:
+def _excecute_imports(
+    module: ModuleType, modname: str, imports: list[str], verbose: bool = False
+) -> None:
     """Module Imports"""
-    # level: -1 is a the Python2 import strategy
-    # level:  0 is a the Python3 absolute import
     if verbose:
-        print('[MKINIT] EXECUTING %d IMPORT TUPLES' % (len(imports),))
-    level = 0
+        print('[MKINIT] EXECUTING %d IMPORT TUPLES' % len(imports))
     for name in imports:
-        if level == -1:
-            tmp = __import__(
-                name, globals(), locals(), fromlist=[], level=level
-            )
-        elif level == 0:
-            # FIXME: should support unicode. Maybe just a python2 thing
-            tmp = __import__(
-                modname, globals(), locals(), fromlist=[str(name)], level=level
-            )
+        __import__(modname, fromlist=[name])
 
 
 def _execute_fromimport_star(
@@ -166,7 +157,7 @@ def _execute_fromimport_star(
         varset = set(vars(module)) if check_not_imported else set()
         fromset = set()  # set(fromlist) if fromlist is not None else set()
 
-        def valid_attrname(attrname):
+        def valid_attrname(attrname: str) -> bool:
             """
             Guess if the attrname is valid based on its name
             """
@@ -213,8 +204,16 @@ def _execute_fromimport_star(
     return from_imports
 
 
-def _make_initstr(modname: str, imports: list[str], from_imports: list[tuple[str, Sequence[str]]], withheader: bool = True) -> str:
+def _make_initstr(
+    modname: str,
+    imports: list[str],
+    from_imports: list[tuple[str, Sequence[str]]],
+    withheader: bool = True,
+) -> str:
     """Calls the other string makers"""
+    # This generator describes imports executed by dynamic_init. Do not
+    # substitute formatting._initstr: static generation also supports __all__,
+    # relative imports, stub files, and lazy-import modes.
     header = _make_module_header() if withheader else ''
     import_str = _make_imports_str(imports, modname)
     fromimport_str = _make_fromimport_str(from_imports, modname)
@@ -233,13 +232,8 @@ def _make_initstr(modname: str, imports: list[str], from_imports: list[tuple[str
 
 
 def _make_module_header() -> str:
-    return '\n'.join(
-        [
-            '# flake8:'
-            + ' noqa',  # the plus prevents it from triggering on this file
-            'from __future__ import absolute_import, division, print_function, unicode_literals',
-        ]
-    )
+    # Retain the generated lint marker, but no Python 2 compatibility imports.
+    return '# flake8:' + ' noqa'
 
 
 def _make_imports_str(imports: list[str], rootmodname: str = '.') -> str:
@@ -249,12 +243,14 @@ def _make_imports_str(imports: list[str], rootmodname: str = '.') -> str:
     return '\n'.join([imports_fmtstr % (name,) for name in imports])
 
 
-def _make_fromimport_str(from_imports: list[tuple[str, Sequence[str]]], rootmodname: str = '.') -> str:
+def _make_fromimport_str(
+    from_imports: list[tuple[str, Sequence[str]]], rootmodname: str = '.'
+) -> str:
     if rootmodname == '.':
         # dot is already taken care of in fmtstr
         rootmodname = ''
 
-    def _pack_fromimport(tup):
+    def _pack_fromimport(tup: tuple[str, Sequence[str]]) -> str:
         name, fromlist = tup[0], tup[1]
         from_module_str = 'from {rootmodname}.{name} import ('.format(
             rootmodname=rootmodname, name=name
@@ -285,7 +281,7 @@ def _find_local_submodule_names(pkgpath: str) -> list[str]:
     # Automatically find the imports if they are not specified
     from mkinit import static_mkinit
 
-    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))  # type: ignore
+    import_paths = dict(static_mkinit._find_local_submodules(pkgpath))
     imports = list(import_paths.keys())
     return imports
 

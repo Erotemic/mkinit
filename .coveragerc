@@ -1,3 +1,8 @@
+# Compatibility configuration for older coverage invocations, including
+# the legacy CircleCI job that passes --cov-config .coveragerc.
+# Keep these rules aligned with xcookie-generated [tool.coverage] settings
+# in pyproject.toml. `source` is extra for standalone `coverage run`.
+
 [run]
 branch = True
 source = mkinit
@@ -11,16 +16,12 @@ exclude_lines =
     raise AssertionError
     raise NotImplementedError
     if 0:
-    if six.PY2:
     if trace is not None
     verbose = .*
-    raise
-    pass
+    ^ *raise
+    ^ *pass *$
     if _debug:
     if __name__ == .__main__.:
-    print(.*)
-    ^import .*
-    ^from .* import .*
-
-omit = 
+    .*if six.PY2:
+omit =
     mkinit/__main__.py

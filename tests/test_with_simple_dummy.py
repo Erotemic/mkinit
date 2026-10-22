@@ -1,13 +1,7 @@
 import os
-import sys
 from os.path import dirname, join
 
 import ubelt as ub
-
-try:
-    from packaging.version import parse as LooseVersion
-except ImportError:
-    from distutils.version import LooseVersion
 
 
 def make_simple_dummy_package():
@@ -68,12 +62,7 @@ def test_simple_lazy_import():
     """
     xdoctest ~/code/mkinit/tests/test_with_simple_dummy.py test_simple_lazy_import
     """
-    import pytest
-
     import mkinit
-
-    if sys.version_info[0:2] < (3, 7):
-        pytest.skip('Only 3.7+ has lazy imports')
 
     paths = make_simple_dummy_package()
     pkg_path = paths['root']
@@ -81,11 +70,6 @@ def test_simple_lazy_import():
     mkinit.autogen_init(
         pkg_path, options={'lazy_import': 1}, dry=False, recursive=True
     )
-
-    if LooseVersion('{}.{}'.format(*sys.version_info[0:2])) < LooseVersion(
-        '3.7'
-    ):
-        pytest.skip()
 
     dpath = dirname(paths['root'])
     with ub.util_import.PythonPathContext(os.fspath(dpath)):
