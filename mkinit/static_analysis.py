@@ -11,8 +11,16 @@ from mkinit import _static_eval
 from mkinit._static_eval import StaticValue, find_static_assignment
 from mkinit.util import util_import
 
-# Kept as a compatibility alias for existing private API consumers.
-_parse_static_node_value = _static_eval.parse_static_node_value
+
+def _parse_static_node_value(node: ast.AST | None) -> StaticValue:
+    """Legacy static-analysis diagnostics over the shared literal parser."""
+    try:
+        return _static_eval.parse_static_node_value(node)
+    except TypeError as ex:
+        if hasattr(ex, '_mkinit_invalid_node'):
+            # The original static-analysis parser printed the rejected node.
+            print(getattr(ex, '_mkinit_invalid_node').__dict__)
+        raise
 
 
 def parse_static_value(

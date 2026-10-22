@@ -29,7 +29,11 @@ SubmoduleSpec: TypeAlias = list[str] | dict[str, list[str] | None]
 
 
 class UserDeclarations(TypedDict, total=False):
-    """Statically parsed configuration from a package's ``__init__.py``."""
+    """Documented declaration shapes; not validated at runtime.
+
+    Parsing intentionally preserves original literal values, even for
+    nonconforming declarations. Annotations must not impose new constraints.
+    """
 
     __submodules__: SubmoduleSpec
     __explicit__: list[str]
@@ -38,34 +42,6 @@ class UserDeclarations(TypedDict, total=False):
     __ignore__: list[str]
     __external__: list[str]
     module_property_names: list[str]
-
-
-def _name_list(value: static.StaticValue, field: str) -> list[str]:
-    """Validate user-declared names at the untyped AST boundary."""
-    if not isinstance(value, (list, tuple)):
-        raise TypeError(f'{field} must be a list of names')
-    names: list[str] = []
-    for item in value:
-        if not isinstance(item, str):
-            raise TypeError(f'{field} must be a list of names')
-        names.append(item)
-    return names
-
-
-def _submodule_spec(value: static.StaticValue) -> SubmoduleSpec:
-    """Validate the two documented forms of ``__submodules__``."""
-    if isinstance(value, (list, tuple)):
-        return _name_list(value, '__submodules__')
-    if isinstance(value, dict):
-        result: dict[str, list[str] | None] = {}
-        for name, attrs in value.items():
-            if not isinstance(name, str):
-                raise TypeError('__submodules__ keys must be names')
-            result[name] = (
-                None if attrs is None else _name_list(attrs, '__submodules__')
-            )
-        return result
-    raise TypeError('__submodules__ must be a list or mapping')
 
 
 __all__ = [
@@ -375,7 +351,6 @@ def _parse_user_declarations2(
         '__protected__': [],
         '__private__': [],
         '__ignore__': [],
-        '__external__': [],
     }
 
     user_decl_name_to_main: dict[str, str] = {}
@@ -392,14 +367,13 @@ def _parse_user_declarations2(
             self._classmethods: dict[str, list[str]] = {}
 
         def visit_ClassDef(self, node: ast.ClassDef) -> None:
-            previous_classname = self._current_classname
             self._current_classname = node.name
             self._classmethods[node.name] = []
             self.generic_visit(node)
-            self._current_classname = previous_classname
+            self._current_classname = None
 
             if node.name == '__module_properties__':
-                # Expose the special class's methods as module properties.
+                # Preserve the original visitation and nested-class semantics.
                 self.user_decl['module_property_names'] = self._classmethods[
                     node.name
                 ]
@@ -408,51 +382,28 @@ def _parse_user_declarations2(
             if self._current_classname is not None:
                 self._classmethods[self._current_classname].append(node.name)
 
-        def visit_AsyncFunctionDef(self, node: ast.AsyncFunctionDef) -> None:
-            if self._current_classname is not None:
-                self._classmethods[self._current_classname].append(node.name)
-
-        def _record(self, target: ast.expr, value: ast.expr) -> None:
-            if not isinstance(target, ast.Name):
-                return
-            target_id = target.id
-            main_id = user_decl_name_to_main.get(target_id)
-            if main_id is None:
-                return
-            if main_id != target_id:
-                warnings.warn(
-                    f'Use {main_id} instead, {target_id} is deprecated as a '
-                    'mkinit attribute and may no longer be respected in '
-                    'future versions.',
-                    DeprecationWarning,
-                )
-
-            try:
-                parsed = static._parse_static_node_value(value)
-                if main_id == '__submodules__':
-                    self.user_decl['__submodules__'] = _submodule_spec(parsed)
-                elif main_id == '__explicit__':
-                    self.user_decl['__explicit__'] = _name_list(parsed, main_id)
-                elif main_id == '__protected__':
-                    self.user_decl['__protected__'] = _name_list(
-                        parsed, main_id
-                    )
-                elif main_id == '__private__':
-                    self.user_decl['__private__'] = _name_list(parsed, main_id)
-                elif main_id == '__ignore__':
-                    self.user_decl['__ignore__'] = _name_list(parsed, main_id)
-                elif main_id == '__external__':
-                    self.user_decl['__external__'] = _name_list(parsed, main_id)
-            except TypeError as ex:
-                warnings.warn(repr(ex))
-
         def visit_Assign(self, node: ast.Assign) -> None:
             for target in node.targets:
-                self._record(target, node.value)
-
-        def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
-            if node.value is not None:
-                self._record(node.target, node.value)
+                target_id = getattr(target, 'id', None)
+                if target_id in user_decl_name_to_main:
+                    main_id = user_decl_name_to_main[target_id]
+                    if main_id != target_id:
+                        warnings.warn(
+                            f'Use {main_id} instead, {target_id} is deprecated as a '
+                            'mkinit attribute and may no longer be respected in '
+                            'future versions.',
+                            DeprecationWarning,
+                        )
+                    try:
+                        # No shape conversion or runtime validation: user
+                        # declarations retain their literal AST values.
+                        self.user_decl[main_id] = (
+                            static._parse_static_node_value(  # type: ignore
+                                node.value
+                            )
+                        )
+                    except TypeError as ex:
+                        warnings.warn(repr(ex))
 
     source = init_path.read_text()
     pt = ast.parse(source)
@@ -528,12 +479,13 @@ def _extract_attributes(
             raise IOError(
                 'Error reading {}, caused by {}'.format(modpath, repr(ex))
             )
-    valid_attrs = None
+    valid_attrs: list[str] | None = None
     if respect_all:  # pragma: nobranch
         try:
-            parsed_all = static.parse_static_value('__all__', source)
-            if parsed_all is not None:
-                valid_attrs = _name_list(parsed_all, '__all__')
+            # Preserve historically permissive __all__ values, unchanged.
+            valid_attrs = static.parse_static_value(  # type: ignore[invalid-assignment]
+                '__all__', source
+            )
         except NameError:
             pass
     if valid_attrs is None:
@@ -769,6 +721,4 @@ def _static_parse_imports(
             else:
                 from_imports.append((ext_modname, _ordered(valid_attrs)))
 
-    if modname is None:
-        raise ValueError(f'Cannot derive module name for {modpath!r}')
-    return modname, imports, from_imports
+    return modname, imports, from_imports  # type: ignore[invalid-return-type]

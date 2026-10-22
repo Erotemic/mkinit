@@ -190,7 +190,7 @@ def _syspath_modname_to_modpath(
     """
     import glob
 
-    def _isvalid(modpath: str, base: str) -> bool:
+    def _isvalid(modpath: str, base: str | os.PathLike[str]) -> bool:
         # every directory up to the module, should have an init
         subdir = dirname(modpath)
         while subdir and subdir != base:
@@ -211,10 +211,9 @@ def _syspath_modname_to_modpath(
     if sys_path is None:
         sys_path = sys.path
 
-    # the empty string in sys.path indicates cwd. Change this to a '.'
-    # Normalize each element independently: os.fspath is overloaded, so
-    # passing it directly to map loses the str-only return type for our paths.
-    candidate_dpaths = [os.fspath(p) or '.' for p in sys_path]
+    # The empty string in sys.path indicates cwd; keep other inputs as-is.
+    # Avoid an additional fspath conversion of every search-path element.
+    candidate_dpaths = ['.' if p == '' else p for p in sys_path]
 
     if exclude:
 
@@ -230,7 +229,7 @@ def _syspath_modname_to_modpath(
             p for p in candidate_dpaths if normalize(p) not in real_exclude
         ]
 
-    def check_dpath(dpath: str) -> str | None:
+    def check_dpath(dpath: str | os.PathLike[str]) -> str | None:
         # Check for directory-based modules (has presidence over files)
         modpath = join(dpath, _fname_we)
         if exists(modpath):
@@ -291,21 +290,22 @@ def _syspath_modname_to_modpath(
                 try:
                     mapping = _static_parse('MAPPING', finder_fpath)
                 except AttributeError:
-                    continue
-                # The restricted literal evaluator allows values other than
-                # dictionaries, but setuptools' MAPPING must map names to
-                # filesystem paths. Narrow the value at this boundary.
-                if not isinstance(mapping, dict):
-                    continue
-                package_path = mapping.get(_pkg_name)
-                if not isinstance(package_path, str):
-                    continue
-                target = dirname(package_path)
-                if not exclude or normalize(target) not in real_exclude:
-                    modpath = check_dpath(target)
-                    if modpath:  # pragma: nobranch
-                        found_modpath = modpath
-                        break
+                    ...
+                else:
+                    try:
+                        # Keep original access/error behavior. Static typing
+                        # must not introduce runtime schema guards here.
+                        target = dirname(mapping[_pkg_name])  # type: ignore
+                    except KeyError:
+                        ...
+                    else:
+                        if (
+                            not exclude or normalize(target) not in real_exclude
+                        ):  # pragma: nobranch
+                            modpath = check_dpath(target)
+                            if modpath:  # pragma: nobranch
+                                found_modpath = modpath
+                                break
             if found_modpath is not None:
                 break
 

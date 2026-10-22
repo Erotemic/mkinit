@@ -142,8 +142,8 @@ class TopLevelVisitor(ast.NodeVisitor):
         self.attrnames = oset()
         self.removed = oset()  # keep track of which variables were deleted
 
-    def _register(self, name: str | Iterable[str]) -> None:
-        if not isinstance(name, str):
+    def _register(self, name: str | list[str] | tuple[str, ...] | oset) -> None:
+        if isinstance(name, (list, tuple, oset)):
             for item in name:
                 self._register(item)
         elif name not in self.attrnames:

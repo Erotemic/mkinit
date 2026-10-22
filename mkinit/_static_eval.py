@@ -29,11 +29,9 @@ def parse_static_node_value(node: ast.AST | None) -> StaticValue:
     """Parse the restricted mkinit literal grammar without executing source.
 
     Dictionary keys are returned in an ``OrderedDict`` for compatibility
-    with the previous static parsers. ``None`` nodes, which represent ``**``
-    dictionary unpacking, are deliberately rejected.
+    with the previous static parsers. Error details from the original parsers
+    are retained by the callers, without adding checks to successful parses.
     """
-    if node is None:
-        raise TypeError('Cannot statically parse dictionary unpacking')
     if isinstance(node, ast.Constant):
         return node.value
     if isinstance(node, ast.List):
@@ -43,15 +41,21 @@ def parse_static_node_value(node: ast.AST | None) -> StaticValue:
     if isinstance(node, ast.Dict):
         result: OrderedDict[object, StaticValue] = OrderedDict()
         for key, value in zip(node.keys, node.values):
-            result[parse_static_node_value(key)] = parse_static_node_value(
-                value
-            )
+            # Evaluate keys before values, as OrderedDict(zip(keys, values))
+            # did in both original parsers (important for invalid literals).
+            parsed_key = parse_static_node_value(key)
+            parsed_value = parse_static_node_value(value)
+            result[parsed_key] = parsed_value
         return result
-    raise TypeError(
+    error = TypeError(
         'Cannot parse a static value from non-static node of type: {!r}'.format(
             type(node)
         )
     )
+    # Only on the failing path: the old static parser printed the offending
+    # AST node, while util_import's identical evaluator did not.
+    setattr(error, '_mkinit_invalid_node', node)
+    raise error
 
 
 def find_static_assignment(
@@ -78,17 +82,20 @@ def find_static_assignment(
             except TypeError as ex:
                 if on_invalid == 'raise':
                     raise
+                if hasattr(ex, '_mkinit_invalid_node'):
+                    # The static_analysis parser used to print the offending
+                    # AST node before emitting this warning. ``None`` raises
+                    # AttributeError here, exactly as before.
+                    print(getattr(ex, '_mkinit_invalid_node').__dict__)
                 warnings.warn(repr(ex))
             else:
                 self.value = parsed
                 self.found = True
 
         def visit_Assign(self, node: ast.Assign) -> None:
-            if any(
-                isinstance(target, ast.Name) and target.id == name
-                for target in node.targets
-            ):
-                self._record(node.value)
+            for target in node.targets:
+                if getattr(target, 'id', None) == name:
+                    self._record(node.value)
 
         def visit_AnnAssign(self, node: ast.AnnAssign) -> None:
             if (

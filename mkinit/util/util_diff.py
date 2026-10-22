@@ -85,9 +85,23 @@ def difftext(
                 map(any, zip(isvalid_list[i:], ismarked_list[:-i]))
             )
 
-        diff_lines = [
-            line for line, valid in zip(all_diff_lines, isvalid_list) if valid
-        ]
+        USE_BREAK_LINE = True
+        if USE_BREAK_LINE:
+            # insert a visual break when there is a break in context
+            diff_lines = []
+            prev = False
+            visual_break = '\n <... FILTERED CONTEXT ...> \n'
+            for line, valid in zip(all_diff_lines, isvalid_list):
+                if valid:
+                    diff_lines.append(line)
+                elif prev:
+                    if False:
+                        diff_lines.append(visual_break)
+                prev = valid
+        else:
+            diff_lines = [
+                line for line, flag in zip(all_diff_lines, isvalid_list) if flag
+            ]
     text = '\n'.join(diff_lines)
     if colored:
         text = highlight_code(text, lexer_name='diff')

@@ -28,7 +28,7 @@ def test_pretty_export_literals():
     )
 
 
-def test_literals_retain_semantics_and_empty_set_type():
+def test_literals_retain_legacy_urepr_source_format():
     values = [
         [],
         ['alpha'],
@@ -36,16 +36,15 @@ def test_literals_retain_semantics_and_empty_set_type():
         {'foo': ['alpha', 'beta'], 'bar': []},
         {},
         {'alpha', 'beta'},
-        set(),
     ]
     for value in values:
         rendered = _format_export_literal(value)
         assert ast.literal_eval(rendered) == value
 
-    assert _format_export_literal([], as_set=True) == 'set()'
-    assert _format_export_literal(set()) == 'set()'
-    assert ast.literal_eval(_format_export_literal([], as_set=True)) == set()
-    assert ast.literal_eval(_format_export_literal(set())) == set()
+    # Match the historical literal bytes, even where an empty set was
+    # previously rendered using dict syntax by the source generator.
+    assert _format_export_literal([], as_set=True) == '{}'
+    assert _format_export_literal(set()) == '{}'
 
 
 def test_generated_lazy_import_literals():
@@ -66,9 +65,9 @@ def test_generated_lazy_import_literals():
     ) in generated
     ast.parse(generated)
 
-    # The older repr-style generator emitted `{}` for this empty set.
+    # No generated-output changes are authorized in this cleanup PR.
     empty = _initstr('sample', [], [], options=options)
-    assert 'submodules=set()' in empty
+    assert 'submodules={}' in empty
     ast.parse(empty)
 
 
@@ -96,4 +95,4 @@ def test_lazy_loader_literals_and_module_properties():
     ast.parse(boilerplate + '\n' + code)
 
     empty_props = _make_our_lazy_boilerplate([])
-    assert 'module_property_names = set()' in empty_props
+    assert 'module_property_names = {}' in empty_props

@@ -79,37 +79,13 @@ def _ensure_options(
         'use_black': False,
         'source_order': False,
     }
-    for key in given_options:
+    options = default_options.copy()
+    for key in given_options.keys():
         if key not in default_options:
             raise KeyError('options got bad key={}'.format(key))
-    return {
-        'with_attrs': given_options.get(
-            'with_attrs', default_options['with_attrs']
-        ),
-        'with_mods': given_options.get(
-            'with_mods', default_options['with_mods']
-        ),
-        'with_all': given_options.get('with_all', default_options['with_all']),
-        'relative': given_options.get('relative', default_options['relative']),
-        'lazy_import': given_options.get(
-            'lazy_import', default_options['lazy_import']
-        ),
-        'lazy_loader': given_options.get(
-            'lazy_loader', default_options['lazy_loader']
-        ),
-        'lazy_loader_typed': given_options.get(
-            'lazy_loader_typed', default_options['lazy_loader_typed']
-        ),
-        'lazy_boilerplate': given_options.get(
-            'lazy_boilerplate', default_options['lazy_boilerplate']
-        ),
-        'use_black': given_options.get(
-            'use_black', default_options['use_black']
-        ),
-        'source_order': given_options.get(
-            'source_order', default_options['source_order']
-        ),
-    }
+    # Keep the original single update; types don't impose runtime validation.
+    options.update(given_options)  # type: ignore[invalid-argument-type]
+    return options
 
 
 def _insert_autogen_text(
@@ -299,7 +275,8 @@ def _format_export_literal(
         items = [repr(name) for name in value]
 
     if not items:
-        return 'set()' if as_set or isinstance(value, set) else left + right
+        # Match ubelt.urepr and the historical list-to-set source conversion.
+        return left + right
     if not multiline:
         return left + ', '.join(items) + right
     body = ',\n'.join(_indent(item) for item in items)

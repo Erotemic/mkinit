@@ -45,12 +45,13 @@ def test_restricted_literal_parser_does_not_execute_or_expand_grammar(
     expression,
 ):
     node = ast.parse(expression, mode='eval').body
-    for parser in (
-        static_analysis._parse_static_node_value,
-        util_import._parse_static_node_value,
-    ):
-        with pytest.raises(TypeError):
-            parser(node)
+    with pytest.raises(TypeError):
+        util_import._parse_static_node_value(node)
+    static_error = (
+        AttributeError if expression.startswith("{'a': 1, **") else TypeError
+    )
+    with pytest.raises(static_error):
+        static_analysis._parse_static_node_value(node)
 
 
 def test_annotated_and_plain_assignments_agree(tmp_path):
@@ -93,7 +94,7 @@ def test_missing_and_invalid_assignments_preserve_api_errors(tmp_path):
             static_analysis.parse_static_value('target', path.read_text())
 
 
-def test_user_declarations_are_typed_and_alias_order_is_retained(tmp_path):
+def test_user_declaration_alias_and_ast_behavior_is_retained(tmp_path):
     pkg = tmp_path / 'pkg'
     pkg.mkdir()
     (pkg / '__init__.py').write_text(
@@ -109,24 +110,28 @@ def test_user_declarations_are_typed_and_alias_order_is_retained(tmp_path):
     )
     with pytest.warns(DeprecationWarning):
         data = static_mkinit.parse_user_declarations(str(pkg))
-    assert data['__submodules__'] == {'alpha': ['one'], 'beta': None}
-    assert data['__explicit__'] == ['modern_attr']
-    assert data['__external__'] == ['pathlib']
+    # Types annotate the documented shapes; they must not activate new
+    # declaration forms, reshape values, or validate inputs at runtime.
+    assert data['__submodules__'] == ['legacy']
+    assert data['__explicit__'] == ['legacy_attr']
+    assert '__external__' not in data
     assert data['__private__'] == ['_hidden*']
-    assert data['module_property_names'] == ['sync', 'async_method']
+    assert data['module_property_names'] == ['sync']
 
 
-def test_invalid_declarations_warn_without_becoming_unsafe_values(tmp_path):
+def test_declared_literals_are_not_normalized_or_runtime_validated(tmp_path):
     pkg = tmp_path / 'pkg'
     pkg.mkdir()
     (pkg / '__init__.py').write_text(
         "__explicit__ = 'not a list'\n"
-        "__submodules__ = {'ok': ['name'], 3: []}\n"
+        "__submodules__ = {'ok': ('name',), 3: []}\n"
+        '__ignore__ = None\n'
     )
-    with pytest.warns(UserWarning) as warnings:
-        data = static_mkinit.parse_user_declarations(str(pkg))
-    assert len(warnings) == 2
-    assert data == {}
+    data = static_mkinit.parse_user_declarations(str(pkg))
+    assert data['__explicit__'] == 'not a list'
+    assert isinstance(data['__submodules__'], OrderedDict)
+    assert data['__submodules__'] == {'ok': ('name',), 3: []}
+    assert data['__ignore__'] is None
 
 
 def test_format_options_are_resolved_without_mutating_input():
@@ -196,14 +201,20 @@ def test_custom_lazy_boilerplate_is_preserved():
     assert '__getattr__' in generated
 
 
-def test_syspath_search_accepts_pathlike_paths(tmp_path):
+def test_syspath_pathlike_behavior_is_not_extended_by_typing(tmp_path):
     site = tmp_path / 'site'
     pkg = site / 'namedpkg'
     pkg.mkdir(parents=True)
     (pkg / '__init__.py').write_text('')
     assert util_import._syspath_modname_to_modpath(
-        'namedpkg', sys_path=[site]
+        'namedpkg', sys_path=[str(site)]
     ) == str(pkg)
+    # Baseline _isvalid compares string parents against the original Path.
+    # Adding an eager fspath conversion changed the resolver's behavior.
+    assert (
+        util_import._syspath_modname_to_modpath('namedpkg', sys_path=[site])
+        is None
+    )
     assert (
         util_import._syspath_modname_to_modpath(
             'namedpkg', sys_path=[site], exclude=[site]
@@ -230,7 +241,8 @@ def test_setuptools_editable_finder_mapping(tmp_path):
         is None
     )
     finder.write_text("MAPPING = {'editpkg': None}")
-    assert (
+    with pytest.raises(TypeError):
         util_import._syspath_modname_to_modpath('editpkg', sys_path=[site])
-        is None
-    )
+    finder.write_text('MAPPING = 17')
+    with pytest.raises(TypeError):
+        util_import._syspath_modname_to_modpath('editpkg', sys_path=[site])
