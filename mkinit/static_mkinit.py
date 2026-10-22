@@ -397,10 +397,8 @@ def _parse_user_declarations2(
                     try:
                         # No shape conversion or runtime validation: user
                         # declarations retain their literal AST values.
-                        self.user_decl[main_id] = (
-                            static._parse_static_node_value(  # type: ignore
-                                node.value
-                            )
+                        self.user_decl[main_id] = (  # ty: ignore[invalid-key]
+                            static._parse_static_node_value(node.value)
                         )
                     except TypeError as ex:
                         warnings.warn(repr(ex))
@@ -483,7 +481,7 @@ def _extract_attributes(
     if respect_all:  # pragma: nobranch
         try:
             # Preserve historically permissive __all__ values, unchanged.
-            valid_attrs = static.parse_static_value(  # type: ignore[invalid-assignment]
+            valid_attrs = static.parse_static_value(  # ty: ignore[invalid-assignment]
                 '__all__', source
             )
         except NameError:

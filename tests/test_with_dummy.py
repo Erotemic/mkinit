@@ -646,7 +646,9 @@ def test_ignore_filtering():
     # Check that ignored items are filtered from imports
     lines = text.split('\n')
     import_line = [
-        l for l in lines if 'from test_ignore_filter_pkg.mymodule import' in l
+        line
+        for line in lines
+        if 'from test_ignore_filter_pkg.mymodule import' in line
     ]
     if import_line:
         assert 'ignored_func' not in import_line[0], (

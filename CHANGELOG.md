@@ -9,6 +9,9 @@ This project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.htm
 
 ### Changed
 
+* Keep legacy, unchecked declaration parsing while giving `ty` narrowly
+  scoped, Ruff-stable, static-only suppressions; annotate intentional
+  test-fixture exports for Ruff without changing import behavior.
 * Use the xcookie-generated `pyproject.toml` pytest configuration instead
   of a redundant `pytest.ini`; align the retained legacy `.coveragerc`
   coverage exclusions with the project configuration.
