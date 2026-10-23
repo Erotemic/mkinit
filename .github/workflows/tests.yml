@@ -111,7 +111,7 @@ jobs:
         MOD_NAME=mkinit
         python -m pytest --verbose --cov=mkinit $MOD_DPATH ../tests
         cd ..
-    - uses: actions/upload-artifact@v6.0.0
+    - uses: actions/upload-artifact@v7.0.2
       name: Upload sdist artifact
       with:
         name: sdist_wheels
@@ -149,7 +149,7 @@ jobs:
     - name: Show built files
       shell: bash
       run: ls -la wheelhouse
-    - uses: actions/upload-artifact@v6.0.0
+    - uses: actions/upload-artifact@v7.0.2
       name: Upload wheels artifact
       with:
         name: wheels-${{ matrix.os }}-${{ matrix.arch }}
