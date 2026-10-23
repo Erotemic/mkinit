@@ -32,7 +32,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
     - name: Set up Python 3.15 for linting
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v7.0.0
       with:
         python-version: '3.15'
     - name: Install dependencies
@@ -59,7 +59,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
     - name: Set up Python 3.15
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v7.0.0
       with:
         python-version: '3.15'
     - name: Upgrade pip
@@ -136,7 +136,7 @@ jobs:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
     - name: Setup Python
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
     - name: Build pure wheel
@@ -366,7 +366,7 @@ jobs:
       with:
         arch: ${{ contains(matrix.os, 'arm') && 'arm64' || 'x64' }}
     - name: Setup Python
-      uses: actions/setup-python@v6.2.0
+      uses: actions/setup-python@v7.0.0
       with:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: ${{ matrix.allow-prereleases }}
