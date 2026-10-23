@@ -329,7 +329,7 @@ jobs:
             git tag "$TAG" "$GITHUB_SHA"
             git push origin "refs/tags/$TAG"
         fi
-    - uses: softprops/action-gh-release@v1
+    - uses: softprops/action-gh-release@v3
       name: Create Release
       id: create_release
       env:
