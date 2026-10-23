@@ -371,7 +371,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
         allow-prereleases: ${{ matrix.allow-prereleases }}
         check-latest: ${{ matrix.check-latest }}
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download wheels
       with:
         pattern: wheels-*
