@@ -104,13 +104,13 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download wheels
       with:
         pattern: wheels-*
         merge-multiple: true
         path: wheelhouse
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download sdist
       with:
         name: sdist_wheels
@@ -200,13 +200,13 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download wheels
       with:
         pattern: wheels-*
         merge-multiple: true
         path: wheelhouse
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download sdist
       with:
         name: sdist_wheels
@@ -296,7 +296,7 @@ jobs:
     steps:
     - name: Checkout source
       uses: actions/checkout@v6.0.2
-    - uses: actions/download-artifact@v7.0.0
+    - uses: actions/download-artifact@v8.0.2
       name: Download artifacts
       with:
         name: deploy_artifacts
